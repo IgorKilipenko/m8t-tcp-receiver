@@ -32,6 +32,11 @@ void generateFileName(char *);
 char ssid[] = "Keenetic-9267";
 char pass[] = "1234567890";
 
+char alt_ssid[] = "Redmi5Igor123";
+char alt_pass[] = "1234567890";
+
+
+
 WiFiServer server(7042);
 bool wifiConnected = false;
 const int MAX_CLIENTS = 5;
