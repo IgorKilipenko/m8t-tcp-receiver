@@ -5,6 +5,7 @@
 #include <ESP8266WiFi.h>
 
 //#define DEBUG
+#define ALTSSID
 #define CS_PIN D8
 
 class Logger
@@ -29,12 +30,13 @@ void generateFileName(char *);
 
 //Logger logger;
 
+#ifndef ALTSSID
 char ssid[] = "Keenetic-9267";
 char pass[] = "1234567890";
-
-char alt_ssid[] = "Redmi5Igor123";
-char alt_pass[] = "1234567890";
-
+#else
+char ssid[] = "Redmi5Igor123";
+char pass[] = "1234567890";
+#endif
 
 
 WiFiServer server(7042);
