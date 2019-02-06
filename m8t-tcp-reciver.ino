@@ -3,11 +3,16 @@
 #include <SD.h>
 #include <SoftwareSerial.h>
 #include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <DNSServer.h>
+#include <ESP8266mDNS.h>
+#include <EEPROM.h>
+#include <ESP8266WebServer.h>
 
 //#define DEBUG
 #define ALTSSID
 #define CS_PIN D8
-
+;
 class Logger
 {
   public:
@@ -31,13 +36,12 @@ void generateFileName(char *);
 //Logger logger;
 
 #ifndef ALTSSID
-char ssid[] = "Keenetic-9267";
-char pass[] = "1234567890";
+char ssid[32] = "Keenetic-9267";
+char password[32] = "1234567890";
 #else
-char ssid[] = "Redmi5Igor123";
-char pass[] = "1234567890";
+char ssid[32] = "Redmi5Igor123";
+char password[32] = "1234567890";
 #endif
-
 
 WiFiServer server(7042);
 bool wifiConnected = false;
@@ -66,7 +70,7 @@ void setup()
     //pinMode(TXPin, OUTPUT);
 
     Serial.begin(GPSBaud);
-    WiFi.begin(ssid, pass);
+    WiFi.begin(ssid, password);
 
     unsigned long start = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - start < 30000)
