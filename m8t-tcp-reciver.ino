@@ -29,11 +29,9 @@ TelnetServer telnetServer{};
 WebServer webServer{telnetServer};
 
 void setup() {
-  Serial.begin(BAUND);
+		Serial.begin(BAUND);
 
-  webServer.setup();
+		webServer.setup();
 }
 
-void loop() { 
-  telnetServer.process(); 
-}
+void loop() { telnetServer.process(); }
