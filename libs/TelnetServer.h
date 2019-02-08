@@ -10,8 +10,6 @@
 class TelnetServer
 {
   private:
-    char ssid[32];
-    char password[32];
 
     WiFiServer server{7042};
     bool wifiConnected = false;
@@ -37,6 +35,6 @@ class TelnetServer
 
     void setup();
     void process();
-}  telnetServer;
+};
 
 #endif
