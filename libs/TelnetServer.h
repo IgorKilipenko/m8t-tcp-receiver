@@ -26,15 +26,20 @@ class TelnetServer
 
     unsigned long start;
 
+    
   public:
     TelnetServer();
     ~TelnetServer();
 
     void getDataFromClients();
     void generateFileName(char *);
+    void writeToSD(byte buffer[], size_t bytesCount);
+    void sendToClient(byte buffer[], size_t bytesCount);
+    bool setFreeClientSpot();
 
     void setup();
     void process();
+    void processEx();
 };
 
 #endif

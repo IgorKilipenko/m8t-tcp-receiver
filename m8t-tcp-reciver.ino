@@ -34,4 +34,6 @@ void setup() {
 		webServer.setup();
 }
 
-void loop() { telnetServer.process(); }
+void loop() {
+	webServer.process();
+ }

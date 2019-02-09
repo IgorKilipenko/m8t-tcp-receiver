@@ -22,7 +22,7 @@
 class WebServer {
 	  private:
 		const char *softAP_ssid = APSSID;
-		const char *softAP_password = APPSK;
+		const char *softAP_password = (String(APPSK) + String(ESP.getChipId())).c_str();
 		const char *myHostname = "esp8266_";
 		char ssid[32];
 		char password[32];
@@ -58,8 +58,12 @@ class WebServer {
 		void handleWifi();
 		void handleWifiSave();
 		void handleNotFound();
-
+		void connectWifi();
+		void process();
 		char *getSsid();
+
+		void saveCredentials();
+		void loadCredentials();
 };
 
 #endif // WebServer_h

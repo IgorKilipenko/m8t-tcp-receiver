@@ -1,8 +1,8 @@
 String toStringIp(IPAddress ip);
 boolean isIp(String str);
 
-void loadCredentials(char ssid[32], char password[32]);
-void saveCredentials(char ssid[32], char password[32]);
+//void loadCredentials(char ssid[], char password[]);
+//void saveCredentials(char ssid[], char password[]);
 
 WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, telnetServer{_telnetServer} {}
 
@@ -10,6 +10,8 @@ WebServer::~WebServer() {}
 
 void WebServer::setup() {
 		delay(1000);
+
+		telnetServer.setup();
 		// logger.println();
 		// logger.println("Configuring access point...");
 		/* You can remove the password parameter if you want the AP to be open.
@@ -23,6 +25,81 @@ void WebServer::setup() {
 		/* Setup the DNS server redirecting all the domains to the apIP */
 		dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
 		dnsServer.start(DNS_PORT, "*", apIP);
+
+		/* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
+		server.on("/", std::bind(&WebServer::handleRoot, this));
+		server.on("/wifi", std::bind(&WebServer::handleWifi, this));
+		server.on("/wifisave", std::bind(&WebServer::handleWifiSave, this));
+		server.on("/generate_204", std::bind(&WebServer::handleRoot, this)); // Android captive portal. Maybe not needed. Might be handled by notFound handler.
+		server.on("/fwlink", std::bind(&WebServer::handleRoot, this));		 // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
+		server.onNotFound(std::bind(&WebServer::handleNotFound, this));
+		server.begin(); // Web server start
+		Serial.println("HTTP server started");
+
+		logger.debug("SSID size %i\n", sizeof(ssid));
+		logger.debug("SSID %s\n", ssid);
+		loadCredentials(/*ssid, password*/); // Load WLAN credentials from network
+		connect = strlen(ssid) > 0;		 // Request WLAN connect if there is a SSID
+}
+
+void WebServer::process() {
+		if (connect) {
+				Serial.println("Connect requested");
+				connect = false;
+				connectWifi();
+				lastConnectTry = millis();
+		}
+		{
+				unsigned int s = WiFi.status();
+				if (s == 0 && millis() > (lastConnectTry + 60000)) {
+						/* If WLAN disconnected and idle try to connect */
+						/* Don't set retry time too low as retry interfere the softAP operation */
+						connect = true;
+				}
+				if (status != s) { // WLAN status change
+						Serial.print("Status: ");
+						Serial.println(s);
+						status = s;
+						if (s == WL_CONNECTED) {
+								/* Just connected to WLAN */
+								Serial.println("");
+								Serial.print("Connected to ");
+								Serial.println(ssid);
+								Serial.print("IP address: ");
+								Serial.println(WiFi.localIP());
+
+								// Setup MDNS responder
+								if (!MDNS.begin(myHostname)) {
+										Serial.println("Error setting up MDNS responder!");
+								} else {
+										Serial.println("mDNS responder started");
+										// Add service to MDNS-SD
+										MDNS.addService("http", "tcp", 80);
+								}
+						} else if (s == WL_NO_SSID_AVAIL) {
+								WiFi.disconnect();
+						}
+				}
+				if (s == WL_CONNECTED) {
+						MDNS.update();
+				}
+		}
+		// Do work:
+		// DNS
+		dnsServer.processNextRequest();
+		// HTTP
+		server.handleClient();
+
+		telnetServer.process();
+}
+
+void WebServer::connectWifi() {
+		Serial.println("Connecting as wifi client...");
+		WiFi.disconnect();
+		WiFi.begin(ssid, password);
+		int connRes = WiFi.waitForConnectResult();
+		Serial.print("connRes: ");
+		Serial.println(connRes);
 }
 
 /** Handle root or redirect to captive portal */
@@ -96,8 +173,8 @@ void WebServer::handleWifi() {
 				F("</td></tr>"
 				  "</table>"
 				  "\r\n<br />"
-				  "<table><tr><th align='left'>WLAN list (refresh if any "
-				  "missing)</th></tr>");
+				  "<table><tr><th align='left'>WLAN list (refresh if any missing)</th></tr>");
+
 		logger.println("scan start");
 		int n = WiFi.scanNetworks();
 		logger.println("scan done");
@@ -133,7 +210,7 @@ void WebServer::handleWifiSave() {
 					"");		// Empty content inhibits Content-length header so we
 								// have to close the socket ourselves.
 		server.client().stop(); // Stop is needed because we sent no content length
-		saveCredentials(ssid, password);
+		saveCredentials(/*ssid, password*/);
 		connect = strlen(ssid) > 0; // Request WLAN connect with new credentials if there is a SSID
 }
 

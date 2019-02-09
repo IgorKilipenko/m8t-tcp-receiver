@@ -1,6 +1,10 @@
 /** Load WLAN credentials from EEPROM */
-void loadCredentials(char ssid[32], char password[32]) {
+void WebServer::loadCredentials(/*char ssid[], char password[]*/) {
+		logger.debug("ssid sizeof: ");
+		logger.debug("%i\n", sizeof(ssid));
+		logger.debug("EEROM start\n");
 		EEPROM.begin(512);
+		logger.debug("EEROM begin\n");
 		EEPROM.get(0, ssid);
 		EEPROM.get(0 + sizeof(ssid), password);
 		char ok[2 + 1];
@@ -16,7 +20,7 @@ void loadCredentials(char ssid[32], char password[32]) {
 }
 
 /** Store WLAN credentials to EEPROM */
-void saveCredentials(char ssid[32], char password[32]) {
+void WebServer::saveCredentials(/*char ssid[], char password[]*/) {
 		EEPROM.begin(512);
 		EEPROM.put(0, ssid);
 		EEPROM.put(0 + sizeof(ssid), password);
