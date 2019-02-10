@@ -22,10 +22,11 @@
 class WebServer {
 	  private:
 		const char *softAP_ssid = APSSID;
-		const char *softAP_password = (String(APPSK) + String(ESP.getChipId())).c_str();
-		const char *myHostname = "esp8266_";
+		const char *softAP_password = APPSK;
+		const char *myHostname = ("esp8266_" + String(ESP.getChipId())).c_str();
 		char ssid[32];
 		char password[32];
+		char gpsStarted[1];
 
 		// DNS server
 		const byte DNS_PORT = 53;
@@ -49,6 +50,10 @@ class WebServer {
 
 		TelnetServer telnetServer;
 
+		String meta;
+
+		
+
 	  public:
 		WebServer(TelnetServer);
 		~WebServer();
@@ -61,6 +66,9 @@ class WebServer {
 		void connectWifi();
 		void process();
 		char *getSsid();
+
+		void handleStartGPS();
+		void returnFail(String);
 
 		void saveCredentials();
 		void loadCredentials();

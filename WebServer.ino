@@ -1,10 +1,14 @@
 String toStringIp(IPAddress ip);
 boolean isIp(String str);
 
-//void loadCredentials(char ssid[], char password[]);
-//void saveCredentials(char ssid[], char password[]);
+// void loadCredentials(char ssid[], char password[]);
+// void saveCredentials(char ssid[], char password[]);
 
-WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, telnetServer{_telnetServer} {}
+WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer} {
+	meta = F(				  
+			"<meta charset=\"utf-8\">"
+				  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+}
 
 WebServer::~WebServer() {}
 
@@ -30,6 +34,7 @@ void WebServer::setup() {
 		server.on("/", std::bind(&WebServer::handleRoot, this));
 		server.on("/wifi", std::bind(&WebServer::handleWifi, this));
 		server.on("/wifisave", std::bind(&WebServer::handleWifiSave, this));
+		server.on("/gps", std::bind(&WebServer::handleStartGPS,this));
 		server.on("/generate_204", std::bind(&WebServer::handleRoot, this)); // Android captive portal. Maybe not needed. Might be handled by notFound handler.
 		server.on("/fwlink", std::bind(&WebServer::handleRoot, this));		 // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 		server.onNotFound(std::bind(&WebServer::handleNotFound, this));
@@ -39,7 +44,9 @@ void WebServer::setup() {
 		logger.debug("SSID size %i\n", sizeof(ssid));
 		logger.debug("SSID %s\n", ssid);
 		loadCredentials(/*ssid, password*/); // Load WLAN credentials from network
-		connect = strlen(ssid) > 0;		 // Request WLAN connect if there is a SSID
+		connect = strlen(ssid) > 0;			 // Request WLAN connect if there is a SSID
+
+		
 }
 
 void WebServer::process() {
@@ -90,7 +97,10 @@ void WebServer::process() {
 		// HTTP
 		server.handleClient();
 
-		telnetServer.process();
+		if (gpsStarted[0] == '1'){
+			telnetServer.process();
+		}
+		
 }
 
 void WebServer::connectWifi() {
@@ -111,17 +121,50 @@ void WebServer::handleRoot() {
 		server.sendHeader("Pragma", "no-cache");
 		server.sendHeader("Expires", "-1");
 
+		String Script =String(F(
+				"<script type=\"text/javascript\">\n"
+				  "function startGps() {\n"
+					  "var xhr = new XMLHttpRequest();\n"
+					  "xhr.open('POST', '/gps?g=1', true);\n"
+					  "xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
+					  
+					  "xhr.onreadystatechange = function() {\n"
+						  "if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {\n"
+							  "button.innerHTML = xhr.responseText;\n"
+						  "}\n"
+
+					  "}\n"
+					  "xhr.send('g=")) + (gpsStarted[0] == '0' ? String(F("1")) : String(F("0"))) + String(F("');\n"
+				  "}\n"
+				  "</script>\n"
+					  ));
+		
+
 		String Page;
-		Page += F("<html><head></head><body>"
-				  "<h1>HELLO WORLD!!</h1>");
+		Page += String(F("<html>"
+				  "<head>")) + 
+				  meta +
+				  String(F("</head>"
+				  "<body>"
+				  "<h1>ESP GPS</h1>"));
 		if (server.client().localIP() == apIP) {
 				Page += String(F("<p>You are connected through the soft AP: ")) + softAP_ssid + F("</p>");
 		} else {
 				Page += String(F("<p>You are connected through the wifi network: ")) + ssid + F("</p>");
 		}
-		Page += F("<p>You may want to <a href='/wifi'>config the wifi "
-				  "connection</a>.</p>"
-				  "</body></html>");
+
+		Page += String(F("<div>"
+						 "<button id=\"button\" onclick=\"startGps()\">")) +
+						(gpsStarted[0] == '1'
+					? String(F("Stop GPS"))
+					: String(F("Start GPS")) ) + 
+					String(F("</button>" 
+					"</div>"));
+
+		Page += String(F("<p>You may want to <a href='/wifi'>config the wifi "
+				  "connection</a>.</p>")) +
+				  Script +
+				  String(F("</body></html>"));
 
 		server.send(200, "text/html", Page);
 }
@@ -197,6 +240,24 @@ void WebServer::handleWifi() {
 		server.client().stop(); // Stop is needed because we sent no content length
 }
 
+void WebServer::handleStartGPS() {
+		logger.println("gps start");
+		logger.debug("Argument count %i\n", server.args());
+		if (server.args() == 0){
+			return returnFail("BAD ARGS");
+		}
+		logger.debug("Argument (0) name : %i, argument value : %s\n", server.argName(0).c_str(), server.arg(0).c_str());
+		//server.arg(0).toCharArray(gpsStarted, sizeof(gpsStarted));
+		memcpy(gpsStarted, server.arg(0).c_str(), sizeof(gpsStarted));
+		logger.debug("arg g: %c\n", gpsStarted[0]);
+		//server.sendHeader("Location", "gps", true);
+		//server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+		//server.sendHeader("Pragma", "no-cache");
+		//server.sendHeader("Expires", "-1");
+		String res  = gpsStarted[0] == '1' ? String(F("GPS Starting")) : String(F("GPS not started"));
+		server.send(200, "text/plain", res);
+}
+
 /** Handle the WLAN save form and redirect to WLAN config page again */
 void WebServer::handleWifiSave() {
 		logger.println("wifi save");
@@ -234,4 +295,8 @@ void WebServer::handleNotFound() {
 		server.sendHeader("Pragma", "no-cache");
 		server.sendHeader("Expires", "-1");
 		server.send(404, "text/plain", message);
+}
+
+void WebServer::returnFail(String msg) {
+  server.send(500, "text/plain", msg + "\r\n");
 }

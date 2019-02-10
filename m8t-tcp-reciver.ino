@@ -1,4 +1,4 @@
-#define DEBUG
+//#define DEBUG
 #define ALTSSID
 #define CS_PIN D8
 
@@ -29,11 +29,10 @@ TelnetServer telnetServer{};
 WebServer webServer{telnetServer};
 
 void setup() {
+		logger.debug("setup\n");
 		Serial.begin(BAUND);
 
 		webServer.setup();
 }
 
-void loop() {
-	webServer.process();
- }
+void loop() { webServer.process(); }
