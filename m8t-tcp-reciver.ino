@@ -29,7 +29,6 @@ TelnetServer telnetServer{};
 WebServer webServer{telnetServer};
 
 void setup() {
-		logger.debug("setup\n");
 		Serial.begin(BAUND);
 
 		webServer.setup();
