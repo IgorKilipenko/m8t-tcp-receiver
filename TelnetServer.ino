@@ -51,8 +51,6 @@ void TelnetServer::setup() {
 		start = millis();
 }
 
-
-
 void TelnetServer::process() {
 		if (WiFi.status() == WL_CONNECTED) {
 				setFreeClientSpot();

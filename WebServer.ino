@@ -5,9 +5,8 @@ boolean isIp(String str);
 // void saveCredentials(char ssid[], char password[]);
 
 WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer} {
-	meta = F(				  
-			"<meta charset=\"utf-8\">"
-				  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+		meta = F("<meta charset=\"utf-8\">"
+				 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 }
 
 WebServer::~WebServer() {}
@@ -34,7 +33,7 @@ void WebServer::setup() {
 		server.on("/", std::bind(&WebServer::handleRoot, this));
 		server.on("/wifi", std::bind(&WebServer::handleWifi, this));
 		server.on("/wifisave", std::bind(&WebServer::handleWifiSave, this));
-		server.on("/gps", std::bind(&WebServer::handleStartGPS,this));
+		server.on("/gps", std::bind(&WebServer::handleStartGPS, this));
 		server.on("/generate_204", std::bind(&WebServer::handleRoot, this)); // Android captive portal. Maybe not needed. Might be handled by notFound handler.
 		server.on("/fwlink", std::bind(&WebServer::handleRoot, this));		 // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 		server.onNotFound(std::bind(&WebServer::handleNotFound, this));
@@ -45,8 +44,6 @@ void WebServer::setup() {
 		logger.debug("SSID %s\n", ssid);
 		loadCredentials(/*ssid, password*/); // Load WLAN credentials from network
 		connect = strlen(ssid) > 0;			 // Request WLAN connect if there is a SSID
-
-		
 }
 
 void WebServer::process() {
@@ -97,10 +94,9 @@ void WebServer::process() {
 		// HTTP
 		server.handleClient();
 
-		if (gpsStarted[0] == '1'){
-			telnetServer.process();
+		if (gpsStarted[0] == '1') {
+				telnetServer.process();
 		}
-		
 }
 
 void WebServer::connectWifi() {
@@ -120,39 +116,41 @@ void WebServer::handleRoot() {
 		server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		server.sendHeader("Pragma", "no-cache");
 		server.sendHeader("Expires", "-1");
-		
-		String Script = String(F(
-				"<script type=\"text/javascript\">\n"
-				  "function startGps() {\n"
-					  "var xhr = new XMLHttpRequest();\n"
-					  "xhr.open('POST', '/gps', true);\n"
-					  //"xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
-					  
-					  "xhr.onreadystatechange = function() {\n"
-						  "if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {\n"
-						      "var resp = xhr.responseText.split(String.fromCharCode(10));"
-						      "console.log({resp});\n"
-							  "button.innerHTML = resp[0];\n"
-						  "}\n"
 
-					  "}\n"
-					  "var formData = new FormData();\n" 
-					  "var val = button.innerHTML == '")) + GPS_START_BTN + F("' ? 1 : 0;\n"
-					  "formData.append('gps', val);\n"
-					  "xhr.send(formData);\n"
-					  "console.log({formData}, {xhr});\n"
-				  "}\n\n"
-				  "button.innerHTML = '") + (gpsStarted[0] == '0' ? GPS_START_BTN : GPS_STOP_BTN) +  
-				  F("';\n"
-					  "</script>\n");
+		String Script = String(F("<script type=\"text/javascript\">\n"
+								 "function startGps() {\n"
+								 "var xhr = new XMLHttpRequest();\n"
+								 "xhr.open('POST', '/gps', true);\n"
+								 //"xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
+
+								 "xhr.onreadystatechange = function() {\n"
+								 "if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {\n"
+								 "var resp = xhr.responseText.split(String.fromCharCode(10));"
+								 "console.log({resp});\n"
+								 "button.innerHTML = resp[0];\n"
+								 "}\n"
+
+								 "}\n"
+								 "var formData = new FormData();\n"
+								 "var val = button.innerHTML == '")) +
+						GPS_START_BTN +
+						F("' ? 1 : 0;\n"
+						  "formData.append('gps', val);\n"
+						  "xhr.send(formData);\n"
+						  "console.log({formData}, {xhr});\n"
+						  "}\n\n"
+						  "button.innerHTML = '") +
+						(gpsStarted[0] == '0' ? GPS_START_BTN : GPS_STOP_BTN) +
+						F("';\n"
+						  "</script>\n");
 
 		String Page;
 		Page += String(F("<html>"
-				  "<head>")) + 
-				  meta +
-				  String(F("</head>"
-				  "<body>"
-				  "<h1>ESP GPS</h1>"));
+						 "<head>")) +
+				meta +
+				String(F("</head>"
+						 "<body>"
+						 "<h1>ESP GPS</h1>"));
 		if (server.client().localIP() == apIP) {
 				Page += String(F("<p>You are connected through the soft AP: ")) + softAP_ssid + F("</p>");
 		} else {
@@ -161,13 +159,12 @@ void WebServer::handleRoot() {
 
 		Page += String(F("<div>"
 						 "<button id=\"button\" onclick=\"startGps()\">"
-					"</button>" 
-					"</div>"));
+						 "</button>"
+						 "</div>"));
 
 		Page += String(F("<p>You may want to <a href='/wifi'>config the wifi "
-				  "connection</a>.</p>")) +
-				  Script +
-				  String(F("</body></html>"));
+						 "connection</a>.</p>")) +
+				Script + String(F("</body></html>"));
 
 		server.send(200, "text/html", Page);
 }
@@ -190,7 +187,7 @@ boolean WebServer::captivePortal() {
 void WebServer::handleWifi() {
 		server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		server.sendHeader("Pragma", "no-cache");
-		server.sendHeader("Expires", "-1");		
+		server.sendHeader("Expires", "-1");
 
 		String Page;
 		Page += F("<html><head></head><body>"
@@ -247,14 +244,14 @@ void WebServer::handleStartGPS() {
 		logger.debug("gps start\n");
 		logger.debug("gpsStarted = %c\n", gpsStarted[0]);
 		logger.debug("Argument count %i\n", server.args());
-		if (server.args() == 0){
-			return returnFail("BAD ARGS");
+		if (server.args() == 0) {
+				return returnFail("BAD ARGS");
 		}
 		logger.debug("Server has gps atr %s\n)", server.hasArg("gps") ? "true" : "false");
 		logger.debug("Argument (0) name : %s, argument gps value : %s\n", server.argName(0).c_str(), server.arg("gps").c_str());
 		memcpy(gpsStarted, server.arg("gps").c_str(), sizeof(gpsStarted));
 		logger.debug("arg g: %c\n", gpsStarted[0]);
-		String res  = gpsStarted[0] == '1' ? String(GPS_STOP_BTN) + String(F("\nGPS Started")) : String(GPS_START_BTN) + String(F("\nGPS not started"));
+		String res = gpsStarted[0] == '1' ? String(GPS_STOP_BTN) + String(F("\nGPS Started")) : String(GPS_START_BTN) + String(F("\nGPS not started"));
 		server.send(200, "text/plain", res);
 }
 
@@ -297,6 +294,4 @@ void WebServer::handleNotFound() {
 		server.send(404, "text/plain", message);
 }
 
-void WebServer::returnFail(String msg) {
-  server.send(500, "text/plain", msg + "\r\n");
-}
+void WebServer::returnFail(String msg) { server.send(500, "text/plain", msg + "\r\n"); }

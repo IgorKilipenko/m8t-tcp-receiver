@@ -55,8 +55,7 @@ class WebServer {
 
 		String meta;
 
-		
-
+	
 	  public:
 		WebServer(TelnetServer);
 		~WebServer();
