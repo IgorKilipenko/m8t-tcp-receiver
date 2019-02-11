@@ -190,7 +190,8 @@ void WebServer::handleWifi() {
 	server.sendHeader("Expires", "-1");
 
 	String Page;
-	Page += F("<html><head></head><body>"
+	Page += String(F("<html><head>")) + meta +
+			F("</head><body>"
 			  "<h1>Wifi config</h1>");
 	if (server.client().localIP() == apIP) {
 		Page += String(F("<p>You are connected through the soft AP: ")) + softAP_ssid + F("</p>");
