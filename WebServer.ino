@@ -120,25 +120,31 @@ void WebServer::handleRoot() {
 		server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		server.sendHeader("Pragma", "no-cache");
 		server.sendHeader("Expires", "-1");
-
-		String Script =String(F(
+		
+		String Script = String(F(
 				"<script type=\"text/javascript\">\n"
 				  "function startGps() {\n"
 					  "var xhr = new XMLHttpRequest();\n"
-					  "xhr.open('POST', '/gps?g=1', true);\n"
-					  "xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
+					  "xhr.open('POST', '/gps', true);\n"
+					  //"xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
 					  
 					  "xhr.onreadystatechange = function() {\n"
 						  "if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {\n"
-							  "button.innerHTML = xhr.responseText;\n"
+						      "var resp = xhr.responseText.split(String.fromCharCode(10));"
+						      "console.log({resp});\n"
+							  "button.innerHTML = resp[0];\n"
 						  "}\n"
 
 					  "}\n"
-					  "xhr.send('g=")) + (gpsStarted[0] == '0' ? String(F("1")) : String(F("0"))) + String(F("');\n"
-				  "}\n"
-				  "</script>\n"
-					  ));
-		
+					  "var formData = new FormData();\n" 
+					  "var val = button.innerHTML == '")) + GPS_START_BTN + F("' ? 1 : 0;\n"
+					  "formData.append('gps', val);\n"
+					  "xhr.send(formData);\n"
+					  "console.log({formData}, {xhr});\n"
+				  "}\n\n"
+				  "button.innerHTML = '") + (gpsStarted[0] == '0' ? GPS_START_BTN : GPS_STOP_BTN) +  
+				  F("';\n"
+					  "</script>\n");
 
 		String Page;
 		Page += String(F("<html>"
@@ -154,11 +160,8 @@ void WebServer::handleRoot() {
 		}
 
 		Page += String(F("<div>"
-						 "<button id=\"button\" onclick=\"startGps()\">")) +
-						(gpsStarted[0] == '1'
-					? String(F("Stop GPS"))
-					: String(F("Start GPS")) ) + 
-					String(F("</button>" 
+						 "<button id=\"button\" onclick=\"startGps()\">"
+					"</button>" 
 					"</div>"));
 
 		Page += String(F("<p>You may want to <a href='/wifi'>config the wifi "
@@ -187,7 +190,7 @@ boolean WebServer::captivePortal() {
 void WebServer::handleWifi() {
 		server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		server.sendHeader("Pragma", "no-cache");
-		server.sendHeader("Expires", "-1");
+		server.sendHeader("Expires", "-1");		
 
 		String Page;
 		Page += F("<html><head></head><body>"
@@ -241,20 +244,17 @@ void WebServer::handleWifi() {
 }
 
 void WebServer::handleStartGPS() {
-		logger.println("gps start");
+		logger.debug("gps start\n");
+		logger.debug("gpsStarted = %c\n", gpsStarted[0]);
 		logger.debug("Argument count %i\n", server.args());
 		if (server.args() == 0){
 			return returnFail("BAD ARGS");
 		}
-		logger.debug("Argument (0) name : %i, argument value : %s\n", server.argName(0).c_str(), server.arg(0).c_str());
-		//server.arg(0).toCharArray(gpsStarted, sizeof(gpsStarted));
-		memcpy(gpsStarted, server.arg(0).c_str(), sizeof(gpsStarted));
+		logger.debug("Server has gps atr %s\n)", server.hasArg("gps") ? "true" : "false");
+		logger.debug("Argument (0) name : %s, argument gps value : %s\n", server.argName(0).c_str(), server.arg("gps").c_str());
+		memcpy(gpsStarted, server.arg("gps").c_str(), sizeof(gpsStarted));
 		logger.debug("arg g: %c\n", gpsStarted[0]);
-		//server.sendHeader("Location", "gps", true);
-		//server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-		//server.sendHeader("Pragma", "no-cache");
-		//server.sendHeader("Expires", "-1");
-		String res  = gpsStarted[0] == '1' ? String(F("GPS Starting")) : String(F("GPS not started"));
+		String res  = gpsStarted[0] == '1' ? String(GPS_STOP_BTN) + String(F("\nGPS Started")) : String(GPS_START_BTN) + String(F("\nGPS not started"));
 		server.send(200, "text/plain", res);
 }
 

@@ -6,9 +6,12 @@
 #define WebServer_h
 
 #ifndef APSSID
-#define APSSID "ESP_ap"
+#define APSSID "ESP_ap_"
 #define APPSK "12345678"
 #endif
+
+#define GPS_START_BTN "Start GPS"
+#define GPS_STOP_BTN "Stop GPS"
 
 #include "Arduino.h"
 #include "TelnetServer.h"
@@ -22,7 +25,7 @@
 class WebServer {
 	  private:
 		const char *softAP_ssid = APSSID;
-		const char *softAP_password = APPSK;
+		const char *softAP_password = (APPSK + String(ESP.getChipId())).c_str();
 		const char *myHostname = ("esp8266_" + String(ESP.getChipId())).c_str();
 		char ssid[32];
 		char password[32];
