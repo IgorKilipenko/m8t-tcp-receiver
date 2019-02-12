@@ -1,4 +1,4 @@
-#define DEBUG
+//#define DEBUG
 #define ALTSSID
 #define CS_PIN D8
 

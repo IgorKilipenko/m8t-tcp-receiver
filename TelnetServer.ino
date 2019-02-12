@@ -5,24 +5,6 @@ TelnetServer::~TelnetServer() {}
 void TelnetServer::setup() {
 	// WiFi.begin(ssid, password);
 
-	unsigned long start = millis();
-	// while (WiFi.status() != WL_CONNECTED && millis() - start < 30000)
-	//{
-	//    delay(500);
-	//    logger.print(".");
-	//}
-#ifdef DEBUG
-	// if (WiFi.status() == WL_CONNECTED)
-	//{
-	//    logger.debug("WiFi connected on ");
-	//    logger.debug("IP -> %s\n", WiFi.localIP().toString().c_str());
-	//}
-	// else
-	//{
-	//    logger.print("WiFi not connected");
-	//}
-#endif
-
 	if (!SD.begin(CS_PIN)) {
 		// initialization failed!
 		cdCard = false;
@@ -39,16 +21,8 @@ void TelnetServer::setup() {
 		logger.debug("File: %s created\n", filename);
 	}
 
-	// for (unsigned long start = millis(); millis() - start < 1000;)
-	//{
-	//    //Serial1.print("#");
-	//    delay(500);
-	//}
-
 	server.begin();
 	server.setNoDelay(true);
-
-	start = millis();
 }
 
 void TelnetServer::process() {
