@@ -34,7 +34,7 @@ void WebServer::setup() {
 	server.on("/fwlink", std::bind(&WebServer::handleRoot, this));		 // Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
 	server.onNotFound(std::bind(&WebServer::handleNotFound, this));
 	server.begin(); // Web server start
-	logger->println("HTTP server started");
+	logger.println("HTTP server started");
 
 	logger.debug("SSID size %i\n", sizeof(ssid));
 	logger.debug("SSID %s\n", ssid);
@@ -44,7 +44,7 @@ void WebServer::setup() {
 
 void WebServer::process() {
 	if (connect) {
-		logger->println("Connect requested");
+		logger.println("Connect requested");
 		connect = false;
 		connectWifi();
 		lastConnectTry = millis();
@@ -57,22 +57,22 @@ void WebServer::process() {
 			connect = true;
 		}
 		if (status != s) { // WLAN status change
-			logger->print("Status: ");
-			logger->println(s);
+			logger.print("Status: ");
+			logger.println(s);
 			status = s;
 			if (s == WL_CONNECTED) {
 				/* Just connected to WLAN */
-				logger->println("");
-				logger->print("Connected to ");
-				logger->println(ssid);
-				logger->print("IP address: ");
-				logger->println(WiFi.localIP());
+				logger.println("");
+				logger.print("Connected to ");
+				logger.println(ssid);
+				logger.print("IP address: ");
+				logger.println(WiFi.localIP());
 
 				// Setup MDNS responder
 				if (!MDNS.begin(myHostname)) {
-					logger->println("Error setting up MDNS responder!");
+					logger.println("Error setting up MDNS responder!");
 				} else {
-					logger->println("mDNS responder started");
+					logger.println("mDNS responder started");
 					// Add service to MDNS-SD
 					MDNS.addService("http", "tcp", 80);
 				}
@@ -94,12 +94,12 @@ void WebServer::process() {
 }
 
 void WebServer::connectWifi() {
-	logger->println("Connecting as wifi client...");
+	logger.println("Connecting as wifi client...");
 	WiFi.disconnect();
 	WiFi.begin(ssid, password);
 	int connRes = WiFi.waitForConnectResult();
-	logger->print("connRes: ");
-	logger->println(connRes);
+	logger.print("connRes: ");
+	logger.println(connRes);
 }
 
 /** Handle root or redirect to captive portal */
