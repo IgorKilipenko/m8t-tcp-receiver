@@ -6,6 +6,9 @@
 #define TelnetServer_h
 
 #include "Arduino.h"
+#include <ESP8266WiFi.h>
+#include <SPI.h>
+#include <SD.h>
 
 class TelnetServer {
 	  private:
@@ -19,10 +22,9 @@ class TelnetServer {
 
 		static const int RXPin = D2, TXPin = D1;
 
-		File myFile;
-		bool cdCard = false;
-
-		unsigned long start;
+		File sdFile;
+		bool sdCard = false;
+		bool receiveData = false;
 
 	  public:
 		TelnetServer();
@@ -33,10 +35,12 @@ class TelnetServer {
 		void writeToSD(byte buffer[], size_t bytesCount);
 		void sendToClient(byte buffer[], size_t bytesCount);
 		bool setFreeClientSpot();
+		void createFile();
+		void initSdCard();
 
-		void setup();
+		void startReceive();
+		void stopReceive();
 		void process();
-		void processEx();
 };
 
 #endif

@@ -1,8 +1,6 @@
 String toStringIp(IPAddress ip);
 boolean isIp(String str);
 
-// void loadCredentials(char ssid[], char password[]);
-// void saveCredentials(char ssid[], char password[]);
 
 WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer} {
 	meta = F("<meta charset=\"utf-8\">"
@@ -13,10 +11,8 @@ WebServer::~WebServer() {}
 
 void WebServer::setup() {
 	delay(1000);
-
-	telnetServer.setup();
-	// logger.println();
-	// logger.println("Configuring access point...");
+	
+	logger.println("Configuring access point...");
 	/* You can remove the password parameter if you want the AP to be open.
 	 */
 	WiFi.softAPConfig(apIP, apIP, netMsk);
@@ -42,7 +38,7 @@ void WebServer::setup() {
 
 	logger.debug("SSID size %i\n", sizeof(ssid));
 	logger.debug("SSID %s\n", ssid);
-	loadCredentials(/*ssid, password*/); // Load WLAN credentials from network
+	loadCredentials(); // Load WLAN credentials from network
 	connect = strlen(ssid) > 0;			 // Request WLAN connect if there is a SSID
 }
 
@@ -94,9 +90,7 @@ void WebServer::process() {
 	// HTTP
 	server.handleClient();
 
-	if (gpsStarted[0] == '1') {
-		telnetServer.process();
-	}
+	telnetServer.process();
 }
 
 void WebServer::connectWifi() {
@@ -121,15 +115,12 @@ void WebServer::handleRoot() {
 							 "function startGps() {\n"
 							 "var xhr = new XMLHttpRequest();\n"
 							 "xhr.open('POST', '/gps', true);\n"
-							 //"xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');\n\n"
-
 							 "xhr.onreadystatechange = function() {\n"
 							 "if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {\n"
 							 "var resp = xhr.responseText.split(String.fromCharCode(10));"
 							 "console.log({resp});\n"
 							 "button.innerHTML = resp[0];\n"
 							 "}\n"
-
 							 "}\n"
 							 "var formData = new FormData();\n"
 							 "var val = button.innerHTML == '")) +
@@ -252,6 +243,11 @@ void WebServer::handleStartGPS() {
 	logger.debug("Argument (0) name : %s, argument gps value : %s\n", server.argName(0).c_str(), server.arg("gps").c_str());
 	memcpy(gpsStarted, server.arg("gps").c_str(), sizeof(gpsStarted));
 	logger.debug("arg g: %c\n", gpsStarted[0]);
+	if (gpsStarted[0] == '1'){
+		telnetServer.startReceive();
+	}else{
+		telnetServer.stopReceive();
+	}
 	String res = gpsStarted[0] == '1' ? String(GPS_STOP_BTN) + String(F("\nGPS Started")) : String(GPS_START_BTN) + String(F("\nGPS not started"));
 	server.send(200, "text/plain", res);
 }

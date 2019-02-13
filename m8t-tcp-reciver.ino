@@ -2,15 +2,16 @@
 #define ALTSSID
 #define CS_PIN D8
 
+#define BAUD_SERIAL 115200
 #define BAUND 115200
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <DNSServer.h>
-#include <ESP8266mDNS.h>
-#include <EEPROM.h>
-#include <SD.h>
+//#include <ESP8266WiFi.h>
+//#include <WiFiClient.h>
+//#include <ESP8266WebServer.h>
+//#include <DNSServer.h>
+//#include <ESP8266mDNS.h>
+//#include <EEPROM.h>
+
 
 #include "libs/Logger.h"
 #include "libs/TelnetServer.h"

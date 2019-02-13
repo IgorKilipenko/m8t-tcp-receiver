@@ -1,31 +1,13 @@
 
 TelnetServer::TelnetServer() {}
-TelnetServer::~TelnetServer() {}
-
-void TelnetServer::setup() {
-	// WiFi.begin(ssid, password);
-
-	if (!SD.begin(CS_PIN)) {
-		// initialization failed!
-		cdCard = false;
-		// return;
-	} else {
-		cdCard = true;
-		logger.debug("initialization done.\n");
-		generateFileName(filename);
-		if (SD.exists(filename)) {
-			SD.remove(filename);
-			logger.debug("File: %s removed\n", filename);
-		}
-		myFile = SD.open(filename, FILE_WRITE);
-		logger.debug("File: %s created\n", filename);
-	}
-
-	server.begin();
-	server.setNoDelay(true);
-}
+TelnetServer::~TelnetServer() { stopReceive(); }
 
 void TelnetServer::process() {
+
+	if (!receiveData) {
+		return;
+	}
+
 	if (WiFi.status() == WL_CONNECTED) {
 		setFreeClientSpot();
 	}
@@ -43,7 +25,7 @@ void TelnetServer::process() {
 		Serial.readBytes(buffer, bytesCount);
 #endif
 
-		if (myFile) {
+		if (sdFile) {
 			writeToSD(buffer, bytesCount);
 		}
 
@@ -61,6 +43,7 @@ void TelnetServer::process() {
 
 /** Find free/disconnected spot */
 bool TelnetServer::setFreeClientSpot() {
+
 	bool clientConnected = false;
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		WiFiClient &client = clients[i];
@@ -109,9 +92,9 @@ void TelnetServer::writeToSD(byte buffer[], size_t bytesCount) {
 #ifdef DEBUG
 	logger.debug("Write data: (%s) to SD", buffer);
 #else
-	myFile.write(buffer, sizeof(buffer));
+	sdFile.write(buffer, sizeof(buffer));
 #endif
-	myFile.flush();
+	sdFile.flush();
 
 	delay(1);
 }
@@ -152,4 +135,43 @@ void TelnetServer::generateFileName(char *name) {
 			return;
 		}
 	}
+}
+
+void TelnetServer::initSdCard() {
+	if (!SD.begin(CS_PIN)) {
+		// initialization failed!
+		logger.debug("initialization failed!.\n");
+		sdCard = false;
+	} else {
+		logger.debug("initialization done.\n");
+		sdCard = true;
+	}
+}
+
+void TelnetServer::createFile() {
+	generateFileName(filename);
+	if (SD.exists(filename)) {
+		SD.remove(filename);
+		logger.debug("File: %s removed\n", filename);
+	}
+	sdFile = SD.open(filename, FILE_WRITE);
+	logger.debug("File: %s created\n", filename);
+}
+
+void TelnetServer::stopReceive() {
+	if (sdCard && sdFile) {
+		sdFile.close();
+	}
+	server.stop(); 
+	receiveData = false;
+}
+
+void TelnetServer::startReceive() {
+	initSdCard();
+	if (sdCard) {
+		createFile();
+	}
+	server.begin();
+	server.setNoDelay(true);
+	receiveData = true;
 }
