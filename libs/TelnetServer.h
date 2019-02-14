@@ -9,6 +9,7 @@
 #include <ESP8266WiFi.h>
 #include <SPI.h>
 #include <SD.h>
+#include <algorithm> // std::min
 
 class TelnetServer {
 	  private:
@@ -30,13 +31,13 @@ class TelnetServer {
 		TelnetServer();
 		~TelnetServer();
 
-		void getDataFromClients();
 		void generateFileName(char *);
-		void writeToSD(byte buffer[], size_t bytesCount);
-		void sendToClient(byte buffer[], size_t bytesCount);
-		bool setFreeClientSpot();
+		void writeToSD(uint8_t[], size_t);
+		void sendDataToClients(uint8_t[], size_t);
+		bool handleClients(); 
 		void createFile();
 		void initSdCard();
+		void getDataFromClients();
 
 		void startReceive();
 		void stopReceive();

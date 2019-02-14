@@ -9,7 +9,7 @@ void TelnetServer::process() {
 	}
 
 	if (WiFi.status() == WL_CONNECTED) {
-		setFreeClientSpot();
+		handleClients();
 	}
 
 #ifdef DEBUG
@@ -19,10 +19,10 @@ void TelnetServer::process() {
 #endif
 	if (bytesCount > 0) {
 #ifdef DEBUG
-		byte buffer[] = "T";
+		uint8_t buffer[] = "T";
 #else
-		byte buffer[bytesCount];
-		Serial.readBytes(buffer, bytesCount);
+		uint8_t buffer[bytesCount];
+		bytesCount = Serial.readBytes(buffer, bytesCount);
 #endif
 
 		if (sdFile) {
@@ -30,7 +30,8 @@ void TelnetServer::process() {
 		}
 
 		if (WiFi.status() == WL_CONNECTED) {
-			sendToClient(buffer, bytesCount);
+			getDataFromClients();
+			sendDataToClients(buffer, bytesCount);
 		}
 
 #ifdef DEBUG
@@ -42,77 +43,112 @@ void TelnetServer::process() {
 }
 
 /** Find free/disconnected spot */
-bool TelnetServer::setFreeClientSpot() {
+// bool TelnetServer::setFreeClientSpot() {
+//
+//	bool clientConnected = false;
+//	for (int i = 0; i < MAX_CLIENTS; i++) {
+//		WiFiClient &client = clients[i];
+//		if (client && client.connected()) {
+//			while (client.available()) {
+//				Serial.write(client.read());
+//				logger.debug("Data has been sent to Serial\n");
+//			}
+//		} else if (!client || !client.connected()) {
+//			if (client) { // Нет такого события
+//				client.stop();
+//				logger.debug("Close connection to client\n");
+//			}
+//			if (server.hasClient()) {
+//				client = server.available();
+//				clientConnected = true;
+//				logger.debug("Client connected, ip address: %s\n\t-> Connected clients count: %i\n", client.remoteIP().toString().c_str(), i + 1);
+//				break;
+//			}
+//		}
+//		clientConnected = false;
+//	}
+//
+//	if (server.hasClient() && !clientConnected) {
+//		server.available().stop();
+//		logger.debug("MAX_CONNECTION, connection closed.\n");
+//	}
+//
+//	return clientConnected;
+//}
+
+/** Find free/disconnected spot and receive data from clients*/
+bool TelnetServer::handleClients() {
 
 	bool clientConnected = false;
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		WiFiClient &client = clients[i];
-		if (client && client.connected()) {
-			while (client.available()) {
-				Serial.write(client.read());
-				logger.debug("Data has been sent to Serial\n");
-			}
-		} else if (!client || !client.connected()) {
-			if (client) { // Нет такого события
-				client.stop();
-				logger.debug("Close connection to client\n");
-			}
-			if (server.hasClient()) {
-				client = server.available();
+	if (server.hasClient()) {
+		int i;
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			if (!clients[i]) { // receive data from clients and send to uart (to GPS)
+				clients[i] = server.available();
 				clientConnected = true;
-				logger.debug("Client connected, ip address: %s\n\t-> Connected clients count: %i\n", client.remoteIP().toString().c_str(), i + 1);
+				logger.debug("Client connected, ip address: %s\n\t-> Connected clients count: %i\n", clients[i].remoteIP().toString().c_str(), i + 1);
 				break;
 			}
 		}
-		clientConnected = false;
-	}
-
-	if (server.hasClient() && !clientConnected) {
-		server.available().stop();
-		logger.debug("MAX_CONNECTION, connection closed.\n");
+		if (i == MAX_CLIENTS) {
+			server.available().println("403 Forbidden");
+			logger.debug("server is busy with %d active connections\n", MAX_CLIENTS);
+		}
 	}
 
 	return clientConnected;
 }
 
-void TelnetServer::sendToClient(byte buffer[], size_t bytesCount) {
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		WiFiClient &client = clients[i];
-		if (&client && client && client.connected()) {
-			client.write(buffer, bytesCount);
-			logger.debug("Data has been sent to client\n");
+void TelnetServer::sendDataToClients(uint8_t buffer[], size_t bytesCount) {
 
-			delay(1);
+	// push UART data to all connected telnet clients
+	for (int i = 0; i < MAX_CLIENTS; i++){
+		// if client.availableForWrite() was 0 (congested)
+		// and increased since then,
+		// ensure write space is sufficient:
+		if (!clients[i]){
+			continue;
+		}
+		if (size_t afw = clients[i].availableForWrite()) {
+			if (bytesCount > afw) {
+				logger.debug("warn available for write: %zd serial-read:%zd\n", afw, bytesCount);
+			}
+			afw = std::min(bytesCount, afw);
+			size_t tcp_sent = clients[i].write(buffer, afw);
+			if (tcp_sent != afw) {
+				logger.debug("len mismatch: available:%zd serial-read:%zd tcp-write:%zd\n", afw, bytesCount, tcp_sent);
+			}
+#ifdef DEBUG
+			String msg;
+			msg.getBytes(buffer, afw);
+			logger.debug(msg.c_str());
+
+			logger.debug("data");
+#endif
 		}
 	}
-}
-
-/** Save GPS data to SD card */
-void TelnetServer::writeToSD(byte buffer[], size_t bytesCount) {
-#ifdef DEBUG
-	logger.debug("Write data: (%s) to SD", buffer);
-#else
-	sdFile.write(buffer, sizeof(buffer));
-#endif
-	sdFile.flush();
-
-	delay(1);
 }
 
 void TelnetServer::getDataFromClients() {
 	if (WiFi.status() == WL_CONNECTED) {
 		for (int i = 0; i < MAX_CLIENTS; i++) {
-			WiFiClient &client = clients[i];
-			if (&client && client && client.connected()) {
-				while (client.available()) {
-					Serial.write(client.read());
+			if (clients[i]) {
+				while (clients[i].available() && Serial.availableForWrite() > 0) {
+					Serial.write(clients[i].read());
+					logger.debug("Data has been sent to GPS\n");
 				}
-
-				logger.debug("Data has been sent to Serial\n");
 				delay(1);
 			}
 		}
 	}
+}
+
+/** Save GPS data to SD card */
+void TelnetServer::writeToSD(uint8_t buffer[], size_t bytesCount) {
+	sdFile.write(buffer, bytesCount);
+	sdFile.flush();
+
+	delay(1);
 }
 
 void TelnetServer::generateFileName(char *name) {
@@ -161,8 +197,9 @@ void TelnetServer::createFile() {
 void TelnetServer::stopReceive() {
 	if (sdCard && sdFile) {
 		sdFile.close();
+		SD.end();
 	}
-	server.stop(); 
+	server.stop();
 	receiveData = false;
 }
 
