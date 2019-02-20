@@ -7,6 +7,7 @@
 
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
+#include <FS.h>
 #include <SPI.h>
 #include <SD.h>
 #include <algorithm> // std::min
