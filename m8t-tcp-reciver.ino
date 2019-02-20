@@ -5,7 +5,6 @@
 #define BAUD_SERIAL 115200
 #define BAUND 115200
 
-
 #include "libs/Logger.h"
 #include "libs/TelnetServer.h"
 #include "libs/WebServer.h"
@@ -15,13 +14,10 @@ TelnetServer telnetServer{};
 WebServer webServer{telnetServer};
 
 void setup() {
-	
+
 	Serial.begin(BAUND);
 
 	webServer.setup();
-	
 }
 
-void loop() { 
-	webServer.process(); 
-}
+void loop() { webServer.process(); }

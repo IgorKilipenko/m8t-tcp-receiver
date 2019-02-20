@@ -10,13 +10,13 @@
 #include <ArduinoOTA.h>
 
 class OTA {
-    public:
-    OTA();
-    ~OTA();
-    void setup();
-    void handle();
+  public:
+	OTA();
+	~OTA();
+	void setup();
+	void handle();
 
-    private:
+  private:
 };
 
- #endif //OTA_h
+#endif // OTA_h
