@@ -12,6 +12,11 @@ class Logger {
 		template <typename... T> void printf(T...);
 		template <typename T> void println(T);
 
+		template <typename T> Logger& operator<<(T str){
+			logger.print(str);
+			return(*this);
+		}
+
 	  private:
 		#ifdef DEBUG
 		bool ndebug = false;
