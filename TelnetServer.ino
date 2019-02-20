@@ -174,7 +174,7 @@ void TelnetServer::generateFileName(char *name) {
 }
 
 void TelnetServer::initSdCard() {
-	if (!SD.begin(CS_PIN)) {
+	if (!SD.begin(CS_PIN/*, SPI_QUARTER_SPEED*/)) {
 		// initialization failed!
 		logger.debug("initialization failed!.\n");
 		sdCard = false;
@@ -211,4 +211,8 @@ void TelnetServer::startReceive() {
 	server.begin();
 	server.setNoDelay(true);
 	receiveData = true;
+}
+
+bool TelnetServer::isInProgress(){
+	return receiveData;
 }

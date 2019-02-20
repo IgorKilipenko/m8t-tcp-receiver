@@ -42,6 +42,9 @@ class TelnetServer {
 		void startReceive();
 		void stopReceive();
 		void process();
+
+		/** return true if data transfer in progress */
+		bool isInProgress();
 };
 
 #endif

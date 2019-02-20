@@ -2,7 +2,7 @@ String toStringIp(IPAddress ip);
 boolean isIp(String str);
 
 
-WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer} {
+WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer}, ota{} {
 	meta = F("<meta charset=\"utf-8\">"
 			 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 }
@@ -40,6 +40,8 @@ void WebServer::setup() {
 	logger.debug("SSID %s\n", ssid);
 	loadCredentials(); // Load WLAN credentials from network
 	connect = strlen(ssid) > 0;			 // Request WLAN connect if there is a SSID
+
+	ota.setup();
 }
 
 void WebServer::process() {
@@ -82,6 +84,12 @@ void WebServer::process() {
 		}
 		if (s == WL_CONNECTED) {
 			MDNS.update();
+
+			/* Handle OTA update if not receiving data */
+			if (!telnetServer.isInProgress()){
+				ota.handle();
+			}
+			
 		}
 	}
 	// Do work:

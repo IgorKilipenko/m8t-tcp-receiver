@@ -15,9 +15,13 @@ TelnetServer telnetServer{};
 WebServer webServer{telnetServer};
 
 void setup() {
+	
 	Serial.begin(BAUND);
 
 	webServer.setup();
+	
 }
 
-void loop() { webServer.process(); }
+void loop() { 
+	webServer.process(); 
+}

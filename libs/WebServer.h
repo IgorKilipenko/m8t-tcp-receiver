@@ -14,18 +14,20 @@
 #define GPS_STOP_BTN "Stop GPS"
 
 #include "Arduino.h"
-#include "TelnetServer.h"
 #include <DNSServer.h>
 #include <EEPROM.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiClient.h>
+#include "TelnetServer.h"
+#include "OTA.h"
+
 
 class WebServer {
 	  private:
-		const char *softAP_ssid = APSSID;
-		const char *softAP_password = (APPSK + String(ESP.getChipId())).c_str();
+		const char *softAP_ssid = (APSSID  + String(ESP.getChipId())).c_str();
+		const char *softAP_password = APPSK;
 		const char *myHostname = ("esp8266_" + String(ESP.getChipId())).c_str();
 		char ssid[32];
 		char password[32];
@@ -53,7 +55,11 @@ class WebServer {
 
 		TelnetServer telnetServer;
 
+		/** Meta-tags html */
 		String meta;
+
+		/** OTA updater */
+		OTA ota;
 
 	
 	  public:
@@ -67,7 +73,7 @@ class WebServer {
 		void handleNotFound();
 		void connectWifi();
 		void process();
-		char *getSsid();
+		char *getSsid();	
 
 		void handleStartGPS();
 		void returnFail(String);
