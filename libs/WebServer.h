@@ -20,7 +20,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiClient.h>
-#include "TelnetServer.h"
+//#include "TelnetServer.h"
+#include "ATcpServer.h"
 #include "OTA.h"
 
 class WebServer {
@@ -52,7 +53,7 @@ class WebServer {
 	/** Current WLAN status */
 	unsigned int status = WL_IDLE_STATUS;
 
-	TelnetServer telnetServer;
+	ATcpServer* telnetServer;
 
 	/** Meta-tags html */
 	String meta;
@@ -61,7 +62,7 @@ class WebServer {
 	OTA ota;
 
   public:
-	WebServer(TelnetServer);
+	WebServer(ATcpServer*);
 	~WebServer();
 	void setup();
 	void handleRoot();

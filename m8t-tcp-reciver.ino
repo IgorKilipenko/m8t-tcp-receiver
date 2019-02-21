@@ -1,17 +1,25 @@
-//#define DEBUG
+#define DEBUG		// Uncomment for enable debug mode
 #define ALTSSID
-#define CS_PIN D8
 
-#define BAUD_SERIAL 115200
-#define BAUND 115200
+/* SD card */
+#define CS_PIN D8	// SD card cs_pin (default D8 on ESP8266)
+
+/* TCP Client */
+#define MAX_TCP_CLIENTS 5   // Default max clients
+#define TCP_PORT 7042		// Default tcp port (GPS receiver communication)
+
+/* Serial */
+#define BAUD_SERIAL 115200	// Not use (for Serial1 logging)
+#define BAUND 115200		// GPS receiver baund rate
 
 #include "libs/Logger.h"
 #include "libs/TelnetServer.h"
+#include "libs/ATcpServer.h"
 #include "libs/WebServer.h"
 
-Logger logger{&Serial};
-TelnetServer telnetServer{};
-WebServer webServer{telnetServer};
+Logger logger{&Serial};		// For debug mode
+ATcpServer telnetServer{};	// GPS receiver communication
+WebServer webServer{&telnetServer};	// Web interface
 
 void setup() {
 

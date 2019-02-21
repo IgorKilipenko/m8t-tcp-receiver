@@ -12,7 +12,7 @@
 #include <algorithm> // std::min
 
 class TelnetServer {
-  private:
+  protected:
 	WiFiServer server{7042};
 	bool wifiConnected = false;
 	static const int MAX_CLIENTS = 5;
@@ -39,12 +39,12 @@ class TelnetServer {
 	void initSdCard();
 	void getDataFromClients();
 
-	void startReceive();
-	void stopReceive();
-	void process();
+	virtual void startReceive();
+	virtual void stopReceive();
+	virtual void process();
 
 	/** return true if data transfer in progress */
-	bool isInProgress();
+	virtual bool isInProgress();
 };
 
 #endif

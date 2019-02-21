@@ -2,7 +2,7 @@ String toStringIp(IPAddress ip);
 boolean isIp(String str);
 
 
-WebServer::WebServer(TelnetServer _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer}, ota{} {
+WebServer::WebServer(ATcpServer * _telnetServer) : ssid{""}, password{""}, gpsStarted{'0'}, telnetServer{_telnetServer}, ota{} {
 	meta = F("<meta charset=\"utf-8\">"
 			 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 }
@@ -42,6 +42,7 @@ void WebServer::setup() {
 	connect = strlen(ssid) > 0;			 // Request WLAN connect if there is a SSID
 
 	ota.setup();
+	telnetServer->setup();
 }
 
 void WebServer::process() {
@@ -86,7 +87,7 @@ void WebServer::process() {
 			MDNS.update();
 
 			/* Handle OTA update if not receiving data */
-			if (!telnetServer.isInProgress()){
+			if (!telnetServer->isInProgress()){
 				ota.handle();
 			}
 			
@@ -98,7 +99,7 @@ void WebServer::process() {
 	// HTTP
 	server.handleClient();
 
-	telnetServer.process();
+	telnetServer->process();
 }
 
 void WebServer::connectWifi() {
@@ -252,9 +253,9 @@ void WebServer::handleStartGPS() {
 	memcpy(gpsStarted, server.arg("gps").c_str(), sizeof(gpsStarted));
 	logger.debug("arg g: %c\n", gpsStarted[0]);
 	if (gpsStarted[0] == '1'){
-		telnetServer.startReceive();
+		telnetServer->startReceive();
 	}else{
-		telnetServer.stopReceive();
+		telnetServer->stopReceive();
 	}
 	String res = gpsStarted[0] == '1' ? String(GPS_STOP_BTN) + String(F("\nGPS Started")) : String(GPS_START_BTN) + String(F("\nGPS not started"));
 	server.send(200, "text/plain", res);

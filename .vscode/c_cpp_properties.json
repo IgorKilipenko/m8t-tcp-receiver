@@ -9,7 +9,8 @@
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\avr\\include",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\5.4.0\\include",
-                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\mega"
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\mega",
+                "C:\\Users\\Igor\\Documents\\__ArduinoWork__\\libraries\\**"
             ],
             "browse": {
                 "limitSymbolsToIncludedHeaders": false,
@@ -20,7 +21,8 @@
                     "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
                     "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\avr\\include",
                     "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\5.4.0\\include",
-                    "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\mega"
+                    "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\mega",
+                    "C:\\Users\\Igor\\Documents\\__ArduinoWork__\\libraries\\**"
                 ]
             },
             "forcedInclude": [],
