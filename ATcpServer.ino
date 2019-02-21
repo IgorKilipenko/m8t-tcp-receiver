@@ -134,9 +134,8 @@ size_t ATcpServer::freeClients() {
 
 size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len) {
 	if (client->space() > len && client->canSend()) {
-		char reply[32];
 		logger.debug("Data has been send to client, Ip: %s\n", client->remoteIP().toString().c_str());
-		const size_t will_send = client->add(reply, len);
+		const size_t will_send = client->add(msg, len);
 		if (client->send()) {
 			return will_send;
 		}
