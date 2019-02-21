@@ -25,26 +25,26 @@ class ATcpServer {
 	void stopReceive();
 	void startReceive();
 	bool isInProgress();
-    void sendDataToClients(uint8_t buffer[], size_t bytesCount);
+	void sendDataToClients(uint8_t buffer[], size_t bytesCount);
 
-	void handleError(AsyncClient *client, int8_t error);
-    void handleData(AsyncClient *client, void *data, size_t len);
-    void handleDisconnect(AsyncClient *client);
-    void handleTimeOut(AsyncClient *client, uint32_t time);
-    void handleNewClient(AsyncClient *client);
-    void end();
-    void freeClients();
-    void sendMessage(AsyncClient *client, const char msg[], size_t len);
-    void sendMessage(AsyncClient *client, String str);
-    void setup();
-
-
+	void end();
+	size_t sendMessage(AsyncClient *client, const char msg[], size_t len);
+	size_t sendMessage(AsyncClient *client, String str);
+	void setup();
+	size_t availableClientsCount();
 
   private:
-	std::vector<AsyncClient*> clients; // a list to hold all clients
+	std::vector<AsyncClient *> clients; // a list to hold all clients
 	bool receiveData = false;
-    SDStore * store = nullptr;
-    AsyncServer* server = nullptr;
+	SDStore *store = nullptr;
+	AsyncServer *server = nullptr;
+
+	size_t freeClients();
+	void handleError(AsyncClient *client, int8_t error);
+	void handleData(AsyncClient *client, void *data, size_t len);
+	void handleDisconnect(AsyncClient *client);
+	void handleTimeOut(AsyncClient *client, uint32_t time);
+	void handleNewClient(AsyncClient *client);
 };
 
 #endif
