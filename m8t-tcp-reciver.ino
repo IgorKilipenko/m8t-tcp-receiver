@@ -1,4 +1,4 @@
-#define DEBUG		// Uncomment for enable debug mode
+//#define DEBUG		// Uncomment for enable debug mode
 #define ALTSSID
 
 /* SD card */
