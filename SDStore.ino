@@ -61,7 +61,7 @@ void SDStore::closeFile() {
 	}
 }
 
-void SDStore::writeToSD(uint8_t buffer[], size_t bytesCount) {
+void SDStore::writeToSD(char buffer[], size_t bytesCount) {
 	sdFile.write(buffer, bytesCount);
 	sdFile.flush();
 

@@ -13,9 +13,9 @@ void ATcpServer::ATcpServer::process() {
 #endif
 	if (bytesCount > 0) {
 #ifdef DEBUG
-		uint8_t buffer[] = "T";
+		char buffer[] = "T";
 #else
-		uint8_t buffer[bytesCount];
+		char buffer[bytesCount];
 		bytesCount = Serial.readBytes(buffer, bytesCount);
 #endif
 
@@ -97,8 +97,8 @@ void ATcpServer::startReceive() {
 		store->createFile();
 	}
 
-	server->setNoDelay(true);
 	server->begin();
+	server->setNoDelay(true);
 	receiveData = true;
 }
 
@@ -133,8 +133,25 @@ size_t ATcpServer::freeClients() {
 }
 
 size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len) {
-	if (client->space() > len && client->canSend()) {
-		logger.debug("Data has been send to client, Ip: %s\n", client->remoteIP().toString().c_str());
+	/* Not work, see AsyncPrinter.cpp */
+	//size_t toWrite = 0;
+	//size_t toSend = len;
+	//while (client->space() < toSend) {
+	//	toWrite = client->space();
+	//	client->add(msg, toWrite);
+	//	while (!client->canSend())
+	//		delay(0);
+	//	client->send();
+	//	toSend -= toWrite;
+	//}
+	//client->add(msg + (len - toSend), toSend);
+	//while (!client->canSend())
+	//	delay(0);
+	//client->send();
+	//return len;
+
+	if (client->space() > len /* && client->canSend()*/) {
+		// logger.debug("Data has been send to client, Ip: %s\n", client->remoteIP().toString().c_str());
 		const size_t will_send = client->add(msg, len);
 		if (client->send()) {
 			return will_send;
@@ -154,10 +171,10 @@ void ATcpServer::setup() {
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);
 }
 
-void ATcpServer::sendDataToClients(uint8_t buffer[], size_t bytesCount) {
+void ATcpServer::sendDataToClients(char buffer[], size_t bytesCount) {
 	for (int i = 0; i < MAX_TCP_CLIENTS; i++) {
 		if (clients[i] && clients[i]->connected()) {
-			sendMessage(clients[i], (char *)buffer, bytesCount);
+			sendMessage(clients[i], buffer, bytesCount);
 		}
 	}
 }
