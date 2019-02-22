@@ -78,6 +78,13 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 	client->onError([](void *r, AsyncClient *c, int8_t error) { ((ATcpServer *)(r))->handleError(c, error); }, this);
 	client->onDisconnect([](void *r, AsyncClient *c) { ((ATcpServer *)(r))->handleDisconnect(c); }, this);
 	client->onTimeout([](void *r, AsyncClient *c, uint32_t time) { ((ATcpServer *)(r))->handleTimeOut(c, time); }, this);
+
+	serviceServer->onClient([](void *s, AsyncClient *client) {
+		const char msg[] = "Service server\n";
+		if (client){
+			client->write(msg);
+		}
+	}, this);
 }
 
 bool ATcpServer::isInProgress() { return receiveData; }
@@ -97,8 +104,11 @@ void ATcpServer::startReceive() {
 		store->createFile();
 	}
 
-	server->begin();
 	server->setNoDelay(true);
+	server->begin();
+
+	serviceServer->begin();
+	
 	receiveData = true;
 }
 
@@ -134,9 +144,9 @@ size_t ATcpServer::freeClients() {
 
 size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len) {
 	/* Not work, see AsyncPrinter.cpp */
-	//size_t toWrite = 0;
-	//size_t toSend = len;
-	//while (client->space() < toSend) {
+	// size_t toWrite = 0;
+	// size_t toSend = len;
+	// while (client->space() < toSend) {
 	//	toWrite = client->space();
 	//	client->add(msg, toWrite);
 	//	while (!client->canSend())
@@ -144,20 +154,17 @@ size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len
 	//	client->send();
 	//	toSend -= toWrite;
 	//}
-	//client->add(msg + (len - toSend), toSend);
-	//while (!client->canSend())
+	// client->add(msg + (len - toSend), toSend);
+	// while (!client->canSend())
 	//	delay(0);
-	//client->send();
-	//return len;
+	// client->send();
+	// return len;
 
-	if (client->space() > len /* && client->canSend()*/) {
-		// logger.debug("Data has been send to client, Ip: %s\n", client->remoteIP().toString().c_str());
-		const size_t will_send = client->add(msg, len);
-		if (client->send()) {
-			return will_send;
-		}
+	const size_t will_send = client->add(msg, len);
+	if (!will_send || !client->send()) {
+		return 0;
 	}
-	return 0;
+	return will_send;
 }
 
 size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
@@ -168,6 +175,7 @@ size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
 void ATcpServer::setup() {
 	store = new SDStore();
 	server = new AsyncServer(TCP_PORT);
+	serviceServer = new AsyncServer(TCP_PORT+1);
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);
 }
 

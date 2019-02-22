@@ -38,7 +38,7 @@ class ATcpServer {
 	bool receiveData = false;
 	SDStore *store = nullptr;
 	AsyncServer *server = nullptr;
-	//AsyncServer * serviceServer = nullptr;
+	AsyncServer * serviceServer = nullptr;
 
 	size_t freeClients();
 	void handleError(AsyncClient *client, int8_t error);
@@ -46,8 +46,6 @@ class ATcpServer {
 	void handleDisconnect(AsyncClient *client);
 	void handleTimeOut(AsyncClient *client, uint32_t time);
 	void handleNewClient(AsyncClient *client);
-
-	// Service server
 
 };
 
