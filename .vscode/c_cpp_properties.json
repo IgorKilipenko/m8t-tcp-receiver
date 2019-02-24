@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceRoot}",
+                "C:\\Users\\Igor\\Documents\\__ArduinoWork__\\hardware\\espressif\\esp32",
                 "C:\\Users\\Igor\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
                 "C:\\Users\\Igor\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.0\\**",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
@@ -16,6 +17,7 @@
                 "limitSymbolsToIncludedHeaders": false,
                 "path": [
                     "${workspaceRoot}",
+                    "C:\\Users\\Igor\\Documents\\__ArduinoWork__\\hardware\\espressif\\esp32",
                     "C:\\Users\\Igor\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
                     "C:\\Users\\Igor\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.0\\**",
                     "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",

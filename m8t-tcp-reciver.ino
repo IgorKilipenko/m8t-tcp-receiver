@@ -1,4 +1,4 @@
-//#define DEBUG		// Uncomment for enable debug mode
+#define DEBUG		// Uncomment for enable debug mode
 #define ALTSSID
 
 /* SD card */
@@ -13,17 +13,21 @@
 #define BAUND 115200		// GPS receiver baund rate
 
 #include "libs/Logger.h"
-#include "libs/TelnetServer.h"
+#include "libs/AWebServer.h"
 #include "libs/ATcpServer.h"
-#include "libs/WebServer.h"
+//#include "libs/WebServer.h"
 
 Logger logger{&Serial};		// For debug mode
 ATcpServer telnetServer{};	// GPS receiver communication
-WebServer webServer{&telnetServer};	// Web interface
+//WebServer webServer{&telnetServer};	// Web interface
+
+AWebServer webServer{&telnetServer};
 
 void setup() {
 
 	Serial.begin(BAUND);
+
+	//webServer.setup();
 
 	webServer.setup();
 }
