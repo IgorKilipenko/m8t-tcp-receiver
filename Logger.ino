@@ -2,7 +2,7 @@
 	Logger
 */
 
-Logger::Logger(HardwareSerial *serial) : lout{serial} {}
+Logger::Logger(HardwareSerial *serial) : Print(), lout{serial} {}
 Logger::~Logger() {}
 
 template <typename... T> void Logger::debug(T... args) {
@@ -10,22 +10,51 @@ template <typename... T> void Logger::debug(T... args) {
 	lout->printf(args...);
 #endif
 }
-template <typename T> void Logger::print(T str) {
+// template <typename T> void Logger::print(T str) {
+//#ifdef DEBUG
+//	lout->print(str);
+//#endif
+//}
+// template <typename T> void Logger::println(T str) {
+//#ifdef DEBUG
+//	lout->println(str);
+//#endif
+//}
+// template <typename... T> void Logger::printf(T... args) {
+//#ifdef DEBUG
+//	lout->printf(args...);
+//#endif
+//}
+size_t Logger::write(const uint8_t *buffer, size_t len) {
 #ifdef DEBUG
-	lout->print(str);
+	return lout->write(buffer, len);
 #endif
+	return 0;
 }
-template <typename T> void Logger::println(T str) {
+size_t Logger::write(const uint16_t *buffer, size_t len) {
 #ifdef DEBUG
-	lout->println(str);
+	size_t i = 0;
+	while (i < len) {
+		return lout->write((const uint8_t *)(&buffer[i++]), 2);
+	}
 #endif
+	return 0;
 }
-template <typename... T> void Logger::printf(T... args) {
+size_t Logger::write(const uint16_t wc) {
 #ifdef DEBUG
-	lout->printf(args...);
+	return write(&wc, 2);
 #endif
+	return 0;
 }
-template <typename T> Logger &Logger::operator<<(T str) {
-	logger.print(str);
-	return (*this);
+size_t Logger::write(const uint8_t c) {
+#ifdef DEBUG
+	return lout->write(c);
+#endif
+	return 0;
+}
+
+void Logger::flush() {
+#ifdef DEBUG
+	return lout->flush();
+#endif
 }

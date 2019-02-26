@@ -14,6 +14,7 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESP8266mDNS.h>
+#include <ESPAsyncWebServer.h>
 #else
 #error Platform not supported
 #endif
@@ -24,9 +25,14 @@
 #include <FS.h>
 #include <Hash.h>
 //#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
 #include <SPIFFSEditor.h>
 #include "ATcpServer.h"
+
+#ifdef REST_API
+#include "AsyncJson.h"
+#include "ArduinoJson.h"
+#include "SGraphQL.h"
+#endif
 
 #define APSSID "ESP_ap_"
 #define APPSK "12345678"
@@ -48,17 +54,23 @@ class AWebServer {
 
 	char ssid[32];
 	char password[32];
-	char gpsStarted[1];
 	const char *hostName = "esp-async";
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	
+	static bool _static_init;
+
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 	AsyncEventSource events;
 	ATcpServer* telnetServer;
 
-	void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
+	/* API ============================== */
+	static const char * API_P_GPSCMD;
+	SGraphQL api;
+
+	void onWsEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
+	void initDefaultHeaders();
 };
 
 #endif // AWebServer_h

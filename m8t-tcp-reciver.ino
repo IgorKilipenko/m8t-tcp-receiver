@@ -1,5 +1,6 @@
 #define DEBUG		// Uncomment for enable debug mode
 #define ALTSSID
+#define REST_API	// Use REST API
 
 /* SD card */
 #define CS_PIN D8	// SD card cs_pin (default D8 on ESP8266)

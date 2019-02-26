@@ -9,15 +9,19 @@
 	#define log_info(M, ...)
 #endif
 
-class Logger {
+class Logger : public Print {
   public:
 		Logger(HardwareSerial *);
 		~Logger();
 		template <typename... T> void debug(T...);
-		template <typename T> void print(T);
-		template <typename... T> void printf(T...);
-		template <typename T> void println(T);
-		template <typename T> Logger &operator<<(T str);
+		//template <typename T> void print(T);
+		//template <typename... T> void printf(T...);
+		//template <typename T> void println(T);
+		size_t write(const uint8_t*, size_t) override;
+		size_t write(const uint16_t*, size_t);
+		size_t write(const uint8_t) override;
+		size_t write(const uint16_t);
+		void flush() override;
 
   private:
 		HardwareSerial *lout;

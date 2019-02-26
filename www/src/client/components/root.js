@@ -255,6 +255,9 @@ class MiniDrawer extends React.Component {
                     <Typography paragraph>
                         State : {this.state.status}
                     </Typography>
+                    <div>
+                        {this.props.children && React.Children.map(this.props.children, (ch) => <div>{ch}</div>)}
+                    </div>
                     {this.state &&
                         this.state.data.map((line, i) => (
                             <div key={i}>{Object.values(line).join('\t')}</div>

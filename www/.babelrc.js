@@ -14,6 +14,6 @@ module.exports = {
     plugins: [
         ...stages.Stage1,
         ...stages.Stage2,
-        ...stages.Stage3
+        ...stages.Stage3,
     ]
 };
