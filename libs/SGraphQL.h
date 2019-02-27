@@ -2,28 +2,32 @@
 #define sgraphql_h
 
 #include "ArduinoJson.h"
+#include "utils.h"
 
 class ApiHandler;
 
-typedef std::function<void(JsonObject &res)> ApiHandlerFunction;
+typedef std::function<void(const char* event, const JsonObject &json)> ApiHandlerFunction;
 
 class SGraphQL {
   public:
 	SGraphQL();
 	~SGraphQL();
-	bool parse(JsonObject &);
+	bool parse(const JsonObject &);
 	ApiHandler &on(const char *, const char *, ApiHandlerFunction cb);
 	ApiHandler &addHandler(ApiHandler *);
 	bool removeHandler(ApiHandler *);
 
-	static const char *QUERY_TYPE;
-	static const char *MUTATION_TYPE;
-	static const char *EXEC_TYPE;
-	static const char *UNDEFINED_TYPE;
+	static const char *QUERY;
+	static const char *MUTATION;
+	static const char *ACTION;
+	static const char *UNDEFINED;
+	static const char *ALL;
+
+	static const char *QUERY_SECTION;
 
   private:
 	LinkedList<ApiHandler *> handlers;
-    void emit(const char *event, const char *component, JsonObject &res);
+    void emit(const char *event, const char *component, const JsonObject &res);
 };
 
 class ApiHandler {

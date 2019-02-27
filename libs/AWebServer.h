@@ -4,6 +4,7 @@
 #define FS_NO_GLOBALS
 
 #include "Arduino.h"
+#include "utils.h"
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -39,6 +40,7 @@
 #define GPS_START_BTN "Start GPS"
 #define GPS_STOP_BTN "Stop GPS"
 
+
 class AWebServer {
   public:
 	AWebServer(ATcpServer* telnetServer);
@@ -47,6 +49,8 @@ class AWebServer {
 	void process();
 	void loadWiFiCredentials();
 	void saveWiFiCredentials();
+	int8_t scanWiFi();
+	struct WifiItem;
 
   private:
 	const char *softAP_ssid = (APSSID + String(ESP.getChipId())).c_str();
@@ -64,6 +68,7 @@ class AWebServer {
 	AsyncWebSocket ws;
 	AsyncEventSource events;
 	ATcpServer* telnetServer;
+	std::vector<std::unique_ptr<WifiItem>> wifiList;
 
 	/* API ============================== */
 	static const char * API_P_GPSCMD;
@@ -71,6 +76,15 @@ class AWebServer {
 
 	void onWsEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
 	void initDefaultHeaders();
+};
+
+struct AWebServer::WifiItem {
+	int32_t rssi;
+	String ssid;
+	String bssid;
+	int32_t channel;
+	uint8_t secure;
+	bool hidden;
 };
 
 #endif // AWebServer_h

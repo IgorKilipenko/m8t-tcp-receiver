@@ -97,9 +97,11 @@ class App extends React.Component {
 
         try {
             //this.testRestApi();
-            this.testApi()
+            //this.testApi()
+            const res = await api.getWifiList();
+            console.log({res});
         } catch (err) {
-            console.log(err);
+            console.log({err});
         }
 
 
@@ -110,7 +112,9 @@ class App extends React.Component {
         return (
             <div>
                 <Helmet>
-                    <meta charSet="ANSI" />
+                    {/*<meta charSet="ANSI" />*/}
+                    {/*<meta charSet="Windows-1252" />*/}
+                    <meta charSet="utf-8" />
                     <title>ESP GPS</title>
                     {/*<link rel="icon" href={favicon}/>
                     <meta name="msapplication-TileImage" content={favicon}/>*/}
@@ -127,8 +131,8 @@ class App extends React.Component {
                         href="https://fonts.googleapis.com/css?family=Montserrat+Alternates:300,300i,400,400i,500,500i,600,600i&amp;subset=cyrillic"
                         rel="stylesheet"
                     />
+                    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"></link>
                 </Helmet>
-                <div>Test REACT</div>
                 <MiniDrawer>
                     <Button onClick={async () => this.sendGnssCmd()}>
                         {gps.enabled ? 'Stop GPS' : 'Start GPS'}

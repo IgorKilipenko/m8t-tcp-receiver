@@ -6,6 +6,12 @@ import { withStyles } from '@material-ui/core/styles';
 class WiFiConfigPage extends React.Component {
     constructor(){
         super();
-        this.state = {}
+        this.state = {
+            selectedWifi: null
+        }
+    }
+
+    render() {
+        return ()
     }
 }

@@ -2,7 +2,7 @@ bool AWebServer::_static_init = false;
 
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
-AWebServer::AWebServer(ATcpServer *telnetServer) : ssid{APSSID}, password{APPSK}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, api{} {}
+AWebServer::AWebServer(ATcpServer *telnetServer) : ssid{APSSID}, password{APPSK}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, api{} {}
 
 AWebServer::~AWebServer() {
 	if (telnetServer) {
@@ -168,6 +168,7 @@ void AWebServer::setup() {
 		json = String();
 	});
 
+#ifdef DEBUG
 	server.on("/api/gnss/cmd", HTTP_POST, [&](AsyncWebServerRequest *request) {
 		logger.debug("GPS start/stop request\n");
 		logger.debug("Argument count %i\n", request->args());
@@ -238,59 +239,65 @@ void AWebServer::setup() {
 			logger.printf("BodyEnd: %u B\n", total);
 		}
 	});
+#endif
+
 #ifdef REST_API
-	AsyncCallbackJsonWebHandler *handler = new AsyncCallbackJsonWebHandler("/rest/endpoint", [](AsyncWebServerRequest *request, JsonVariant &json) {
-		logger.debug("Old api \n");
-		if (!json) {
-			logger.debug("Json is empty\n");
-			return;
-		}
-		JsonObject &jsonObj = json.as<JsonObject>();
-		if (jsonObj.success()) {
-			logger.debug("Json parse success\n");
-			if (jsonObj.containsKey("rest_test")) {
-				logger.debug("The REST API test SUCCESS\n");
-				// logger.debug("{ \"%s\" : %s }", jsonObj["rest_test"].as<const char*>() | "err");
-				jsonObj.prettyPrintTo(logger);
-			}
-		} else {
-			logger.debug("Json parsing failed\n");
-		}
-
-		AsyncJsonResponse *response = new AsyncJsonResponse();
-		response->addHeader("Server", "ESP Async Web Server");
-		JsonObject &root = response->getRoot();
-		root["heap"] = ESP.getFreeHeap();
-		response->setLength();
-		request->send(response);
-	});
-	server.addHandler(handler);
-
-	api.on("query", "receiver", [&](JsonObject &res){
-		logger.debug("API parsing success\n");
-		res.prettyPrintTo(logger);
-	});
+	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
 		logger.debug("API \n");
 		if (!json) {
 			logger.debug("Json is empty\n");
+			request->send(404);
 			return;
 		}
-		JsonObject &jsonObj = json.as<JsonObject>();
-		if (jsonObj.success()) {
-			logger.debug("Json parse success\n");
-			api.parse(jsonObj);
-
-		} else {
+		const JsonObject &jsonObj = json.as<const JsonObject>();
+		if (!jsonObj.success()) {
 			logger.debug("Json parsing failed\n");
+			request->send(404);
+			return;
 		}
 
-		AsyncJsonResponse *response = new AsyncJsonResponse();
-		response->addHeader("Server", "ESP Async Web Server");
-		JsonObject &root = response->getRoot();
-		root["heap"] = ESP.getFreeHeap();
-		response->setLength();
-		request->send(response);
+		logger.debug("Json parse success\n");
+
+		api.on("wifi", SGraphQL::QUERY, [&](const char *event, const JsonObject &json) {
+			logger.debug("Start on wifi\n");
+			json.prettyPrintTo(logger);
+			logger.debug("\n");
+			AsyncJsonResponse *response = new AsyncJsonResponse(true);
+			JsonArray &root = response->getRoot();
+			//JsonObject &root = response->getRoot();
+			//JsonArray &arrJson= root.createNestedArray("wifiList");
+			if (json.containsKey("cmd")) {
+				logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
+				const char *cmd = json.get<const char *>("cmd");
+				if (!strcmp(cmd, "scan")) {
+					logger.debug("Start scan WIFI\n");
+					int8_t n = scanWiFi();
+					if (n <= 0){
+						delay(3000);
+						n = scanWiFi();
+					}
+					logger.debug("Scan end, item count: %i\n", n);
+					if (n > 0) {
+						uint8_t i =0;
+						for (auto const& item : wifiList) {
+							logger.debug("n:%i,",i);
+							JsonObject &resJson = root.createNestedObject();
+							resJson["rssi"] = item->rssi;
+							resJson["ssid"] = item->ssid;
+							resJson["bssid"] = item->bssid;
+							resJson["channel"] = item->channel;
+							resJson["secure"] = item->secure;
+							resJson["hidden"] = item->hidden;
+						}
+					}
+				}
+			}
+			response->setLength();
+			request->send(response);
+		});
+
+		api.parse(jsonObj);
 	});
 	server.addHandler(apiHandler);
 #endif // REST_API
@@ -301,6 +308,7 @@ void AWebServer::setup() {
 	server.begin();
 }
 
+/** WebSocket events */
 void AWebServer::onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 	if (type == WS_EVT_CONNECT) {
 		logger.printf("ws[%s][%u] connect\n", server->url(), client->id());
@@ -373,8 +381,13 @@ void AWebServer::onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 	}
 }
 
+
+/** Main process */
 void AWebServer::process() { ArduinoOTA.handle(); }
 
+
+
+/** Credentials ================================================ */
 /** Load WLAN credentials from EEPROM */
 void AWebServer::loadWiFiCredentials() {
 	logger.debug("ssid sizeof: ");
@@ -407,14 +420,46 @@ void AWebServer::saveWiFiCredentials() {
 	EEPROM.end();
 }
 
+
+/** Set default headers */
 void AWebServer::initDefaultHeaders() {
 	if (!AWebServer::_static_init) {
 		DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
 		// DefaultHeaders::Instance().addHeader("Access-Control-Expose-Headers","Access-Control-Allow-Origin");
 		DefaultHeaders::Instance().addHeader("charset", "ANSI");
+		// DefaultHeaders::Instance().addHeader("charset", "Windows-1252");
 		DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
 		DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers",
 											 "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
 		AWebServer::_static_init = true;
 	}
+}
+
+/** Scan WiFi Networks */
+int8_t AWebServer::scanWiFi() {
+	if (wifiList.size() > 0) {
+		wifiList.clear();
+	}
+	int n = WiFi.scanComplete();
+	if (n == -2) {
+		WiFi.scanNetworks(true);
+	} else if (n) {
+		for (int i = 0; i < n; ++i) {
+			auto wifi = utils::make_unique<WifiItem>();
+			wifi->rssi = WiFi.RSSI(i);
+			wifi->ssid = WiFi.SSID(i);
+			wifi->bssid = WiFi.BSSIDstr(i);
+			wifi->channel = WiFi.channel(i);
+			wifi->secure = WiFi.encryptionType(i);
+			wifi->hidden = WiFi.isHidden(i) ? "true" : "false";
+			wifiList.push_back(std::move(wifi));
+
+			std::unique_ptr<int> ptr (new int);
+		}
+		WiFi.scanDelete();
+		if (WiFi.scanComplete() == -2) {
+			WiFi.scanNetworks(true);
+		}
+	}
+	return n;
 }

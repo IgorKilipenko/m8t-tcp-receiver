@@ -1,26 +1,30 @@
 
-const char *SGraphQL::QUERY_TYPE = "query";
-const char *SGraphQL::MUTATION_TYPE = "mutaion";
-const char *SGraphQL::EXEC_TYPE = "exec";
-const char *SGraphQL::UNDEFINED_TYPE = "undefined";
+const char *SGraphQL::QUERY = "query";
+const char *SGraphQL::MUTATION = "mutaion";
+const char *SGraphQL::ACTION = "action";
+const char *SGraphQL::UNDEFINED = "undefined";
+const char *SGraphQL::ALL = "all";
+
+const char *SGraphQL::QUERY_SECTION = "data";
 
 SGraphQL::SGraphQL() : handlers(LinkedList<ApiHandler *>([](ApiHandler *h) { delete h; })) {}
 
 SGraphQL::~SGraphQL() { handlers.free(); }
 
-bool SGraphQL::parse(JsonObject &json) {
-	if (!json.containsKey("type")) {
+bool SGraphQL::parse(const JsonObject &json) {
+	if (&json && !json.containsKey("type")) {
 		logger.debug("JsonObject not contain key \"type\"\n");
 		return false;
 	}
 	const char *type = json.get<const char *>("type");
-    logger.debug("TYPE: %s\n", type);
-	if (!strcmp(type,QUERY_TYPE) && !strcmp(type, MUTATION_TYPE) && !strcmp(type, EXEC_TYPE)) {
+	logger.debug("TYPE: %s\n", type);
+	if (!utils::streq(type, QUERY) && !utils::streq(type, MUTATION) && !utils::streq(type, ACTION)) {
 		logger.debug("Gql type filed\n");
 		return false;
 	}
 
 	const char *component = json.get<char *>("component");
+	//JsonObject& data = json.get<JsonObject&>("Data");
 	emit(type, component, json);
 
 	return true;
@@ -42,10 +46,14 @@ ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunc
 	return *handler;
 }
 
-void SGraphQL::emit(const char *event, const char *component, JsonObject &res) {
+void SGraphQL::emit(const char *event, const char *component, const JsonObject &json) {
 	for (const auto &h : handlers) {
-		if (strcmp(h->type, event) && strcmp(h->component, component)) {
-			h->callback_fn(res);
+		logger.debug("Component: %s, handler component: %s\n", component, h->component);
+		if (utils::streq(h->component, component)) {
+			logger.debug("Event: %s, handler type: %s\n", event, h->type);
+			if (utils::streq(h->type, SGraphQL::ALL) || utils::streq(h->type, event)) {
+				h->callback_fn(event, json);
+			}
 		}
 	}
 }
