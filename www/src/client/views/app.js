@@ -71,7 +71,7 @@ class App extends React.Component {
             try {
                 const resp = await api.instance({
                     method: 'post',
-                    url: '/api',
+                    //url: '/api',
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -95,14 +95,14 @@ class App extends React.Component {
         //    console.log({ err }, this);
         //}
 
-        try {
-            //this.testRestApi();
-            //this.testApi()
-            const res = await api.getWifiList();
-            console.log({res});
-        } catch (err) {
-            console.log({err});
-        }
+        //try {
+        //    //this.testRestApi();
+        //    //this.testApi()
+        //    const res = await api.getWifiList();
+        //    console.log({res});
+        //} catch (err) {
+        //    console.log({err});
+        //}
 
 
     };
@@ -134,10 +134,11 @@ class App extends React.Component {
                     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"></link>
                 </Helmet>
                 <MiniDrawer>
-                    <Button onClick={async () => this.sendGnssCmd()}>
+                    {/*<Button onClick={async () => this.sendGnssCmd()}>
                         {gps.enabled ? 'Stop GPS' : 'Start GPS'}
                     </Button>
-                    <Button>Тест utf-8</Button>
+                    <Button>Тест utf-8</Button>*/}
+                    {this.props.children} 
                 </MiniDrawer>
             </div>
         );

@@ -3,10 +3,10 @@ import axios from 'axios';
 export default class ApiSocket {
     constructor() {
         this.instance = axios.create({
-            baseURL: 'http://192.168.1.62',
+            baseURL: `http://${REMOTE_API_URL}`, //'http://192.168.1.62',
             timeout: 6000,
             method: 'post',
-            maxContentLength: 40000
+            //maxContentLength: 40000
         });
         this.headers = {
             json: {
@@ -22,6 +22,8 @@ export default class ApiSocket {
             receiver: 'receiver',
             wifi: 'wifi'
         };
+
+        console.log({baseUrl:`http://${REMOTE_API_URL}`})
     }
 
     getWifiList = () => {
@@ -29,7 +31,7 @@ export default class ApiSocket {
             try {
                 const resp = await this.instance({
                     method: 'post',
-                    url: '/api',
+                    //url: '/api',
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -44,46 +46,5 @@ export default class ApiSocket {
                 reject(err);
             }
         });
-    };
-
-    getServerInfo = () => {
-        return new Promise(async (reslove, reject) => {
-            try {
-                const resp = await this.instance({
-                    url: '/consts',
-                    method: 'get'
-                });
-                reslove(resp);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    };
-
-    getConstants = () => {
-        return new Promise(async (reslove, reject) => {
-            try {
-                const resp = await this.instance({
-                    url: '/consts',
-                    method: 'get'
-                });
-                reslove(resp);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    };
-
-    getGpsStatus = async () => {
-        try {
-            const resp = await this.instance({
-                method: 'post',
-                url: '/gnss',
-                data: {}
-            });
-            this.setState({ gps });
-        } catch (err) {
-            console.log({ err });
-        }
     };
 }

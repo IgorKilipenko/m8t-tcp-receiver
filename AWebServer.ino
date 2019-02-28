@@ -273,10 +273,6 @@ void AWebServer::setup() {
 				if (!strcmp(cmd, "scan")) {
 					logger.debug("Start scan WIFI\n");
 					int8_t n = scanWiFi();
-					if (n <= 0){
-						delay(3000);
-						n = scanWiFi();
-					}
 					logger.debug("Scan end, item count: %i\n", n);
 					if (n > 0) {
 						uint8_t i =0;
@@ -295,6 +291,9 @@ void AWebServer::setup() {
 			}
 			response->setLength();
 			request->send(response);
+			if (wifiList.size() > 0){
+				wifiList.clear();
+			}
 		});
 
 		api.parse(jsonObj);
@@ -302,10 +301,15 @@ void AWebServer::setup() {
 	server.addHandler(apiHandler);
 #endif // REST_API
 
+	int8_t nets = scanWiFi();
+	if (nets > 0){
+		wifiList.clear();
+	}
 	telnetServer->setup();
 
 	initDefaultHeaders();
 	server.begin();
+	
 }
 
 /** WebSocket events */
@@ -454,7 +458,6 @@ int8_t AWebServer::scanWiFi() {
 			wifi->hidden = WiFi.isHidden(i) ? "true" : "false";
 			wifiList.push_back(std::move(wifi));
 
-			std::unique_ptr<int> ptr (new int);
 		}
 		WiFi.scanDelete();
 		if (WiFi.scanComplete() == -2) {
@@ -463,3 +466,4 @@ int8_t AWebServer::scanWiFi() {
 	}
 	return n;
 }
+

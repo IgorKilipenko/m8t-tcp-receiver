@@ -3,6 +3,8 @@
 
 #include "ArduinoJson.h"
 #include "utils.h"
+#include <list>
+//#include <string>
 
 class ApiHandler;
 
@@ -13,9 +15,9 @@ class SGraphQL {
 	SGraphQL();
 	~SGraphQL();
 	bool parse(const JsonObject &);
-	ApiHandler &on(const char *, const char *, ApiHandlerFunction cb);
-	ApiHandler &addHandler(ApiHandler *);
-	bool removeHandler(ApiHandler *);
+	const ApiHandler &on(const char *, const char *, ApiHandlerFunction);
+	const ApiHandler &addHandler(const std::shared_ptr<const ApiHandler>);
+	bool removeHandler(const std::shared_ptr<const ApiHandler>);
 
 	static const char *QUERY;
 	static const char *MUTATION;
@@ -26,7 +28,7 @@ class SGraphQL {
 	static const char *QUERY_SECTION;
 
   private:
-	LinkedList<ApiHandler *> handlers;
+		std::list<std::shared_ptr<const ApiHandler>> handlers;
     void emit(const char *event, const char *component, const JsonObject &res);
 };
 
@@ -34,13 +36,13 @@ class ApiHandler {
 	friend SGraphQL;
 
   public:
-	ApiHandler() {}
-	~ApiHandler() {}
+	ApiHandler(const char* component,const char* event ,ApiHandlerFunction callback);
+	~ApiHandler();
 
   private:
 	ApiHandlerFunction callback_fn;
-	const char *type;
-	const char *component;
+	char *type;
+	char *component;
 };
 
 #endif

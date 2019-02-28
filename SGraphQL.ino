@@ -7,9 +7,9 @@ const char *SGraphQL::ALL = "all";
 
 const char *SGraphQL::QUERY_SECTION = "data";
 
-SGraphQL::SGraphQL() : handlers(LinkedList<ApiHandler *>([](ApiHandler *h) { delete h; })) {}
+SGraphQL::SGraphQL() : handlers{} {}
 
-SGraphQL::~SGraphQL() { handlers.free(); }
+SGraphQL::~SGraphQL() { handlers.clear(); }
 
 bool SGraphQL::parse(const JsonObject &json) {
 	if (&json && !json.containsKey("type")) {
@@ -24,29 +24,35 @@ bool SGraphQL::parse(const JsonObject &json) {
 	}
 
 	const char *component = json.get<char *>("component");
-	//JsonObject& data = json.get<JsonObject&>("Data");
+	// JsonObject& data = json.get<JsonObject&>("Data");
 	emit(type, component, json);
 
+	logger.debug("Parsing seccess\n");
 	return true;
 }
 
-ApiHandler &SGraphQL::addHandler(ApiHandler *handler) {
-	handlers.add(handler);
+const ApiHandler &SGraphQL::addHandler(const std::shared_ptr<const ApiHandler> handler) {
+	handlers.push_back(handler);
 	return *handler;
 }
 
-bool SGraphQL::removeHandler(ApiHandler *handler) { return handlers.remove(handler) ? true : false; }
+bool SGraphQL::removeHandler(const std::shared_ptr<const ApiHandler> handler) {
+	const size_t size = handlers.size();
+	handlers.remove(handler);
+	return size > handlers.size();
+}
 
-ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunction cb) {
-	ApiHandler *handler = new ApiHandler();
-	handler->component = component;
-	handler->type = type;
-	handler->callback_fn = cb;
+const ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunction cb) {
+	std::shared_ptr<ApiHandler> handler(new ApiHandler(component, type, cb));
+	// handler->component = component;
+	// handler->type = type;
+	// handler->callback_fn = cb;
 	addHandler(handler);
 	return *handler;
 }
 
 void SGraphQL::emit(const char *event, const char *component, const JsonObject &json) {
+	logger.debug("Start emmit for event: %s, component: %s, \n", event, component);
 	for (const auto &h : handlers) {
 		logger.debug("Component: %s, handler component: %s\n", component, h->component);
 		if (utils::streq(h->component, component)) {
@@ -55,5 +61,26 @@ void SGraphQL::emit(const char *event, const char *component, const JsonObject &
 				h->callback_fn(event, json);
 			}
 		}
+	}
+}
+
+ApiHandler::ApiHandler(const char *component, const char *event, ApiHandlerFunction callback) : callback_fn{callback} {
+
+	this->type = new char[sizeof(event)];
+	strcpy(this->type, event);
+
+	this->component = new char[sizeof(component)];
+	strcpy(this->component, component);
+}
+
+ApiHandler::~ApiHandler() {
+	logger.debug("Destroy ApiHandler\n");
+	if (type) {
+		logger.debug("Delete [] event: %s\n", type);
+		delete[] type;
+	}
+	if (component) {
+		logger.debug("Delete [] component: %s\n", component);
+		delete[] component;
 	}
 }

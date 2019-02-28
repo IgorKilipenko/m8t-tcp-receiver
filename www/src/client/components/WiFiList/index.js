@@ -1,40 +1,71 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
-import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
-const api = new ApiSocket();
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import ListSubheader from '@material-ui/core/ListSubheader';
+import Switch from '@material-ui/core/Switch';
+import WifiIcon from '@material-ui/icons/Wifi';
+import LoginDialog from '../LoginDialog';
+
+const styles = theme => ({
+    root: {
+        width: '100%',
+        maxWidth: 360,
+        backgroundColor: theme.palette.background.paper
+    }
+});
+
+
 
 class WiFiList extends React.Component {
     state = {
-        open: false,
-        status: '',
-        data: [
-            {
-                '1': 'rssi',
-                '2': 'ssid',
-                '3': 'bssid',
-                '4': 'channel',
-                '5': 'secure',
-                '6': 'hidden'
-            }
-        ]
+        openLoginDialog: false,
     };
 
-    getWifiLiset = async () => {
-        try {
-            const resp = await axios({
-                method: 'get',
-                url: 'http://192.168.1.62/api/wifi/scan',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            this.setState({
-                staus: resp.status,
-                data: resp.data
-            });
-        } catch (err) {
-            console.log({ err });
-        }
-    };
+    handleClick = (wifi) =>{
+        this.setState({
+            openLoginDialog: true,
+            currentSsid:wifi.ssid
+        });
+
+    }
+
+    handleCloseLoginDialog = ({login, password, save}) => {
+        this.setState({openLoginDialog:false});
+    }
+
+    render() {
+        const { classes, wifiListData } = this.props;
+        wifiListData.sort((w1, w2) => w2.rssi - w1.rssi);
+        return (
+            <Fragment>
+            <LoginDialog open={this.state.openLoginDialog} onCloseDialog={this.handleCloseLoginDialog} ssid={this.state.currentSsid}/>
+            <List
+                subheader={<ListSubheader>Settings</ListSubheader>}
+                className={classes.root}
+            >
+                {wifiListData.map((wifi, i) => {
+                    return (
+                        <ListItem key={i} button onClick={() => this.handleClick(wifi)}>
+                            <ListItemIcon>
+                                <WifiIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={`${wifi.ssid || 'ssid'}\t|\t${wifi.rssi || rssi}`} />
+                        </ListItem>
+                    );
+                })}
+            </List>
+            </Fragment>
+        );
+    }
 }
+
+WiFiList.propTypes = {
+    classes: PropTypes.object.isRequired,
+    wifiListData: PropTypes.array.isRequired
+};
+
+export default withStyles(styles, { withTheme: true })(WiFiList);

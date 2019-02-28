@@ -70,6 +70,7 @@
     "express": "^4.16.4",
     "mobx": "^5.9.0",
     "mobx-react": "^5.4.3",
+    "mobx-react-router": "^4.0.5",
     "react": "^16.8.3",
     "react-dom": "^16.8.3",
     "source-map-support": "^0.5.10"

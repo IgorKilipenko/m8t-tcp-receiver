@@ -81,7 +81,12 @@ const baseConfig = {
             options: { postcss: [precss, autoprefixer] }
         }),
         new CleanWebpackPlugin(['dist']),
-
+        new webpack.DefinePlugin({
+            REMOTE_API_URL: JSON.stringify('192.168.1.62/api'),
+            API_URL: JSON.stringify('localhost:80/api'),
+            HOST: JSON.stringify('192.168.1.62'),
+            PORT: JSON.stringify(80)
+        })
     ]
 };
 
