@@ -11,7 +11,7 @@ SGraphQL::SGraphQL() : handlers{} {}
 
 SGraphQL::~SGraphQL() { handlers.clear(); }
 
-bool SGraphQL::parse(const JsonObject &json) {
+bool SGraphQL::parse(const JsonObject &json, JsonArray & outJson) {
 	if (&json && !json.containsKey("type")) {
 		logger.debug("JsonObject not contain key \"type\"\n");
 		return false;
@@ -25,9 +25,9 @@ bool SGraphQL::parse(const JsonObject &json) {
 
 	const char *component = json.get<char *>("component");
 	// JsonObject& data = json.get<JsonObject&>("Data");
-	emit(type, component, json);
+	emit(type, component, json, outJson);
 
-	logger.debug("Parsing seccess\n");
+	logger.debug("Json API request parsed success\n");
 	return true;
 }
 
@@ -44,21 +44,18 @@ bool SGraphQL::removeHandler(const std::shared_ptr<const ApiHandler> handler) {
 
 const ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunction cb) {
 	std::shared_ptr<ApiHandler> handler(new ApiHandler(component, type, cb));
-	// handler->component = component;
-	// handler->type = type;
-	// handler->callback_fn = cb;
 	addHandler(handler);
 	return *handler;
 }
 
-void SGraphQL::emit(const char *event, const char *component, const JsonObject &json) {
+void SGraphQL::emit(const char *event, const char *component, const JsonObject &json, JsonArray & outJson) {
 	logger.debug("Start emmit for event: %s, component: %s, \n", event, component);
 	for (const auto &h : handlers) {
 		logger.debug("Component: %s, handler component: %s\n", component, h->component);
 		if (utils::streq(h->component, component)) {
 			logger.debug("Event: %s, handler type: %s\n", event, h->type);
 			if (utils::streq(h->type, SGraphQL::ALL) || utils::streq(h->type, event)) {
-				h->callback_fn(event, json);
+				h->callback_fn(event, json, outJson);
 			}
 		}
 	}

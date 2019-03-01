@@ -76,6 +76,8 @@ class AWebServer {
 
 	void onWsEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
 	void initDefaultHeaders();
+
+	void onWiFiRequest(const char *event, const JsonObject &json, JsonArray &outJson);
 };
 
 struct AWebServer::WifiItem {

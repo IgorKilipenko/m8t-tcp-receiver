@@ -8,13 +8,13 @@
 
 class ApiHandler;
 
-typedef std::function<void(const char* event, const JsonObject &json)> ApiHandlerFunction;
+typedef std::function<void(const char* event, const JsonObject &json, JsonArray & outJson)> ApiHandlerFunction;
 
 class SGraphQL {
   public:
 	SGraphQL();
 	~SGraphQL();
-	bool parse(const JsonObject &);
+	bool parse(const JsonObject &, JsonArray &);
 	const ApiHandler &on(const char *, const char *, ApiHandlerFunction);
 	const ApiHandler &addHandler(const std::shared_ptr<const ApiHandler>);
 	bool removeHandler(const std::shared_ptr<const ApiHandler>);
@@ -29,7 +29,7 @@ class SGraphQL {
 
   private:
 		std::list<std::shared_ptr<const ApiHandler>> handlers;
-    void emit(const char *event, const char *component, const JsonObject &res);
+    void emit(const char *event, const char *component, const JsonObject &, JsonArray & );
 };
 
 class ApiHandler {

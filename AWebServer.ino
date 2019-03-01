@@ -242,6 +242,42 @@ void AWebServer::setup() {
 #endif
 
 #ifdef REST_API
+
+	// const ApiHandler &wifiApiHandler = api.on("wifi", SGraphQL::QUERY, [&](const char *event, const JsonObject &json, JsonArray &outJson) {
+	//	logger.debug("Start on wifi\n");
+	//	json.prettyPrintTo(logger);
+	//	logger.debug("\n");
+	//	if (json.containsKey("cmd")) {
+	//		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
+	//		const char *cmd = json.get<const char *>("cmd");
+	//		if (!strcmp(cmd, "scan")) {
+	//			logger.debug("Start scan WIFI\n");
+	//			int8_t n = scanWiFi();
+	//			logger.debug("Scan end, item count: %i\n", n);
+	//			if (n > 0) {
+	//				uint8_t i = 0;
+	//				for (auto const &item : wifiList) {
+	//					logger.debug("n:%i,", i);
+	//					JsonObject &resJson = outJson.createNestedObject();
+	//					resJson["rssi"] = item->rssi;
+	//					resJson["ssid"] = item->ssid;
+	//					resJson["bssid"] = item->bssid;
+	//					resJson["channel"] = item->channel;
+	//					resJson["secure"] = item->secure;
+	//					resJson["hidden"] = item->hidden;
+	//				}
+	//			}
+	//		}
+	//	}
+	//	// response->setLength();
+	//	// request->send(response);
+	//	if (wifiList.size() > 0) {
+	//		wifiList.clear();
+	//	}
+	//});
+
+	api.on("wifi", "query", std::bind(&AWebServer::onWiFiRequest, this ,std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
 		logger.debug("API \n");
@@ -257,59 +293,32 @@ void AWebServer::setup() {
 			return;
 		}
 
-		logger.debug("Json parse success\n");
+		AsyncJsonResponse *response = new AsyncJsonResponse(true);
+		JsonArray &root = response->getRoot();
+		if (!api.parse(jsonObj, root)) {
+			logger.debug("Json API request parse\n");
+			request->send(404);
+			return;
+		}
+		logger.debug("Json API request parse success\n");
 
-		api.on("wifi", SGraphQL::QUERY, [&](const char *event, const JsonObject &json) {
-			logger.debug("Start on wifi\n");
-			json.prettyPrintTo(logger);
-			logger.debug("\n");
-			AsyncJsonResponse *response = new AsyncJsonResponse(true);
-			JsonArray &root = response->getRoot();
-			//JsonObject &root = response->getRoot();
-			//JsonArray &arrJson= root.createNestedArray("wifiList");
-			if (json.containsKey("cmd")) {
-				logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
-				const char *cmd = json.get<const char *>("cmd");
-				if (!strcmp(cmd, "scan")) {
-					logger.debug("Start scan WIFI\n");
-					int8_t n = scanWiFi();
-					logger.debug("Scan end, item count: %i\n", n);
-					if (n > 0) {
-						uint8_t i =0;
-						for (auto const& item : wifiList) {
-							logger.debug("n:%i,",i);
-							JsonObject &resJson = root.createNestedObject();
-							resJson["rssi"] = item->rssi;
-							resJson["ssid"] = item->ssid;
-							resJson["bssid"] = item->bssid;
-							resJson["channel"] = item->channel;
-							resJson["secure"] = item->secure;
-							resJson["hidden"] = item->hidden;
-						}
-					}
-				}
-			}
-			response->setLength();
-			request->send(response);
-			if (wifiList.size() > 0){
-				wifiList.clear();
-			}
-		});
-
-		api.parse(jsonObj);
+		response->setLength();
+		request->send(response);
+		logger.debug("Json API response send success\n");
 	});
+
 	server.addHandler(apiHandler);
+
 #endif // REST_API
 
 	int8_t nets = scanWiFi();
-	if (nets > 0){
+	if (nets > 0) {
 		wifiList.clear();
 	}
 	telnetServer->setup();
 
 	initDefaultHeaders();
 	server.begin();
-	
 }
 
 /** WebSocket events */
@@ -385,11 +394,8 @@ void AWebServer::onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 	}
 }
 
-
 /** Main process */
 void AWebServer::process() { ArduinoOTA.handle(); }
-
-
 
 /** Credentials ================================================ */
 /** Load WLAN credentials from EEPROM */
@@ -424,7 +430,6 @@ void AWebServer::saveWiFiCredentials() {
 	EEPROM.end();
 }
 
-
 /** Set default headers */
 void AWebServer::initDefaultHeaders() {
 	if (!AWebServer::_static_init) {
@@ -457,7 +462,6 @@ int8_t AWebServer::scanWiFi() {
 			wifi->secure = WiFi.encryptionType(i);
 			wifi->hidden = WiFi.isHidden(i) ? "true" : "false";
 			wifiList.push_back(std::move(wifi));
-
 		}
 		WiFi.scanDelete();
 		if (WiFi.scanComplete() == -2) {
@@ -467,3 +471,35 @@ int8_t AWebServer::scanWiFi() {
 	return n;
 }
 
+void AWebServer::onWiFiRequest(const char *event, const JsonObject &json, JsonArray &outJson) {
+	logger.debug("Start on wifi\n");
+	json.prettyPrintTo(logger);
+	logger.debug("\n");
+	if (json.containsKey("cmd")) {
+		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
+		const char *cmd = json.get<const char *>("cmd");
+		if (!strcmp(cmd, "scan")) {
+			logger.debug("Start scan WIFI\n");
+			int8_t n = scanWiFi();
+			logger.debug("Scan end, item count: %i\n", n);
+			if (n > 0) {
+				uint8_t i = 0;
+				for (auto const &item : wifiList) {
+					logger.debug("n:%i,", i);
+					JsonObject &resJson = outJson.createNestedObject();
+					resJson["rssi"] = item->rssi;
+					resJson["ssid"] = item->ssid;
+					resJson["bssid"] = item->bssid;
+					resJson["channel"] = item->channel;
+					resJson["secure"] = item->secure;
+					resJson["hidden"] = item->hidden;
+				}
+			}
+		}
+	}
+	// response->setLength();
+	// request->send(response);
+	if (wifiList.size() > 0) {
+		wifiList.clear();
+	}
+}
