@@ -51,7 +51,7 @@ void AWebServer::setup() {
 
 	SPIFFS.begin();
 
-	ws.onEvent(std::bind(&AWebServer::wsEventHnadler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
+	ws.onEvent(std::bind(&AWebServer::wsEventHnadler, this ,std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
 
 	server.addHandler(&ws);
 
@@ -115,10 +115,13 @@ void AWebServer::setup() {
 		json = String();
 	});
 
+
+
 #ifdef REST_API
 
+
 	api.on(SGraphQL::WIFI, SGraphQL::QUERY, std::bind(&AWebServer::wifiQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-	//api.on(SGraphQL::WIFI, SGraphQL::ACTION, std::bind(&AWebServer::wifiActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::WIFI, SGraphQL::ACTION, std::bind(&AWebServer::wifiActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
@@ -152,62 +155,6 @@ void AWebServer::setup() {
 
 	server.addHandler(apiHandler);
 
-	AsyncCallbackJsonWebHandler *wifiStaConnectHandler = new AsyncCallbackJsonWebHandler("/api/srvice", [&](AsyncWebServerRequest *request, JsonVariant &jsonReq) {
-		logger.debug("/api/srvice \n");
-		if (!jsonReq) {
-			logger.debug("apiHandler -> Json is empty\n");
-			request->send(404);
-			return;
-		}
-		const JsonObject &jsonObj = jsonReq.as<const JsonObject>();
-		if (!jsonObj.success()) {
-			logger.debug("apiHandler -> Json parsing failed\n");
-			request->send(404);
-			return;
-		}
-
-		AsyncJsonResponse *response = new AsyncJsonResponse(true);
-		JsonArray &jsonResp = response->getRoot();
-
-		if (jsonObj.containsKey("cmd")) {
-			logger.debug("Contain cmd key, cmd: %s\n", jsonObj.get<const char *>("cmd"));
-			const char *cmd = jsonObj.get<const char *>("cmd");
-			if (utils::streq(cmd, "connect")) {
-				if (!jsonObj.containsKey("ssid")) {
-					logger.debug("SSID failed\n");
-					return;
-				}
-				if (!jsonObj.containsKey("password")) {
-					logger.debug("PASSWORD failed\n");
-					return;
-				}
-				const char *new_ssid = jsonObj["ssid"];
-				strcpy(this->ssid, new_ssid);
-				const char *new_password = jsonObj["password"];
-				strcpy(this->password, new_password);
-
-				logger.debug("onWiFiActionRequest -> createNestedObject\n ");
-				JsonObject &resJson = jsonResp.createNestedObject();
-
-				if (!this->connectStaWifi(ssid, password)) {
-					logger.debug("WiFi STA not connected\n");
-					return;
-				}
-				delay(500);
-				//resJson["status"] = WiFi.status();
-				//String ip = utils::toStringIp(WiFi.localIP());
-				//resJson["new_sta_ip"] = ip;
-				//resJson["status"] = WiFi.status();
-			}
-		}
-
-		response->setLength();
-		request->send(response);
-		logger.debug("apiHandler -> Json API response send success\n");
-		// delete response;
-	});
-
-	server.addHandler(wifiStaConnectHandler);
 
 #endif // REST_API
 
@@ -220,6 +167,10 @@ void AWebServer::setup() {
 	initDefaultHeaders();
 	server.begin();
 }
+
+
+
+
 
 /** Credentials ================================================ */
 /** Load WLAN credentials from EEPROM */
@@ -295,6 +246,7 @@ int8_t AWebServer::scanWiFi() {
 	return n;
 }
 
+
 bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 	logger.debug("connectStaWifi -> ssid : %s, password: %s\n", ssid, password);
 	logger.debug("connectStaWifi -> start connect WiFi\n");
@@ -321,6 +273,8 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 	}
 	return true;
 }
+
+
 
 /** Main process */
 void AWebServer::process() { ArduinoOTA.handle(); }
