@@ -91,7 +91,7 @@ ApiHandler::ApiHandler(const char *component, const char *event, ApiHandlerFunct
 	
 	//this->component = new char[5]{};
 	//strcpy(this->component, "wifi");
-	this->component = utils::copynewstr(event);
+	this->component = utils::copynewstr(component);
 }
 
 ApiHandler::~ApiHandler() {
