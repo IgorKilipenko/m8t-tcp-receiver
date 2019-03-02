@@ -47,4 +47,26 @@ export default class ApiSocket {
             }
         });
     };
+
+    connectWiFiSTA = (ssid, password) => {
+        return new Promise(async (reslove, reject) => {
+            try {
+                const resp = await this.instance({
+                    method: 'post',
+                    //url: '/api',
+                    headers: this.headers.json,
+                    data: {
+                        type: this.types.action,
+                        component: this.components.wifi,
+                        cmd: 'connect',
+                        ssid,
+                        password
+                    }
+                });
+                reslove(resp);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
 }

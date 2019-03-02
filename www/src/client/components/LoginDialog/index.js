@@ -56,7 +56,7 @@ class LoginDialog extends React.Component {
                         {`Enter yore login ${ssid ? 'to ' + ssid : ''}`}
                     </DialogTitle>
                     <DialogContent>
-                        <TextField
+                        {/*<TextField
                             id="outlined-adornment-login"
                             className={classNames(
                                 classes.margin,
@@ -66,14 +66,14 @@ class LoginDialog extends React.Component {
                             label="Login"
                             value={this.state.weight}
                             onChange={this.handleChange('login')}
-                        />
+                        />*/}
                         <TextField
                             id="outlined-adornment-password"
                             className={classNames(
                                 classes.margin,
                                 classes.textField
                             )}
-                            //variant="outlined"
+                            variant="outlined"
                             type={this.state.showPassword ? 'text' : 'password'}
                             label="Password"
                             autoComplete="current-password"
@@ -104,7 +104,7 @@ class LoginDialog extends React.Component {
                             onClick={() => {
                                 onCloseDialog &&
                                     onCloseDialog(
-                                        this.state.login,
+                                        ssid,
                                         this.state.password,
                                         false
                                     );
@@ -117,14 +117,14 @@ class LoginDialog extends React.Component {
                             onClick={() => {
                                 onCloseDialog &&
                                     onCloseDialog(
-                                        this.state.login,
+                                        ssid,
                                         this.state.password,
                                         true
                                     );
                             }}
                             color="primary"
                         >
-                            Save
+                            Connect
                         </Button>
                     </DialogActions>
                 </Dialog>

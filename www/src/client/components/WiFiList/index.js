@@ -9,6 +9,10 @@ import ListSubheader from '@material-ui/core/ListSubheader';
 import Switch from '@material-ui/core/Switch';
 import WifiIcon from '@material-ui/icons/Wifi';
 import LoginDialog from '../LoginDialog';
+import ApiSocket from '../api-socket';
+import { async } from 'q';
+
+const apiSocket = new ApiSocket();
 
 const styles = theme => ({
     root: {
@@ -33,8 +37,18 @@ class WiFiList extends React.Component {
 
     }
 
-    handleCloseLoginDialog = ({login, password, save}) => {
+    handleCloseLoginDialog = async (ssid, password, save) => {
         this.setState({openLoginDialog:false});
+        console.log(`CLOSE DIALOG, SAVE = ${save}`);
+        if (save){
+            try{
+                const res = await apiSocket.connectWiFiSTA(ssid, password);
+                console.log({res}, this);
+            }catch (err){
+                console.log({err}, this);
+            }
+            
+        }
     }
 
     render() {
@@ -42,7 +56,7 @@ class WiFiList extends React.Component {
         wifiListData.sort((w1, w2) => w2.rssi - w1.rssi);
         return (
             <Fragment>
-            <LoginDialog open={this.state.openLoginDialog} onCloseDialog={this.handleCloseLoginDialog} ssid={this.state.currentSsid}/>
+            <LoginDialog open={this.state.openLoginDialog} onCloseDialog={(ssid, password, save) => this.handleCloseLoginDialog(ssid, password, save)} ssid={this.state.currentSsid}/>
             <List
                 subheader={<ListSubheader>Settings</ListSubheader>}
                 className={classes.root}

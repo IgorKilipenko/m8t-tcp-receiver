@@ -17,31 +17,49 @@ const app = express();
 //  }
 //}
 app.use(cors());
-const isDevelopment = process.env.NODE_ENV && process.env.NODE_ENV.trim() !== 'production';
+const isDevelopment =
+    process.env.NODE_ENV && process.env.NODE_ENV.trim() !== 'production';
 
-console.log("WEBPACK_MODE :" + process.env.NODE_ENV);
-console.log(typeof(process.env.NODE_ENV));
-console.log("isDevelopment :" + isDevelopment);
+console.log('WEBPACK_MODE :' + process.env.NODE_ENV);
+console.log(typeof process.env.NODE_ENV);
+console.log('isDevelopment :' + isDevelopment);
 
 if (isDevelopment) {
-  const webpack = require('webpack');
-  const webpackConfig = require('./webpack.config.dev.babel');
-  webpackConfig.mode = 'development';
-  const compiler = webpack(webpackConfig);
-  console.log(webpackConfig.output);
-  console.log(webpackConfig.entry);
-  app.use(require('webpack-dev-middleware')(compiler, {
-    hot: true,
-    stats: {
-      colors: true
-    },
-    publicPath: webpackConfig.output.publicPath,
-  }));
-  app.use(require('webpack-hot-middleware')(compiler, {
-    publicPath: webpackConfig.output.publicPath,
-  }));
+    const webpack = require('webpack');
+    const webpackConfig = require('./webpack.config.dev.babel');
+    webpackConfig.mode = 'development';
+    const compiler = webpack(webpackConfig);
+    console.log(webpackConfig.output);
+    console.log(webpackConfig.entry);
+    app.use(
+        require('webpack-dev-middleware')(compiler, {
+            contentBase: './dist',
+            host: 'loclahost',
+            hot: true,
+            stats: {
+                colors: true
+            },
+            publicPath: webpackConfig.output.publicPath
+        })
+    );
+    app.use(
+        require('webpack-hot-middleware')(compiler, {
+            publicPath: webpackConfig.output.publicPath
+        })
+    );
+    app.use('*', (req, res, next) => {
+        const filename = path.resolve(compiler.outputPath, 'index.html');
+        compiler.outputFileSystem.readFile(filename, (err, result) => {
+            if (err) {
+                return next(err);
+            }
+            res.set('content-type', 'text/html');
+            res.send(result);
+            res.end();
+        });
+    });
 } else {
-  app.use(express.static(PUBLIC_PATH));
+    app.use(express.static(PUBLIC_PATH));
 }
 
 //app.use(express.static(PUBLIC_PATH));
@@ -51,5 +69,5 @@ app.all('*', function(req, res) {
 });
 
 app.listen(PORT, function() {
-  console.log('Listening on port ' + PORT + '...');
+    console.log('Listening on port ' + PORT + '...');
 });

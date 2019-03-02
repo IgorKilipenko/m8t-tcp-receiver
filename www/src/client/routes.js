@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 
 import Index from './views/home'
 import App from './views/app';
@@ -22,13 +22,13 @@ const routes = [
                 routes: [
 
                 ],
-                isScrollRoute: true
+                isScrollRoute: false
             },
             {
                 name: 'wifi_config',
                 path: '/wifi_config',
                 component: WiFiConfigView,
-                isScrollRoute: true
+                isScrollRoute: false
             },
 
         ]
@@ -44,3 +44,4 @@ export const ScrollRouter = (props) => {
             ))
     )
 }
+

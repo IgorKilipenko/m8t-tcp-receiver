@@ -4,15 +4,16 @@ import { Helmet } from 'react-helmet';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import MiniDrawer from '../components/root';
-//import axios from 'axios';
 import ApiSocket from '../components/api-socket';
 import { inject, observer } from 'mobx-react';
+import { withRouter } from 'react-router-dom';
 
 const api = new ApiSocket();
 
 const styles = theme => ({});
 
 @inject('apiStore')
+@withRouter
 @observer
 class App extends React.Component {
     constructor() {

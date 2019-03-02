@@ -22,13 +22,13 @@ const scrollRoutingStore = new ScrollRouterStore(routes);
 const apiStore = new ApiStore();
 
 const stores = {
-    routing: scrollRoutingStore,
+    //routing: scrollRoutingStore,
     apiStore: apiStore
 };
-const history = syncHistoryWithStore(browserHistory, scrollRoutingStore);
+//const history = syncHistoryWithStore(browserHistory, scrollRoutingStore);
 ReactDOM.render(
     <Provider {...stores}>
-        <Router history={history}>
+        <Router history={browserHistory}>
             <MuiThemeProvider theme={theme}>
                 <CssBaseline />
                 <App>

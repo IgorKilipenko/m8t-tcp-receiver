@@ -2,7 +2,11 @@ bool AWebServer::_static_init = false;
 
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
-AWebServer::AWebServer(ATcpServer *telnetServer) : ssid{APSSID}, password{APPSK}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, api{} {}
+AWebServer::AWebServer(ATcpServer *telnetServer)
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, api{} {
+	String id(ESP.getChipId());
+	strcat(softAP_ssid, id.c_str());
+}
 
 AWebServer::~AWebServer() {
 	if (telnetServer) {
@@ -14,19 +18,21 @@ AWebServer::~AWebServer() {
 void AWebServer::setup() {
 	loadWiFiCredentials();
 
-	WiFi.hostname(hostName);
+	// WiFi.hostname(hostName);
 	WiFi.mode(WIFI_AP_STA);
-	WiFi.softAP("ESPPP");
+	WiFi.softAP(softAP_ssid, softAP_password);
 
-	if (ssid && password) {
-		WiFi.begin(ssid, password);
-		while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-			logger.printf("STA: Failed!\n");
-			WiFi.disconnect(false);
-			delay(1000);
-			WiFi.begin(ssid, password);
-		}
-	}
+	// if (ssid && password) {
+	//	WiFi.begin(ssid, password);
+	//	while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+	//		logger.printf("STA: Failed!\n");
+	//		WiFi.disconnect(false);
+	//		delay(1000);
+	//		WiFi.begin(ssid, password);
+	//	}
+	//}
+
+	connectStaWifi(ssid, password);
 
 	// Send OTA events to the browser
 	ArduinoOTA.onStart([&]() { events.send("Update Start", "ota"); });
@@ -276,19 +282,20 @@ void AWebServer::setup() {
 	//	}
 	//});
 
-	api.on("wifi", "query", std::bind(&AWebServer::onWiFiRequest, this ,std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::WIFI, SGraphQL::QUERY, std::bind(&AWebServer::onWiFiQueryRequest, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::WIFI, SGraphQL::ACTION, std::bind(&AWebServer::onWiFiActionRequest, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
 		logger.debug("API \n");
 		if (!json) {
-			logger.debug("Json is empty\n");
+			logger.debug("apiHandler -> Json is empty\n");
 			request->send(404);
 			return;
 		}
 		const JsonObject &jsonObj = json.as<const JsonObject>();
 		if (!jsonObj.success()) {
-			logger.debug("Json parsing failed\n");
+			logger.debug("apiHandler -> Json parsing failed\n");
 			request->send(404);
 			return;
 		}
@@ -296,15 +303,16 @@ void AWebServer::setup() {
 		AsyncJsonResponse *response = new AsyncJsonResponse(true);
 		JsonArray &root = response->getRoot();
 		if (!api.parse(jsonObj, root)) {
-			logger.debug("Json API request parse\n");
+			logger.debug("apiHandler -> Json API request parse failed\n");
 			request->send(404);
 			return;
 		}
-		logger.debug("Json API request parse success\n");
+		logger.debug("apiHandler -> Json API request parse success\n");
 
 		response->setLength();
 		request->send(response);
-		logger.debug("Json API response send success\n");
+		logger.debug("apiHandler -> Json API response send success\n");
+		// delete response;
 	});
 
 	server.addHandler(apiHandler);
@@ -471,21 +479,21 @@ int8_t AWebServer::scanWiFi() {
 	return n;
 }
 
-void AWebServer::onWiFiRequest(const char *event, const JsonObject &json, JsonArray &outJson) {
-	logger.debug("Start on wifi\n");
+void AWebServer::onWiFiQueryRequest(const char *event, const JsonObject &json, JsonArray &outJson) {
+	logger.debug("Start on wifi QUERY\n");
 	json.prettyPrintTo(logger);
 	logger.debug("\n");
 	if (json.containsKey("cmd")) {
 		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
 		const char *cmd = json.get<const char *>("cmd");
-		if (!strcmp(cmd, "scan")) {
+		if (utils::streq(cmd, "scan")) {
 			logger.debug("Start scan WIFI\n");
 			int8_t n = scanWiFi();
 			logger.debug("Scan end, item count: %i\n", n);
 			if (n > 0) {
 				uint8_t i = 0;
 				for (auto const &item : wifiList) {
-					logger.debug("n:%i,", i);
+					logger.debug("n:%i,", i++);
 					JsonObject &resJson = outJson.createNestedObject();
 					resJson["rssi"] = item->rssi;
 					resJson["ssid"] = item->ssid;
@@ -495,11 +503,75 @@ void AWebServer::onWiFiRequest(const char *event, const JsonObject &json, JsonAr
 					resJson["hidden"] = item->hidden;
 				}
 			}
+			if (wifiList.size() > 0) {
+				wifiList.clear();
+			}
 		}
 	}
-	// response->setLength();
-	// request->send(response);
-	if (wifiList.size() > 0) {
-		wifiList.clear();
+}
+
+void AWebServer::onWiFiActionRequest(const char *event, const JsonObject &json, JsonArray &outJson) {
+	logger.debug("Start on wifi ACTION\n");
+	json.prettyPrintTo(logger);
+	logger.debug("\n");
+	if (json.containsKey("cmd")) {
+		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
+		const char *cmd = json.get<const char *>("cmd");
+		if (utils::streq(cmd, "connect")) {
+			if (!json.containsKey("ssid")) {
+				logger.debug("SSID failed\n");
+				return;
+			}
+			if (!json.containsKey("password")) {
+				logger.debug("PASSWORD failed\n");
+				return;
+			}
+			const char *new_ssid = json["ssid"];
+			strcpy(this->ssid, new_ssid);
+			const char *new_password = json["password"];
+			strcpy(this->password, new_password);
+
+			logger.debug("onWiFiActionRequest -> createNestedObject\n ");
+			JsonObject &resJson = outJson.createNestedObject();
+
+
+
+			if (!this->connectStaWifi(ssid, password)) {
+				logger.debug("WiFi STA not connected\n");
+				resJson["status"] = WiFi.status();
+				return;
+			}
+			delay(500);
+			String ip = utils::toStringIp(WiFi.localIP());
+			resJson["new_sta_ip"] = ip;
+			resJson["status"] = WiFi.status();
+		}
 	}
+}
+
+bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
+	logger.debug("connectStaWifi -> ssid : %s, password: %s\n", ssid, password);
+	logger.debug("connectStaWifi -> start connect WiFi\n");
+	if (ssid && password) {
+		if (WiFi.isConnected()) {
+			logger.debug("connectStaWifi -> disconnect\n");
+			WiFi.disconnect(false);
+		}
+		logger.debug("connectStaWifi -> begin\n");
+		WiFi.begin(ssid, password);
+		logger.debug("connectStaWifi -> wait connectiom status\n");
+		while (WiFi.waitForConnectResult() != WL_CONNECTED) {
+			logger.printf("STA: Failed!\n");
+			return false;
+			// WiFi.disconnect(false);
+			// delay(1000);
+			// WiFi.begin(ssid, password);
+		}
+	} else {
+		logger.println("WiFi connected");
+		logger.print("IP address: ");
+		logger.println(WiFi.localIP());
+		return true;
+	}
+	return true;
 }

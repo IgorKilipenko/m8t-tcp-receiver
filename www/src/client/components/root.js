@@ -16,8 +16,8 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
+import CellWifiIcon from '@material-ui/icons/CellWifi';
+import SpeakerPhoneIcon from '@material-ui/icons/SpeakerPhone';
 import { Link } from 'react-router-dom';
 
 import axios from 'axios';
@@ -152,7 +152,7 @@ class MiniDrawer extends React.Component {
                             <MenuIcon />
                         </IconButton>
                         <Typography variant="h6" color="inherit" noWrap>
-                            Mini variant drawer
+                            ESP GPS GUI
                         </Typography>
                     </Toolbar>
                 </AppBar>
@@ -181,6 +181,15 @@ class MiniDrawer extends React.Component {
                     </div>
                     <Divider />
                     <List>
+                        <ListItem button key={1} component={Link} to="/">
+                            <ListItemIcon>
+                                <SpeakerPhoneIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Home" />
+                        </ListItem>
+                    </List>
+                    <Divider />
+                    <List>
                         <ListItem
                             button
                             key={1}
@@ -188,29 +197,10 @@ class MiniDrawer extends React.Component {
                             to="/wifi_config"
                         >
                             <ListItemIcon>
-                                <InboxIcon />
+                                <CellWifiIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Home" />
+                            <ListItemText primary="WiFi config" />
                         </ListItem>
-                    </List>
-                    <Divider />
-                    <List>
-                        {['Wifi config', 'Trash', 'Spam'].map((text, index) => (
-                            <ListItem
-                                button
-                                key={text}
-                                onClick={() => this.getWifiLiset()}
-                            >
-                                <ListItemIcon>
-                                    {index % 2 === 0 ? (
-                                        <InboxIcon />
-                                    ) : (
-                                        <MailIcon />
-                                    )}
-                                </ListItemIcon>
-                                <ListItemText primary={text} />
-                            </ListItem>
-                        ))}
                     </List>
                 </Drawer>
                 <main className={classes.content}>

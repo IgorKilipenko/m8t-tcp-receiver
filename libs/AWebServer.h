@@ -4,7 +4,7 @@
 #define FS_NO_GLOBALS
 
 #include "Arduino.h"
-#include "utils.h"
+#include <string>
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -53,8 +53,8 @@ class AWebServer {
 	struct WifiItem;
 
   private:
-	const char *softAP_ssid = (APSSID + String(ESP.getChipId())).c_str();
-	const char *softAP_password = APPSK;
+	char softAP_ssid[32];
+	char softAP_password[64];
 
 	char ssid[32];
 	char password[32];
@@ -77,7 +77,10 @@ class AWebServer {
 	void onWsEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
 	void initDefaultHeaders();
 
-	void onWiFiRequest(const char *event, const JsonObject &json, JsonArray &outJson);
+	void onWiFiQueryRequest(const char *event, const JsonObject &json, JsonArray &outJson);
+	void onWiFiActionRequest(const char *event, const JsonObject &json, JsonArray &outJson);
+
+	bool connectStaWifi(const char *ssid, const char *password);
 };
 
 struct AWebServer::WifiItem {
