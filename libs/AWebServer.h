@@ -74,11 +74,12 @@ class AWebServer {
 	static const char * API_P_GPSCMD;
 	SGraphQL api;
 
-	void onWsEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
+	void wsEventHnadler(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
+	void notFoundHandler(AsyncWebServerRequest *request);
 	void initDefaultHeaders();
 
-	void onWiFiQueryRequest(const char *event, const JsonObject &json, JsonArray &outJson);
-	void onWiFiActionRequest(const char *event, const JsonObject &json, JsonArray &outJson);
+	void wifiQueryHandler(const char *event, const JsonObject &json, JsonArray &outJson);
+	void wifiActionHandler(const char *event, const JsonObject &json, JsonArray &outJson);
 
 	bool connectStaWifi(const char *ssid, const char *password);
 };
