@@ -53,7 +53,7 @@ export default class ApiSocket {
             try {
                 const resp = await this.instance({
                     method: 'post',
-                    //url: '/api',
+                    url: '/service',
                     headers: this.headers.json,
                     data: {
                         type: this.types.action,

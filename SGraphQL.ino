@@ -32,7 +32,7 @@ bool SGraphQL::parse(const JsonObject &json, JsonArray &outJson) {
 	// JsonObject& data = json.get<JsonObject&>("Data");
 	uint8_t hcount = emit(type, component, json, outJson);
 
-	logger.debug("Json API request parsed success\n");
+	logger.debug("Json API request parsed success, hendler count : {%s}\n", hcount);
 
 	return hcount;
 }
@@ -91,7 +91,7 @@ ApiHandler::ApiHandler(const char *component, const char *event, ApiHandlerFunct
 	
 	//this->component = new char[5]{};
 	//strcpy(this->component, "wifi");
-	this->component = utils::copynewstr(event);
+	this->component = utils::copynewstr(component);
 }
 
 ApiHandler::~ApiHandler() {
