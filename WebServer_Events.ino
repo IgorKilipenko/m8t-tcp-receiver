@@ -119,70 +119,86 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 	request->send(404);
 }
 
-void AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonArray &outJson) {
-	logger.debug("Start on wifi QUERY\n");
+ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
+	logger.trace("Start on wifi QUERY\n");
+	logger.trace(":");
 	json.prettyPrintTo(logger);
-	logger.debug("\n");
-	if (json.containsKey("cmd")) {
-		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
-		const char *cmd = json.get<const char *>("cmd");
-		if (utils::streq(cmd, "scan")) {
-			logger.debug("Start scan WIFI\n");
-			int8_t n = scanWiFi();
-			logger.debug("Scan end, item count: %i\n", n);
-			if (n > 0) {
-				uint8_t i = 0;
-				for (auto const &item : wifiList) {
-					logger.debug("n:%i,", i++);
-					JsonObject &resJson = outJson.createNestedObject();
-					resJson["rssi"] = item->rssi;
-					resJson["ssid"] = item->ssid;
-					resJson["bssid"] = item->bssid;
-					resJson["channel"] = item->channel;
-					resJson["secure"] = item->secure;
-					resJson["hidden"] = item->hidden;
-				}
+	logger.print("\n");
+
+	const char *cmd = json.get<const char *>("cmd");
+	if (utils::streq(cmd, "scan")) {
+		logger.debug("Start scan WIFI\n");
+		int8_t n = scanWiFi();
+		JsonArray &arrayJson = outJson.createNestedArray("value");
+		logger.debug("Scan end, item count: %i\n", n);
+		if (n > 0) {
+			uint8_t i = 0;
+			for (auto const &item : wifiList) {
+				logger.debug("n:%i,", i++);
+				JsonObject &resJson = arrayJson.createNestedObject();
+				resJson["rssi"] = item->rssi;
+				resJson["ssid"] = item->ssid;
+				resJson["bssid"] = item->bssid;
+				resJson["channel"] = item->channel;
+				resJson["secure"] = item->secure;
+				resJson["hidden"] = item->hidden;
 			}
-			if (wifiList.size() > 0) {
-				wifiList.clear();
-			}
+			logger.print("\n");
+		}
+		if (wifiList.size() > 0) {
+			wifiList.clear();
 		}
 	}
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+	return res_ptr;
 }
 
-void AWebServer::wifiActionHandler(const char *event, const JsonObject &json, JsonArray &outJson) {
+ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
 	logger.debug("Start on wifi ACTION\n");
 	json.prettyPrintTo(logger);
 	logger.debug("\n");
-	if (json.containsKey("cmd")) {
-		logger.debug("Contain cmd key, cmd: %s\n", json.get<const char *>("cmd"));
-		const char *cmd = json.get<const char *>("cmd");
-		if (utils::streq(cmd, "connect")) {
-			if (!json.containsKey("ssid")) {
-				logger.debug("SSID failed\n");
-				return;
-			}
-			if (!json.containsKey("password")) {
-				logger.debug("PASSWORD failed\n");
-				return;
-			}
-			const char *new_ssid = json["ssid"];
-			strcpy(this->ssid, new_ssid);
-			const char *new_password = json["password"];
-			strcpy(this->password, new_password);
 
-			logger.debug("onWiFiActionRequest -> createNestedObject\n ");
-			JsonObject &resJson = outJson.createNestedObject();
-
-			if (!this->connectStaWifi(ssid, password)) {
-				logger.debug("WiFi STA not connected\n");
-				return;
-			}
-			delay(500);
-			resJson["status"] = WiFi.status();
-			String ip = utils::toStringIp(WiFi.localIP());
-			resJson["new_sta_ip"] = ip;
-			resJson["status"] = WiFi.status();
+	const char *cmd = json.get<const char *>("cmd");
+	if (utils::streq(cmd, "connect")) {
+		if (!json.containsKey("ssid")) {
+			logger.debug("SSID failed\n");
+			return nullptr;
 		}
+		if (!json.containsKey("password")) {
+			logger.debug("PASSWORD failed\n");
+			return nullptr;
+		}
+		const char *new_ssid = json["ssid"];
+		strcpy(this->ssid, new_ssid);
+		const char *new_password = json["password"];
+		strcpy(this->password, new_password); 
+		logger.debug("onWiFiActionRequest -> createNestedObject\n ");
+		JsonObject &resJson = outJson.createNestedObject("value");
+
+		resJson["status"] = WiFi.status();
+		String ip = utils::toStringIp(WiFi.localIP());
+		resJson["new_sta_ip"] = ip;
+		resJson["status"] = WiFi.status();
+
+		ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+		
+
+		res_ptr->addAction([&](AsyncWebServerRequest *request) {
+			logger.debug("Start Then Action\n");
+			disconnectStaWifi();
+			delay(2000);
+			WiFi.begin(ssid, password);
+			//if (!connectStaWifi(ssid, password)) {
+			//	logger.debug("WiFi STA not connected\n");
+			//	return 1;
+			//}
+			delay(500);
+			logger.debug("WiFi STA connected\n");
+			return 0;
+		});
+
+		return res_ptr;
 	}
+
+	return nullptr;
 }

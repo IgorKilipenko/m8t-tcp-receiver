@@ -51,6 +51,9 @@ class AWebServer {
 	void saveWiFiCredentials();
 	int8_t scanWiFi();
 	struct WifiItem;
+	void end();
+	void restart();
+	void init();
 
   private:
 	char softAP_ssid[32];
@@ -78,10 +81,11 @@ class AWebServer {
 	void notFoundHandler(AsyncWebServerRequest *request);
 	void initDefaultHeaders();
 
-	void wifiQueryHandler(const char *event, const JsonObject &json, JsonArray &outJson);
-	void wifiActionHandler(const char *event, const JsonObject &json, JsonArray &outJson);
+	ApiResultPtr wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson);
+	ApiResultPtr wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 
 	bool connectStaWifi(const char *ssid, const char *password);
+	void disconnectStaWifi();
 };
 
 struct AWebServer::WifiItem {

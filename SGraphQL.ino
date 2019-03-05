@@ -8,33 +8,39 @@ const char *SGraphQL::ALL = "all";
 const char *SGraphQL::WIFI = "wifi"; // WiFi Component
 const char *SGraphQL::GPS = "gps";   // GPS receiver Conponent
 
-const char *SGraphQL::QUERY_SECTION = "data";
+const char * SGraphQL::RESP_ROOT_NAME = "response";
 
 SGraphQL::SGraphQL() : handlers{} {}
 
 SGraphQL::~SGraphQL() { handlers.clear(); }
 
-bool SGraphQL::parse(const JsonObject &json, JsonArray &outJson) {
-	if (&json && !json.containsKey("type")) {
-		logger.debug("JsonObject not contain key \"type\"\n");
-		return false;
+ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
+
+	if (!validRequest(json)){
+		logger.error("Request Json not vilid\n");
+		json.prettyPrintTo(logger);
+		logger.print("\n");
+		return nullptr;
 	}
+
 	const char *type = json.get<const char *>("type");
 	logger.debug("parse -> type = %s\n", type);
 
-	if (!utils::streq(type, QUERY) && !utils::streq(type, MUTATION) && !utils::streq(type, ACTION)) {
-		logger.debug("Gql type filed\n");
-		return false;
-	}
-
 	const char *component = json.get<char *>("component");
 	logger.debug("parse -> component = %s\n", component);
-	// JsonObject& data = json.get<JsonObject&>("Data");
-	uint8_t hcount = emit(type, component, json, outJson);
 
-	logger.debug("Json API request parsed success\n");
+	const char *req_id = json.get<char *>("id");
+	logger.debug("parse -> request id = %s\n", req_id);
 
-	return hcount;
+	JsonObject & responseRoot = fillRootObject(req_id, outJson);
+
+	ApiResultPtr res_ptr = emit(type, component, json, responseRoot);
+
+	if (res_ptr){
+		logger.debug("Json API request parsed success\n");
+	}
+	
+	return res_ptr;
 }
 
 ApiHandler &SGraphQL::addHandler(const std::shared_ptr<ApiHandler> handler) {
@@ -56,64 +62,108 @@ ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunc
 	return *handler;
 }
 
-uint8_t SGraphQL::emit(const char *event, const char *component, const JsonObject &json, JsonArray &outJson) {
+ApiResultPtr SGraphQL::emit(const char *event, const char *component, const JsonObject &json, JsonObject &outJson) {
 	logger.debug("emit -> Start emit for event: %s, component: %s, \n", event, component);
-
-	uint8_t handlerCount = 0;
-	uint8_t i = 0;
 	for (const auto &h : handlers) {
-		const char * h_component = h->getComponentName();
-		const char * h_event = h->getEventName();
-		logger.debug("\n emit -> iter: {%i} Component: %s, handler component: %s\n", i++, component, h_component);
-		if (utils::streq(h_component, component)) {
-			logger.debug("emit -> Event: %s, handler type: %s\n", event, h_event);
-			if (utils::streq(h_event, SGraphQL::ALL) || utils::streq(h_event, event)) {
-				logger.debug("emit -> Start callback. Component: %s, handler component: %s\n", component, h_component);
-				h->getCallback()(event, json, outJson);
-				handlerCount++;
-			}
+		if (h->test(event, component)) {
+			return h->getCallback()(event, json, outJson);
 		}
 	}
 
-	return handlerCount;
+	return nullptr;
 }
+
+JsonObject & SGraphQL::fillRootObject(const char * request_id ,JsonObject & outJson){
+	//JsonObject & root = outJson.createNestedObject(SGraphQL::RESP_ROOT_NAME);
+	String resp_id = String(millis());
+	outJson["id"] = resp_id;
+	outJson["request_id"] = request_id;
+	return outJson;
+}
+
+bool SGraphQL::validRequest(const JsonObject & json) {
+	const char * type;
+	if (!json.success()){
+		logger.error("Not valid json, JsonObject not scuccess\n");
+		return false;
+	}
+	if (!json.containsKey("id")) {
+		logger.error("Not valid json, JsonObject not contain key \"id\"\n");
+		return false;
+	}
+	if (!json.containsKey("type")) {
+		logger.error("Not valid json, JsonObject not contain key \"type\"\n");
+		return false;
+	}
+	if (!json.containsKey("component")) {
+		logger.error("Not valid json, JsonObject not contain key \"comonent\"\n");
+		return false;
+	}
+	if (!json.containsKey("cmd")) {
+		logger.error("Not valid json, JsonObject not contain key \"cmd\"\n");
+		return false;
+	}
+	type = json["type"];
+	if (!utils::streq(type, QUERY) && !utils::streq(type, MUTATION) && !utils::streq(type, ACTION)) {
+		logger.error("Not valid json, API type filed\n");
+		return false;
+	}
+	if (json.containsKey(SGraphQL::RESP_ROOT_NAME)) {
+		logger.error("Not valid json, JsonObject contain key \"%s\"\n", SGraphQL::RESP_ROOT_NAME);
+		return false;
+	}
+	return true;
+}
+
+
+////////////////////////////////////////////////////////////////////
+/* ApiHandler =================================================== */
+////////////////////////////////////////////////////////////////////
 
 ApiHandler::ApiHandler(const char *component, const char *event, ApiHandlerFunction callback) : callback_fn{callback} {
 	logger.debug("ApiHandle ctr -> component : %s\n", component);
-	//this->type = new char[sizeof(event)];
-	//strcpy(this->type, event);
-
-	this->type = utils::copynewstr(event);
-
-	//this->component = new char[sizeof(component)];
-	//strcpy(this->component, component);
-	//logger.debug("ApiHandle ctr -> component : %s\n", this->component);
-	
-	//this->component = new char[5]{};
-	//strcpy(this->component, "wifi");
-	this->component = utils::copynewstr(component);
+	_type = utils::copynewstr(event);
+	_component = utils::copynewstr(component);
 }
 
 ApiHandler::~ApiHandler() {
 	logger.debug("Destroy ApiHandler\n");
-	if (type) {
-		logger.debug("Delete [] event: %s\n", type);
-		delete[] type;
+	if (_type) {
+		logger.debug("Delete [] event: %s\n", _type);
+		delete[] _type;
 	}
-	if (component) {
-		logger.debug("Delete [] component: %s\n", component);
-		delete[] component;
+	if (_component) {
+		logger.debug("Delete [] component: %s\n", _component);
+		delete[] _component;
 	}
 }
 
-char *ApiHandler::getEventName() const{
-	return type;
+char *ApiHandler::getEventName() const { return _type; }
+
+char *ApiHandler::getComponentName() const { return _component; }
+
+ApiHandlerFunction ApiHandler::getCallback() const { return callback_fn; }
+
+bool ApiHandler::test(const char *event, const char *component) const {
+	return utils::streq(_component, component) && (utils::streq(_type, SGraphQL::ALL) || utils::streq(_type, event));
 }
 
-char *ApiHandler::getComponentName() const{
-	return component;
-}
 
-ApiHandlerFunction ApiHandler::getCallback() const{
-	return callback_fn;
+
+///////////////////////////////////////////////////////////////////
+/* ApiResult =================================================== */
+///////////////////////////////////////////////////////////////////
+
+ApiResult::ApiResult()
+	: _actions{} {}
+
+ApiResult::~ApiResult() {}
+
+uint8_t ApiResult::then(AsyncWebServerRequest *request) {
+	if (_actions.empty()) {
+		return 0;
+	}
+	uint8_t err = _actions.front()(request);
+	_actions.pop();
+	return err;
 }

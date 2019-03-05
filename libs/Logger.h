@@ -14,9 +14,8 @@ class Logger : public Print {
 		Logger(HardwareSerial *);
 		~Logger();
 		template <typename... T> void debug(T...);
-		//template <typename T> void print(T);
-		//template <typename... T> void printf(T...);
-		//template <typename T> void println(T);
+		template <typename... T> void error(T...);
+		template <typename... T> void trace(T...);
 		size_t write(const uint8_t*, size_t) override;
 		size_t write(const uint16_t*, size_t);
 		size_t write(const uint8_t) override;

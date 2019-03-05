@@ -38,7 +38,8 @@ export default class ApiSocket {
                     data: {
                         type: this.types.query,
                         component: this.components.wifi,
-                        cmd: 'scan'
+                        cmd: 'scan',
+                        id: Date.now()
                     }
                 });
                 reslove(resp);
@@ -53,14 +54,16 @@ export default class ApiSocket {
             try {
                 const resp = await this.instance({
                     method: 'post',
-                    //url: '/api',
+                    url: '/service',
                     headers: this.headers.json,
+                    //baseURL: 'http://192.168.1.62',
                     data: {
                         type: this.types.action,
                         component: this.components.wifi,
                         cmd: 'connect',
                         ssid,
-                        password
+                        password,
+                        id: Date.now()
                     }
                 });
                 reslove(resp);

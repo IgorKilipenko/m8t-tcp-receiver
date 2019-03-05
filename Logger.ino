@@ -7,30 +7,32 @@ Logger::~Logger() {}
 
 template <typename... T> void Logger::debug(T... args) {
 #ifdef DEBUG
+	lout->print("[DEBUG] ");
 	lout->printf(args...);
 #endif
 }
-// template <typename T> void Logger::print(T str) {
-//#ifdef DEBUG
-//	lout->print(str);
-//#endif
-//}
-// template <typename T> void Logger::println(T str) {
-//#ifdef DEBUG
-//	lout->println(str);
-//#endif
-//}
-// template <typename... T> void Logger::printf(T... args) {
-//#ifdef DEBUG
-//	lout->printf(args...);
-//#endif
-//}
+
+template <typename... T> void Logger::error(T... args) {
+#ifdef DEBUG
+	lout->print("[ERROR] ");
+	lout->printf(args...);
+#endif
+}
+
+template <typename... T> void Logger::trace(T... args) {
+#ifdef DEBUG
+	lout->print("[TRACE] -> ");
+	lout->printf(args...);
+#endif
+}
+
 size_t Logger::write(const uint8_t *buffer, size_t len) {
 #ifdef DEBUG
 	return lout->write(buffer, len);
 #endif
 	return 0;
 }
+
 size_t Logger::write(const uint16_t *buffer, size_t len) {
 #ifdef DEBUG
 	size_t i = 0;
@@ -40,12 +42,14 @@ size_t Logger::write(const uint16_t *buffer, size_t len) {
 #endif
 	return 0;
 }
+
 size_t Logger::write(const uint16_t wc) {
 #ifdef DEBUG
 	return write(&wc, 2);
 #endif
 	return 0;
 }
+
 size_t Logger::write(const uint8_t c) {
 #ifdef DEBUG
 	return lout->write(c);
