@@ -83,8 +83,8 @@ const baseConfig = {
         new CleanWebpackPlugin(['dist']),
         new webpack.DefinePlugin({
             REMOTE_API_URL: JSON.stringify('192.168.1.62/api'),
-            API_URL: JSON.stringify('localhost:80/api'),
-            HOST: JSON.stringify('192.168.1.62'),
+            API_URL: JSON.stringify('/api'),
+            HOST: JSON.stringify('localhost'),
             PORT: JSON.stringify(80)
         })
     ]

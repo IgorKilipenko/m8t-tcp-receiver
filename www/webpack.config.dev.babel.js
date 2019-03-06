@@ -14,7 +14,10 @@ const devConfig = merge(common,
         mode: 'development',
         devtool: 'inline-source-map',
         plugins: [
-            new webpack.HotModuleReplacementPlugin()
+            new webpack.HotModuleReplacementPlugin(),
+            new webpack.DefinePlugin({
+                DEVELOPMENT: JSON.stringify(true)
+            })
         ]
     }
 );

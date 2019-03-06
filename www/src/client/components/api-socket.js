@@ -3,7 +3,7 @@ import axios from 'axios';
 export default class ApiSocket {
     constructor() {
         this.instance = axios.create({
-            baseURL: `http://${REMOTE_API_URL}`, //'http://192.168.1.62',
+            baseURL: DEVELOPMENT ? `http://${REMOTE_API_URL}` : API_URL,
             timeout: 6000,
             method: 'post',
             //maxContentLength: 40000
@@ -23,7 +23,7 @@ export default class ApiSocket {
             wifi: 'wifi'
         };
 
-        console.log({baseUrl:`http://${REMOTE_API_URL}`})
+        console.log({baseUrl:this.instance.baseURL})
     }
 
     getWifiList = () => {

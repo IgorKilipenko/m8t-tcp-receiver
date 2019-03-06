@@ -53,7 +53,6 @@ class AWebServer {
 	struct WifiItem;
 	void end();
 	void restart();
-	void init();
 
   private:
 	char softAP_ssid[32];
@@ -86,6 +85,8 @@ class AWebServer {
 
 	bool connectStaWifi(const char *ssid, const char *password);
 	void disconnectStaWifi();
+	void addServerHandlers();
+	void addOTAhandlers();
 };
 
 struct AWebServer::WifiItem {
