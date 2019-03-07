@@ -19,6 +19,7 @@
 
 class ApiHandler;
 class ApiResult;
+class ApiEvent;
 
 typedef std::shared_ptr<const ApiHandler> ApiHandlerPtr;
 typedef std::shared_ptr<ApiResult> ApiResultPtr;
@@ -33,11 +34,20 @@ class SGraphQL {
 	static const char *ACTION;
 	static const char *UNDEFINED;
 	static const char *ALL;
+	static const char *CMD;
 
 	static const char *WIFI;
 	static const char *GPS;
+	static const char *SERVER;
 
-	static const char *RESP_ROOT_NAME;
+	static const char *RESP_ERR;
+	static const char *RESP_ID;
+	static const char *RESP_REQ_ID;
+	static const char *RESP_VALUE;
+	static const char *RESP_MSG;
+	static const char *CMD_START;
+	static const char *CMD_STOP;
+
 
 	SGraphQL();
 	~SGraphQL();
@@ -84,6 +94,18 @@ class ApiResult {
   private:
 	size_t _res_count;
 	std::queue<ApiThenAction> _actions;
+};
+
+class ApiEvent {
+  public:
+	ApiEvent(const JsonObject *requestJson, JsonObject *responseJson) : _requestJson{requestJson}, _responseJson{responseJson} {}
+	~ApiEvent() {}
+	const JsonObject &getRequestJson() const { return *_requestJson; }
+	JsonObject &getResponseJson() const { return *_responseJson; }
+
+  private:
+	const JsonObject *_requestJson;
+	JsonObject *_responseJson;
 };
 
 #endif

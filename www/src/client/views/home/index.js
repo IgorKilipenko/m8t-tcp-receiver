@@ -3,8 +3,9 @@ import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { Helmet } from 'react-helmet';
 import { withStyles } from '@material-ui/core/styles';
+import ReceiverView from '../receiver';
 
-const styles = () =>{
+const styles = (theme) =>{
     root: {
         display: 'flex'
     }
@@ -15,9 +16,7 @@ class HomeView extends React.Component {
         const {classes} = this.props;
         return(
             <div className={classes.root}>
-                <h1>
-                    Home page
-                </h1>
+                <ReceiverView/>
             </div>
         )
     }

@@ -4,11 +4,20 @@ const char *SGraphQL::MUTATION = "mutaion";
 const char *SGraphQL::ACTION = "action";
 const char *SGraphQL::UNDEFINED = "undefined";
 const char *SGraphQL::ALL = "all";
+const char *SGraphQL::CMD = "cmd";
 
 const char *SGraphQL::WIFI = "wifi"; // WiFi Component
-const char *SGraphQL::GPS = "gps";   // GPS receiver Conponent
+const char *SGraphQL::GPS = "receiver";   // GPS receiver Conponent
+const char *SGraphQL::SERVER = "server";
 
-const char * SGraphQL::RESP_ROOT_NAME = "response";
+const char * SGraphQL::RESP_VALUE = "value";
+const char *SGraphQL::RESP_MSG = "message";
+const char *SGraphQL::RESP_ERR = "error";
+const char *SGraphQL::RESP_ID = "resp_id";
+const char *SGraphQL::RESP_REQ_ID = "req_id";
+
+const char *SGraphQL::CMD_START = "start";
+const char *SGraphQL::CMD_STOP = "stop";
 
 SGraphQL::SGraphQL() : handlers{} {}
 
@@ -76,8 +85,8 @@ ApiResultPtr SGraphQL::emit(const char *event, const char *component, const Json
 JsonObject & SGraphQL::fillRootObject(const char * request_id ,JsonObject & outJson){
 	//JsonObject & root = outJson.createNestedObject(SGraphQL::RESP_ROOT_NAME);
 	String resp_id = String(millis());
-	outJson["id"] = resp_id;
-	outJson["request_id"] = request_id;
+	outJson[RESP_ID] = resp_id;
+	outJson[RESP_REQ_ID] = request_id;
 	return outJson;
 }
 
@@ -108,10 +117,10 @@ bool SGraphQL::validRequest(const JsonObject & json) {
 		logger.error("Not valid json, API type filed\n");
 		return false;
 	}
-	if (json.containsKey(SGraphQL::RESP_ROOT_NAME)) {
-		logger.error("Not valid json, JsonObject contain key \"%s\"\n", SGraphQL::RESP_ROOT_NAME);
-		return false;
-	}
+	//if (json.containsKey(SGraphQL::RESP_ROOT_NAME)) {
+	//	logger.error("Not valid json, JsonObject contain key \"%s\"\n", SGraphQL::RESP_ROOT_NAME);
+	//	return false;
+	//}
 	return true;
 }
 

@@ -23,89 +23,26 @@ class App extends React.Component {
             server: {}
         };
     }
-    sendGnssCmd = () => {
-        return new Promise(async (reslove, reject) => {
-            try {
-                const resp = await api.instance({
-                    method: 'post',
-                    url: '/api/gnss/cmd',
-                    params: this.state.gps.enabled ? { cmd: '0' } : { cmd: '1' }
-                });
-                console.log({ resp });
-                const gps = {
-                    respStatus: resp.status,
-                    data: resp.data,
-                    enabled: resp.data && resp.data.enabled
-                };
-                console.log({ gps });
-                this.setState({ gps });
-                reslove(gps);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    };
 
-    testRestApi() {
-        return new Promise(async (reslove, reject) => {
-            try {
-                const resp = await api.instance({
-                    method: 'post',
-                    url: '/rest/endpoint',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    data: JSON.stringify({
-                        rest_test: 'TEST SUCCESS'
-                    })
-                });
-                console.log({ resp });
-                reslove(resp);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    }
-
-    testApi() {
-        return new Promise(async (reslove, reject) => {
-            try {
-                const resp = await api.instance({
-                    method: 'post',
-                    //url: '/api',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    data: JSON.stringify({
-                        type: 'query',
-                        component: 'receiver'
-                    })
-                });
-                console.log({ resp });
-                reslove(resp);
-            } catch (err) {
-                reject(err);
-            }
-        });
-    }
 
     componentDidMount = async () => {
-        //try {
-        //    this.getGpsState();
-        //} catch (err) {
-        //    console.log({ err }, this);
-        //}
+        const receiverState = {}
+        try{
+            let resp = await api.getServerInfo();
+            console.log({serverStart:resp.data.server_time})
+            receiverState.serverStart = Date.now() - resp.data.server_time;
 
-        //try {
-        //    //this.testRestApi();
-        //    //this.testApi()
-        //    const res = await api.getWifiList();
-        //    console.log({res});
-        //} catch (err) {
-        //    console.log({err});
-        //}
+            resp = await api.getReceiverState();
+            receiverState.enabled = resp.data.enabled;
+            if (receiverState.enabled){
+                receiverState.timeStart = resp.data.timeStart;
+            }
+            
+            this.props.apiStore.setReceiverState({...receiverState})
 
-
+        }catch (err){
+            console.log({err});
+        }
     };
 
     render() {

@@ -175,4 +175,10 @@ void AWebServer::disconnectStaWifi(){
 }
 
 /** Main process */
-void AWebServer::process() { ArduinoOTA.handle(); }
+void AWebServer::process() { 
+	if (!telnetServer->isInProgress()){
+		ArduinoOTA.handle(); 
+	}else{
+		telnetServer->process();
+	}
+}

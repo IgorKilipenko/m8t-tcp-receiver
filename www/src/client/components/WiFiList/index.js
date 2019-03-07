@@ -58,7 +58,7 @@ class WiFiList extends React.Component {
             <Fragment>
             <LoginDialog open={this.state.openLoginDialog} onCloseDialog={(ssid, password, save) => this.handleCloseLoginDialog(ssid, password, save)} ssid={this.state.currentSsid}/>
             <List
-                subheader={<ListSubheader>Settings</ListSubheader>}
+                subheader={<ListSubheader>WiFi Networks</ListSubheader>}
                 className={classes.root}
             >
                 {wifiListData.map((wifi, i) => {

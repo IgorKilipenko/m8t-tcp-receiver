@@ -53,6 +53,7 @@ class AWebServer {
 	struct WifiItem;
 	void end();
 	void restart();
+	unsigned long getServerTime() const {return millis();}
 
   private:
 	char softAP_ssid[32];
@@ -82,6 +83,9 @@ class AWebServer {
 
 	ApiResultPtr wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
+	ApiResultPtr receiverActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
+	ApiResultPtr receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
+	ApiResultPtr serverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 
 	bool connectStaWifi(const char *ssid, const char *password);
 	void disconnectStaWifi();

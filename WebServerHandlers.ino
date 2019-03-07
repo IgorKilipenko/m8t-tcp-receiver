@@ -86,8 +86,8 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 	else if (request->method() == HTTP_HEAD)
 		logger.printf("HEAD");
 	else if (request->method() == HTTP_OPTIONS) {
-		request->send(200);
-		return;
+		// request->send(200);
+		// return;
 	} else
 		logger.printf("UNKNOWN");
 	logger.printf(" http://%s%s\n", request->host().c_str(), request->url().c_str());
@@ -116,7 +116,8 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 		}
 	}
 
-	request->send(404);
+	// request->send(404);
+	request->send(200);
 }
 
 ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
@@ -125,11 +126,11 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 	json.prettyPrintTo(logger);
 	logger.print("\n");
 
-	const char *cmd = json.get<const char *>("cmd");
+	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "scan")) {
 		logger.debug("Start scan WIFI\n");
 		int8_t n = scanWiFi();
-		JsonArray &arrayJson = outJson.createNestedArray("value");
+		JsonArray &arrayJson = outJson.createNestedArray(SGraphQL::RESP_VALUE);
 		logger.debug("Scan end, item count: %i\n", n);
 		if (n > 0) {
 			uint8_t i = 0;
@@ -158,7 +159,7 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 	json.prettyPrintTo(logger);
 	logger.debug("\n");
 
-	const char *cmd = json.get<const char *>("cmd");
+	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "connect")) {
 		if (!json.containsKey("ssid")) {
 			logger.debug("SSID failed\n");
@@ -173,7 +174,7 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 		const char *new_password = json["password"];
 		strcpy(this->password, new_password);
 		logger.debug("onWiFiActionRequest -> createNestedObject\n ");
-		JsonObject &resJson = outJson.createNestedObject("value");
+		JsonObject &resJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 
 		resJson["status"] = WiFi.status();
 		String ip = utils::toStringIp(WiFi.localIP());
@@ -207,6 +208,93 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 	return nullptr;
 }
 
+ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
+	logger.debug("Start on receiver ACTION\n");
+	json.prettyPrintTo(logger);
+	logger.debug("\n");
+
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+
+	const char *cmd = json.get<const char *>(SGraphQL::CMD);
+	if (utils::streq(cmd, SGraphQL::CMD_START) || utils::streq(cmd, SGraphQL::CMD_STOP)) {
+		logger.trace("Start Receiver Action, cmd: {%s}\n", cmd);
+		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		if (utils::streq(cmd, SGraphQL::CMD_START)) {
+
+			if (telnetServer->isInProgress()) {
+				logger.debug("Already enabled");
+				outJson[SGraphQL::RESP_MSG] = "Already enabled";
+				objJson["timeReceive"] = telnetServer->getTimeReceive();
+			} else {
+				telnetServer->startReceive();
+			}
+			objJson["timeStart"] = telnetServer->getTimeStart();
+
+		} else {
+			if (!telnetServer->isInProgress()) {
+				logger.debug("Already disabled");
+				outJson[SGraphQL::RESP_MSG] = "Already disabled";
+			} else {
+				objJson["timeReceive"] = telnetServer->getTimeReceive();
+				telnetServer->stopReceive();
+			}
+		}
+		objJson["enabled"] = telnetServer->isInProgress();
+		return res_ptr;
+	}
+
+	JsonObject &errJson = outJson.createNestedObject(SGraphQL::RESP_ERR);
+	errJson[SGraphQL::RESP_MSG] = String("Not found command : ") + cmd;
+
+	return res_ptr;
+}
+
+ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
+	logger.debug("Start on receiver ACTION\n");
+	reqJson.prettyPrintTo(logger);
+	logger.debug("\n");
+
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+
+	const char *cmd = reqJson.get<const char *>("cmd");
+	if (utils::streq(cmd, "state")) {
+		logger.trace("Start Receiver Query\n");
+		JsonObject &objJson = outJson.createNestedObject("value");
+		objJson["enabled"] = telnetServer->isInProgress() ? true : false;
+		if (telnetServer->isInProgress()) {
+			objJson["timeStart"] = telnetServer->getTimeStart();
+		}
+
+		return res_ptr;
+	}
+
+	JsonObject &errJson = outJson.createNestedObject("error");
+	errJson["message"] = String("Not found command : ") + cmd;
+
+	return res_ptr;
+}
+
+ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
+	logger.debug("Start server QUERY\n");
+	reqJson.prettyPrintTo(logger);
+	logger.debug("\n");
+
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+
+	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
+	if (utils::streq(cmd, "info")) {
+		logger.trace("Start Server Query\n");
+		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		objJson["server_time"] = getServerTime();
+		return res_ptr;
+	}
+
+	JsonObject &errJson = outJson.createNestedObject(SGraphQL::RESP_ERR);
+	errJson["message"] = String("Not found command : ") + cmd;
+
+	return res_ptr;
+}
+
 void AWebServer::addServerHandlers() {
 	ws.onEvent(std::bind(&AWebServer::wsEventHnadler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
 
@@ -218,7 +306,7 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(new SPIFFSEditor(http_username, http_password));
 
-	server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", String(ESP.getFreeHeap())); });
+	// server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", String(ESP.getFreeHeap())); });
 
 	server.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
 
@@ -278,112 +366,18 @@ void AWebServer::addServerHandlers() {
 		// delete response;
 	});
 
-	// AsyncCallbackJsonWebHandler *wifiStaConnectHandler = new AsyncCallbackJsonWebHandler("/api/service", [&](AsyncWebServerRequest *request, JsonVariant &jsonReq) {
-	//              logger.debug("/api/srvice \n");
-	//              if (!jsonReq) {
-	//              	logger.debug("apiHandler -> Json is empty\n");
-	//              	request->send(404);
-	//              	return;
-	//              }
-	//              const JsonObject &jsonObj = jsonReq.as<const JsonObject>();
-	//              if (!jsonObj.success()) {
-	//              	logger.debug("apiHandler -> Json parsing failed\n");
-	//              	request->send(404);
-	//              	return;
-	//              }
-
-	//              AsyncJsonResponse *response = new AsyncJsonResponse(true);
-	//              JsonArray &jsonResp = response->getRoot();
-
-	//              if (jsonObj.containsKey("cmd")) {
-	//              	logger.debug("Contain cmd key, cmd: %s\n", jsonObj.get<const char *>("cmd"));
-	//              	const char *cmd = jsonObj.get<const char *>("cmd");
-	//              	if (utils::streq(cmd, "connect")) {
-	//              		if (!jsonObj.containsKey("ssid")) {
-	//              			logger.debug("SSID failed\n");
-	//              			return;
-	//              		}
-	//              		if (!jsonObj.containsKey("password")) {
-	//              			logger.debug("PASSWORD failed\n");
-	//              			return;
-	//              		}
-	//              		const char *new_ssid = jsonObj["ssid"];
-	//              		strcpy(this->ssid, new_ssid);
-	//              		const char *new_password = jsonObj["password"];
-	//              		strcpy(this->password, new_password);
-
-	//              		logger.debug("onWiFiActionRequest -> createNestedObject\n ");
-	//              		JsonObject &resJson = jsonResp.createNestedObject();
-
-	//              		//saveWiFiCredentials();
-	//              		server.reset();
-	//              		if (!this->connectStaWifi(ssid, password)) {
-	//              			logger.debug("WiFi STA not connected\n");
-	//              			return;
-	//              		}
-
-	//
-
-	//              		//delay(1000);
-	//              		//ESP.reset();
-	//              		//resJson["status"] = WiFi.status();
-	//              		//String ip = utils::toStringIp(WiFi.localIP());
-	//              		//resJson["new_sta_ip"] = ip;
-	//              		//resJson["status"] = WiFi.status();
-	//              	}
-	//              }
-
-	//              response->setLength();
-	//              request->send(response);
-	//              logger.debug("apiHandler -> Json API response send success\n");
-	//              // delete response;
-	//});
-
-	// server.addHandler(wifiStaConnectHandler);
-
 	api.on(SGraphQL::WIFI, SGraphQL::QUERY, std::bind(&AWebServer::wifiQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	api.on(SGraphQL::WIFI, SGraphQL::ACTION, std::bind(&AWebServer::wifiActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::GPS, SGraphQL::QUERY, std::bind(&AWebServer::receiverQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::GPS, SGraphQL::ACTION, std::bind(&AWebServer::receiverActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::SERVER, SGraphQL::QUERY, std::bind(&AWebServer::serverQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	server.addHandler(apiHandler);
 
 #endif // REST_API
-
-	/* API  ================================ */
-	server.on("/api/wifi/scan", HTTP_GET, [&](AsyncWebServerRequest *request) {
-		logger.debug("WIFI Scan request\n");
-
-		String json = "[";
-		int n = WiFi.scanComplete();
-		if (n == -2) {
-			WiFi.scanNetworks(true);
-		} else if (n) {
-			for (int i = 0; i < n; ++i) {
-				if (i)
-					json += ",";
-				json += "{";
-				json += "\"rssi\":" + String(WiFi.RSSI(i));
-				json += ",\"ssid\":\"" + WiFi.SSID(i) + "\"";
-				json += ",\"bssid\":\"" + WiFi.BSSIDstr(i) + "\"";
-				json += ",\"channel\":" + String(WiFi.channel(i));
-				json += ",\"secure\":" + String(WiFi.encryptionType(i));
-				json += ",\"hidden\":" + String(WiFi.isHidden(i) ? "true" : "false");
-				json += "}";
-			}
-			WiFi.scanDelete();
-			if (WiFi.scanComplete() == -2) {
-				WiFi.scanNetworks(true);
-			}
-		}
-		json += "]";
-
-		AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
-		request->send(response);
-		json = String();
-	});
 }
 
-
-void AWebServer::addOTAhandlers(){
-		// Send OTA events to the browser
+void AWebServer::addOTAhandlers() {
+	// Send OTA events to the browser
 	ArduinoOTA.onStart([&]() { events.send("Update Start", "ota"); });
 	ArduinoOTA.onEnd([&]() { events.send("Update End", "ota"); });
 	ArduinoOTA.onProgress([&](unsigned int progress, unsigned int total) {

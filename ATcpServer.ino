@@ -87,7 +87,7 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 	}, this);
 }
 
-bool ATcpServer::isInProgress() { return receiveData; }
+bool ATcpServer::isInProgress() const { return receiveData; }
 
 void ATcpServer::stopReceive() {
 	if (store) {
@@ -97,6 +97,7 @@ void ATcpServer::stopReceive() {
 		server->end();
 	}
 	receiveData = false;
+	_timeEnd = millis();
 }
 
 void ATcpServer::startReceive() {
@@ -110,6 +111,22 @@ void ATcpServer::startReceive() {
 	serviceServer->begin();
 	
 	receiveData = true;
+	_timeEnd = 0;
+	_timeStart = millis();
+}
+
+unsigned long ATcpServer::getTimeReceive() const {
+	if (!isInProgress()){
+		return 0;
+	}
+	return millis() - _timeStart;
+}
+
+unsigned long ATcpServer::getTimeStart() const {
+	if (!isInProgress()){
+		return 0;
+	}
+	return _timeStart;
 }
 
 void ATcpServer::end() {

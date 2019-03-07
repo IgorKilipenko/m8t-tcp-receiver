@@ -33,7 +33,9 @@ class ATcpServer {
 	void process();
 	void stopReceive();
 	void startReceive();
-	bool isInProgress();
+	bool isInProgress() const;
+	unsigned long getTimeReceive() const;
+	unsigned long getTimeStart() const;
 	void sendDataToClients(char buffer[], size_t bytesCount);
 
 	void end();
@@ -47,7 +49,10 @@ class ATcpServer {
 	bool receiveData = false;
 	SDStore *store = nullptr;
 	AsyncServer *server = nullptr;
-	AsyncServer * serviceServer = nullptr;
+	AsyncServer *serviceServer = nullptr;
+
+	unsigned long _timeStart;
+	unsigned long _timeEnd;
 
 	size_t freeClients();
 	void handleError(AsyncClient *client, int8_t error);
@@ -55,7 +60,6 @@ class ATcpServer {
 	void handleDisconnect(AsyncClient *client);
 	void handleTimeOut(AsyncClient *client, uint32_t time);
 	void handleNewClient(AsyncClient *client);
-
 };
 
 #endif
