@@ -20,7 +20,9 @@ class Logger : public Print {
 		size_t write(const uint16_t*, size_t);
 		size_t write(const uint8_t) override;
 		size_t write(const uint16_t);
+		#ifdef ESP8266
 		void flush() override;
+		#endif
 
   private:
 		HardwareSerial *lout;

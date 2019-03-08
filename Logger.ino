@@ -57,8 +57,10 @@ size_t Logger::write(const uint8_t c) {
 	return 0;
 }
 
+#ifdef ESP8266
 void Logger::flush() {
 #ifdef DEBUG
 	return lout->flush();
 #endif
 }
+#endif

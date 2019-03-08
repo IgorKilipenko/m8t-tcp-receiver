@@ -10,12 +10,14 @@
 #include "ArduinoJson.h"
 
 #ifdef ESP32
-#include <AsyncWebServer.h>
+//#include <AsyncWebServer.h>
 #elif defined(ESP8266)
-#include <ESPAsyncWebServer.h>
+//#include <ESPAsyncWebServer.h>
 #else
 #error Platform not supported
 #endif
+
+#include <ESPAsyncWebServer.h>
 
 class ApiHandler;
 class ApiResult;

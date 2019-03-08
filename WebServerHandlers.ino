@@ -224,7 +224,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 			if (telnetServer->isInProgress()) {
 				logger.debug("Already enabled");
 				outJson[SGraphQL::RESP_MSG] = "Already enabled";
-				//objJson["timeReceive"] = telnetServer->getTimeReceive();
+				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 			} else {
 				telnetServer->startReceive();
 			}
@@ -235,7 +235,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 				logger.debug("Already disabled");
 				outJson[SGraphQL::RESP_MSG] = "Already disabled";
 			} else {
-				//objJson["timeReceive"] = telnetServer->getTimeReceive();
+				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 				telnetServer->stopReceive();
 			}
 		}
@@ -306,7 +306,11 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&events);
 
-	server.addHandler(new SPIFFSEditor(http_username, http_password));
+#ifdef ESP32
+	server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
+#else
+	server.addHandler(new SPIFFSEditor(http_username, http_password, SPIFFS));
+#endif
 
 	// server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", String(ESP.getFreeHeap())); });
 

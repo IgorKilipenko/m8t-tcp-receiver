@@ -61,11 +61,16 @@ void SDStore::closeFile() {
 	}
 }
 
-void SDStore::writeToSD(char buffer[], size_t bytesCount) {
-	sdFile.write(buffer, bytesCount);
+size_t SDStore::writeToSD(const char * buffer, size_t bytesCount) {
+	return writeToSD(reinterpret_cast<const uint8_t*>(buffer), bytesCount);
+}
+
+size_t SDStore::writeToSD(const uint8_t * buffer, size_t bytesCount) {
+	size_t res = sdFile.write(buffer, bytesCount);
 	sdFile.flush();
 
 	delay(1);
+	return res;
 }
 
 bool SDStore::isInitialize() { return sdCard ? true : false; }

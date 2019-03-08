@@ -7,31 +7,35 @@
 #include <string>
 
 #ifdef ESP32
-#include <WiFi.h>
+#include "WiFi.h"
 #include <AsyncTCP.h>
-#include <AsyncWebServer.h>
+//#include <AsyncWebServer.h>
 #include <ESPmDNS.h>
+#include "SPIFFS.h"
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESP8266mDNS.h>
-#include <ESPAsyncWebServer.h>
+#include <Hash.h>		// ESP8266 only
+//#include <ESPAsyncWebServer.h>
 #else
 #error Platform not supported
 #endif
+
+#include <ESPAsyncWebServer.h>
 
 #include <EEPROM.h>
 #include <ArduinoOTA.h>
 //#include <ESP8266WiFi.h>
 #include <FS.h>
-#include <Hash.h>
+
 //#include <ESPAsyncTCP.h>
 #include <SPIFFSEditor.h>
 #include "ATcpServer.h"
 
 #ifdef REST_API
-#include "AsyncJson.h"
-#include "ArduinoJson.h"
+#include <AsyncJson.h>
+#include <ArduinoJson.h>
 #include "SGraphQL.h"
 #endif
 

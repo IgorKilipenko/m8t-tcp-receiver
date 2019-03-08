@@ -3,7 +3,13 @@
 #define REST_API	// Use REST API
 
 /* SD card */
-#define CS_PIN D8	// SD card cs_pin (default D8 on ESP8266)
+#ifdef ESP32
+#define CS_PIN 5			// SD card cs_pin (default D5 GPIO5 on ESP32 DevkitV1)
+#elif defined(ESP8266)
+#define CS_PIN D8			// SD card cs_pin (default D8 on ESP8266)
+#else 
+#error Platform not supported
+#endif
 
 /* TCP Client */
 #define MAX_TCP_CLIENTS 5   // Default max clients
@@ -17,7 +23,6 @@
 #include "libs/AWebServer.h"
 #include "libs/ATcpServer.h"
 //#include "libs/WebServer.h"
-
 
 
 
