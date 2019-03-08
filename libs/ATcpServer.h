@@ -34,6 +34,7 @@ class ATcpServer {
 	void stopReceive();
 	void startReceive();
 	bool isInProgress() const;
+	bool isSdInitialize() const;
 	unsigned long getTimeReceive() const;
 	unsigned long getTimeStart() const;
 	void sendDataToClients(char buffer[], size_t bytesCount);

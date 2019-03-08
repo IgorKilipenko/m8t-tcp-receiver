@@ -171,6 +171,9 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 void AWebServer::disconnectStaWifi(){
 	//WiFi.setAutoConnect(false);
 	//WiFi.setAutoReconnect(false);
+	if (telnetServer != nullptr && telnetServer->isInProgress()){
+		telnetServer->stopReceive();
+	}
 	WiFi.disconnect(false);
 }
 

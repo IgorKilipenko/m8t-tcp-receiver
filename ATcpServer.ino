@@ -88,6 +88,9 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 }
 
 bool ATcpServer::isInProgress() const { return receiveData; }
+bool ATcpServer::isSdInitialize() const {
+	return store != nullptr && store->isInitialize();
+}
 
 void ATcpServer::stopReceive() {
 	if (store) {

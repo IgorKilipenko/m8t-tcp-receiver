@@ -224,7 +224,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 			if (telnetServer->isInProgress()) {
 				logger.debug("Already enabled");
 				outJson[SGraphQL::RESP_MSG] = "Already enabled";
-				objJson["timeReceive"] = telnetServer->getTimeReceive();
+				//objJson["timeReceive"] = telnetServer->getTimeReceive();
 			} else {
 				telnetServer->startReceive();
 			}
@@ -235,7 +235,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 				logger.debug("Already disabled");
 				outJson[SGraphQL::RESP_MSG] = "Already disabled";
 			} else {
-				objJson["timeReceive"] = telnetServer->getTimeReceive();
+				//objJson["timeReceive"] = telnetServer->getTimeReceive();
 				telnetServer->stopReceive();
 			}
 		}
@@ -256,13 +256,14 @@ ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObjec
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
-	const char *cmd = reqJson.get<const char *>("cmd");
+	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "state")) {
 		logger.trace("Start Receiver Query\n");
-		JsonObject &objJson = outJson.createNestedObject("value");
+		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["enabled"] = telnetServer->isInProgress() ? true : false;
 		if (telnetServer->isInProgress()) {
 			objJson["timeStart"] = telnetServer->getTimeStart();
+			objJson["timeReceive"] = telnetServer->getTimeReceive();
 		}
 
 		return res_ptr;
@@ -286,6 +287,7 @@ ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject 
 		logger.trace("Start Server Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["server_time"] = getServerTime();
+		objJson["sd_success"] = telnetServer->isSdInitialize();
 		return res_ptr;
 	}
 
