@@ -149,6 +149,35 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 		if (wifiList.size() > 0) {
 			wifiList.clear();
 		}
+	}else if (utils::streq(cmd, "info")){
+		logger.trace("Start WIFI info\n");
+
+		JsonObject &resJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		
+		uint8_t mode = WiFi.getMode();
+		if (!mode){
+			logger.error("WiFi disconnected, WiFi Mode = [%s]\n", utils::wiFiModeToString(mode).c_str());
+			return nullptr;
+		}
+		resJson["mode"] = utils::wiFiModeToString(mode);
+		if (mode == WIFI_AP || mode == WIFI_AP_STA){
+			JsonObject &apJson = resJson.createNestedObject("ap");
+			apJson["ap_ip"] = utils::toStringIp(WiFi.softAPIP());
+			apJson["ap_ssid"] = WiFi.softAPSSID();
+			apJson["station_num"] = WiFi.softAPgetStationNum();
+		}
+		if (mode == WIFI_STA || WIFI_AP_STA){
+			JsonObject &staJson = resJson.createNestedObject("sta");
+			staJson["local_ip"] = utils::toStringIp(WiFi.localIP());
+			staJson["ssid"] = WiFi.SSID();
+			staJson["rssi"] = WiFi.RSSI();
+			staJson["hostname"] = WiFi.hostname();
+		}
+		
+		
+
+	} else {
+		return nullptr;
 	}
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 	return res_ptr;
@@ -178,8 +207,7 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 
 		resJson["status"] = WiFi.status();
 		String ip = utils::toStringIp(WiFi.localIP());
-		resJson["new_sta_ip"] = ip;
-		resJson["status"] = WiFi.status();
+		resJson["sta_ip"] = ip;
 
 		ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 

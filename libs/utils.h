@@ -17,7 +17,6 @@
 
 namespace utils {
 
-
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args &&... args) { return std::unique_ptr<T>(new T(std::forward<Args>(args)...)); }
 
@@ -62,12 +61,12 @@ String toStringIp(IPAddress ip) {
 /* Source : https://github.com/alanswx/ESPAsyncWiFiManager/blob/00b5c15acab9ef18abf5084cfee88995a8fec1ed/ESPAsyncWiFiManager.cpp */
 const char HEX_CHAR_ARRAY[17] = "0123456789ABCDEF";
 /**
-* convert char array (hex values) to readable string by seperator
-* buf:           buffer to convert
-* length:        data length
-* strSeperator   seperator between each hex value
-* return:        formated value as String
-*/
+ * convert char array (hex values) to readable string by seperator
+ * buf:           buffer to convert
+ * length:        data length
+ * strSeperator   seperator between each hex value
+ * return:        formated value as String
+ */
 String byteToHexString(uint8_t *buf, uint8_t length, String strSeperator = "-") {
 	String dataString = "";
 	for (uint8_t i = 0; i < length; i++) {
@@ -96,6 +95,22 @@ String getEspChipId() {
 #elif defined(ESP8266)
 	return String(ESP.getChipId());
 #endif
+}
+
+String wiFiModeToString(uint8_t mode){
+	switch (mode)
+	{
+		case 0:
+			return "WIFI_OFF";
+		case 1:
+			return "WIFI_STA";
+		case 2: 
+			return "WIFI_AP";
+		case 3:
+			return "WIFI_AP_STA";
+		default:
+			return "unknown";
+	}
 }
 
 } // namespace utils
