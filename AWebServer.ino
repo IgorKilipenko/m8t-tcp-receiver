@@ -66,6 +66,8 @@ void AWebServer::setup() {
 /** Credentials ================================================ */
 /** Load WLAN credentials from EEPROM */
 void AWebServer::loadWiFiCredentials() {
+	logger.trace("Start load Credential");
+
 	logger.debug("ssid sizeof: ");
 	logger.debug("%i\n", sizeof(ssid));
 	logger.debug("EEROM start\n");
@@ -87,6 +89,8 @@ void AWebServer::loadWiFiCredentials() {
 
 /** Store WLAN credentials to EEPROM */
 void AWebServer::saveWiFiCredentials() {
+	logger.trace("Start save Credential");
+
 	EEPROM.begin(512);
 	EEPROM.put(0, ssid);
 	EEPROM.put(0 + sizeof(ssid), password);
@@ -126,9 +130,9 @@ int8_t AWebServer::scanWiFi() {
 			wifi->bssid = WiFi.BSSIDstr(i);
 			wifi->channel = WiFi.channel(i);
 			wifi->secure = WiFi.encryptionType(i);
-			#ifdef ESP8266
+#ifdef ESP8266
 			wifi->hidden = WiFi.isHidden(i) ? "true" : "false";
-			#endif
+#endif
 			wifiList.push_back(std::move(wifi));
 		}
 		WiFi.scanDelete();
@@ -154,13 +158,14 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 		WiFi.begin(ssid, password);
 		logger.debug("connectStaWifi -> wait connectiom status\n");
 		delay(1000);
-		while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-		//if (WiFi.status() != WL_CONNECTED){
+		uint64_t start = millis();
+		while (WiFi.waitForConnectResult() != WL_CONNECTED && millis() - start < 6000) {
+			// if (WiFi.status() != WL_CONNECTED){
 			logger.printf("STA: Failed!\n");
 			return false;
 		}
 		logger.debug("connectStaWifi -> STA connected\n");
-		//restart();
+		// restart();
 	} else {
 		logger.println("WiFi connected");
 		logger.print("IP address: ");
@@ -170,20 +175,29 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 	return true;
 }
 
-void AWebServer::disconnectStaWifi(){
-	//WiFi.setAutoConnect(false);
-	//WiFi.setAutoReconnect(false);
-	if (telnetServer != nullptr && telnetServer->isInProgress()){
+void AWebServer::disconnectStaWifi() {
+	// WiFi.setAutoConnect(false);
+	// WiFi.setAutoReconnect(false);
+	if (telnetServer != nullptr && telnetServer->isInProgress()) {
 		telnetServer->stopReceive();
 	}
 	WiFi.disconnect(false);
 }
 
 /** Main process */
-void AWebServer::process() { 
-	if (!telnetServer->isInProgress()){
-		ArduinoOTA.handle(); 
-	}else{
+void AWebServer::process() {
+	if (_connect) {
+		if (connectStaWifi(ssid, password)) {
+			_connect = false;
+			logger.debug("Reconnected\n");
+			saveWiFiCredentials();
+			logger.debug("Saved WiFi credentials\n");
+		}
+	}
+
+	if (!telnetServer->isInProgress()) {
+		ArduinoOTA.handle();
+	} else {
 		telnetServer->process();
 	}
 }

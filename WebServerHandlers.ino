@@ -116,8 +116,8 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 		}
 	}
 
-	// request->send(404);
-	request->send(200);
+	// NotFount Page in React-Router
+	request->send(SPIFFS, "/www/index.html");
 }
 
 ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
@@ -184,21 +184,49 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 		ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
 		res_ptr->addAction([&](AsyncWebServerRequest *request) {
-			logger.debug("Start Then Action\n");
-			disconnectStaWifi();
-			delay(2000);
-			uint8_t connRes = WiFi.begin(ssid, password);
-			// if (!connectStaWifi(ssid, password)) {
-			//	logger.debug("WiFi STA not connected\n");
-			//	return 1;
-			//}
-			delay(500);
-			if (connRes == WL_CONNECTED) {
-				logger.debug("Save WiFi Credentials\n");
-				saveWiFiCredentials();
-			}
+			logger.trace("Start Then Action\n");
+			logger.debug("SSID: %s\n", ssid);
+			logger.debug("PASW: %s\n", password);
 
-			logger.debug("WiFi STA connected\n");
+			//            WiFi.setAutoConnect(false);
+			//            WiFi.setAutoReconnect(false);
+			//            WiFi.softAPdisconnect(false);
+			//            WiFi.disconnect(false);
+			//            
+			//            logger.trace("Disconnect\n");
+
+			//            while (WiFi.status() != WL_DISCONNECTED){
+			//            	delay(100);
+			//            }
+			//            logger.debug("Connection status: %i\n", WiFi.status());
+			//            //delay(2000);
+			//            WiFi.mode(WIFI_STA);
+			//            WiFi.begin(ssid, password);
+			//            uint64_t start = millis();
+			//            while (WiFi.status() != WL_CONNECTED && millis() - start < 1000 ){
+			//            	delay(100);
+			//            }
+			//            if (WiFi.status() != WL_CONNECTED) {
+			//            	logger.debug("Connection status: %i\n", WiFi.status());
+			//            	WiFi.begin(ssid, password);
+			//            }
+           
+			//            logger.debug("Connection status: %i\n", WiFi.status());
+           
+			//            // if (!connectStaWifi(ssid, password)) {
+			//            //	logger.debug("WiFi STA not connected\n");
+			//            //	return 1;
+			//            //}
+			//            delay(500);
+			//            if (WiFi.status() == WL_CONNECTED) {
+			//            	logger.debug("Save WiFi Credentials\n");
+			//            	saveWiFiCredentials();
+			//            }
+           
+			//            logger.debug("WiFi STA connected\n");
+
+			_connect = true;
+
 			return 0;
 		});
 
@@ -360,7 +388,9 @@ void AWebServer::addServerHandlers() {
 		request->send(response);
 		logger.debug("apiHandler -> Json API response send success\n");
 
-		while (res_ptr->actionCount()) {
+		logger.debug("Then action count %i\n", res_ptr->actionCount());
+
+		while (res_ptr->actionCount() > 0) {
 			const uint8_t err_code = res_ptr->then(request);
 			if (err_code == 0) {
 				logger.debug("Then Action success\n");

@@ -19,6 +19,7 @@
 #define BAUD_SERIAL 115200	// Not use (for Serial1 logging)
 #define BAUND 115200		// GPS receiver baund rate
 
+#include "libs/utils.h"
 #include "libs/Logger.h"
 #include "libs/AWebServer.h"
 #include "libs/ATcpServer.h"

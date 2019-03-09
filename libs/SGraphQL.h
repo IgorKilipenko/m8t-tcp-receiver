@@ -1,8 +1,9 @@
 #ifndef sgraphql_h
 #define sgraphql_h
 
+#include "Arduino.h"
 #include "ArduinoJson.h"
-#include "utils.h"
+//#include "utils.h"
 #include <list>
 #include <queue>
 #include <memory>

@@ -4,7 +4,7 @@
 #define FS_NO_GLOBALS
 
 #include "Arduino.h"
-#include <string>
+//#include <string>
 
 #ifdef ESP32
 #include "WiFi.h"
@@ -65,9 +65,10 @@ class AWebServer {
 
 	char ssid[32];
 	char password[32];
-	const char *hostName = "esp-async";
+	const char *hostName = (String("ESP_GPS_") + utils::getEspChipId()).c_str();
 	const char *http_username = "admin";
 	const char *http_password = "admin";
+	bool _connect = false;
 	
 	static bool _static_init;
 

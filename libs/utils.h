@@ -3,10 +3,20 @@
 
 #include "Arduino.h"
 
-namespace utils {
+#ifdef ESP32
+#include <WiFi.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#else
+#error Platform not supported
+#endif
+
 #include <cassert>
 #include <memory>
 #include <algorithm>
+
+namespace utils {
+
 
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args &&... args) { return std::unique_ptr<T>(new T(std::forward<Args>(args)...)); }
