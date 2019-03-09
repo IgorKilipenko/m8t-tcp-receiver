@@ -1,7 +1,7 @@
 SDStore::SDStore() {}
 SDStore::~SDStore() { end(); }
 
-void SDStore::generateFileName(char * name) {
+void SDStore::generateFileName(char *name) {
 	const size_t max_nums = 999;
 	bool reset = false;
 	const char prefix[] = "raw_";
@@ -61,11 +61,9 @@ void SDStore::closeFile() {
 	}
 }
 
-size_t SDStore::writeToSD(const char * buffer, size_t bytesCount) {
-	return writeToSD(reinterpret_cast<const uint8_t*>(buffer), bytesCount);
-}
+size_t SDStore::writeToSD(const char *buffer, size_t bytesCount) { return writeToSD(reinterpret_cast<const uint8_t *>(buffer), bytesCount); }
 
-size_t SDStore::writeToSD(const uint8_t * buffer, size_t bytesCount) {
+size_t SDStore::writeToSD(const uint8_t *buffer, size_t bytesCount) {
 	size_t res = sdFile.write(buffer, bytesCount);
 	sdFile.flush();
 

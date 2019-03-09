@@ -6,11 +6,11 @@ const char *SGraphQL::UNDEFINED = "undefined";
 const char *SGraphQL::ALL = "all";
 const char *SGraphQL::CMD = "cmd";
 
-const char *SGraphQL::WIFI = "wifi"; // WiFi Component
-const char *SGraphQL::GPS = "receiver";   // GPS receiver Conponent
+const char *SGraphQL::WIFI = "wifi";	// WiFi Component
+const char *SGraphQL::GPS = "receiver"; // GPS receiver Conponent
 const char *SGraphQL::SERVER = "server";
 
-const char * SGraphQL::RESP_VALUE = "value";
+const char *SGraphQL::RESP_VALUE = "value";
 const char *SGraphQL::RESP_MSG = "message";
 const char *SGraphQL::RESP_ERR = "error";
 const char *SGraphQL::RESP_ID = "resp_id";
@@ -25,7 +25,7 @@ SGraphQL::~SGraphQL() { handlers.clear(); }
 
 ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
 
-	if (!validRequest(json)){
+	if (!validRequest(json)) {
 		logger.error("Request Json not vilid\n");
 		json.prettyPrintTo(logger);
 		logger.print("\n");
@@ -41,14 +41,14 @@ ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
 	const char *req_id = json.get<char *>("id");
 	logger.debug("parse -> request id = %s\n", req_id);
 
-	JsonObject & responseRoot = fillRootObject(req_id, outJson);
+	JsonObject &responseRoot = fillRootObject(req_id, outJson);
 
 	ApiResultPtr res_ptr = emit(type, component, json, responseRoot);
 
-	if (res_ptr){
+	if (res_ptr) {
 		logger.debug("Json API request parsed success\n");
 	}
-	
+
 	return res_ptr;
 }
 
@@ -82,17 +82,17 @@ ApiResultPtr SGraphQL::emit(const char *event, const char *component, const Json
 	return nullptr;
 }
 
-JsonObject & SGraphQL::fillRootObject(const char * request_id ,JsonObject & outJson){
-	//JsonObject & root = outJson.createNestedObject(SGraphQL::RESP_ROOT_NAME);
+JsonObject &SGraphQL::fillRootObject(const char *request_id, JsonObject &outJson) {
+	// JsonObject & root = outJson.createNestedObject(SGraphQL::RESP_ROOT_NAME);
 	String resp_id = String(millis());
 	outJson[RESP_ID] = resp_id;
 	outJson[RESP_REQ_ID] = request_id;
 	return outJson;
 }
 
-bool SGraphQL::validRequest(const JsonObject & json) {
-	const char * type;
-	if (!json.success()){
+bool SGraphQL::validRequest(const JsonObject &json) {
+	const char *type;
+	if (!json.success()) {
 		logger.error("Not valid json, JsonObject not scuccess\n");
 		return false;
 	}
@@ -117,13 +117,8 @@ bool SGraphQL::validRequest(const JsonObject & json) {
 		logger.error("Not valid json, API type filed\n");
 		return false;
 	}
-	//if (json.containsKey(SGraphQL::RESP_ROOT_NAME)) {
-	//	logger.error("Not valid json, JsonObject contain key \"%s\"\n", SGraphQL::RESP_ROOT_NAME);
-	//	return false;
-	//}
 	return true;
 }
-
 
 ////////////////////////////////////////////////////////////////////
 /* ApiHandler =================================================== */
@@ -153,18 +148,13 @@ char *ApiHandler::getComponentName() const { return _component; }
 
 ApiHandlerFunction ApiHandler::getCallback() const { return callback_fn; }
 
-bool ApiHandler::test(const char *event, const char *component) const {
-	return utils::streq(_component, component) && (utils::streq(_type, SGraphQL::ALL) || utils::streq(_type, event));
-}
-
-
+bool ApiHandler::test(const char *event, const char *component) const { return utils::streq(_component, component) && (utils::streq(_type, SGraphQL::ALL) || utils::streq(_type, event)); }
 
 ///////////////////////////////////////////////////////////////////
 /* ApiResult =================================================== */
 ///////////////////////////////////////////////////////////////////
 
-ApiResult::ApiResult()
-	: _actions{} {}
+ApiResult::ApiResult() : _actions{} {}
 
 ApiResult::~ApiResult() {}
 

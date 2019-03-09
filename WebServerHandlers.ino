@@ -188,45 +188,7 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 			logger.debug("SSID: %s\n", ssid);
 			logger.debug("PASW: %s\n", password);
 
-			//            WiFi.setAutoConnect(false);
-			//            WiFi.setAutoReconnect(false);
-			//            WiFi.softAPdisconnect(false);
-			//            WiFi.disconnect(false);
-			//            
-			//            logger.trace("Disconnect\n");
-
-			//            while (WiFi.status() != WL_DISCONNECTED){
-			//            	delay(100);
-			//            }
-			//            logger.debug("Connection status: %i\n", WiFi.status());
-			//            //delay(2000);
-			//            WiFi.mode(WIFI_STA);
-			//            WiFi.begin(ssid, password);
-			//            uint64_t start = millis();
-			//            while (WiFi.status() != WL_CONNECTED && millis() - start < 1000 ){
-			//            	delay(100);
-			//            }
-			//            if (WiFi.status() != WL_CONNECTED) {
-			//            	logger.debug("Connection status: %i\n", WiFi.status());
-			//            	WiFi.begin(ssid, password);
-			//            }
-           
-			//            logger.debug("Connection status: %i\n", WiFi.status());
-           
-			//            // if (!connectStaWifi(ssid, password)) {
-			//            //	logger.debug("WiFi STA not connected\n");
-			//            //	return 1;
-			//            //}
-			//            delay(500);
-			//            if (WiFi.status() == WL_CONNECTED) {
-			//            	logger.debug("Save WiFi Credentials\n");
-			//            	saveWiFiCredentials();
-			//            }
-           
-			//            logger.debug("WiFi STA connected\n");
-
 			_connect = true;
-
 			return 0;
 		});
 

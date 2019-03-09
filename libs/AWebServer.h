@@ -9,15 +9,13 @@
 #ifdef ESP32
 #include "WiFi.h"
 #include <AsyncTCP.h>
-//#include <AsyncWebServer.h>
 #include <ESPmDNS.h>
 #include "SPIFFS.h"
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESP8266mDNS.h>
-#include <Hash.h>		// ESP8266 only
-//#include <ESPAsyncWebServer.h>
+#include <Hash.h> // ESP8266 only
 #else
 #error Platform not supported
 #endif
@@ -26,10 +24,8 @@
 
 #include <EEPROM.h>
 #include <ArduinoOTA.h>
-//#include <ESP8266WiFi.h>
 #include <FS.h>
 
-//#include <ESPAsyncTCP.h>
 #include <SPIFFSEditor.h>
 #include "ATcpServer.h"
 
@@ -44,10 +40,9 @@
 #define GPS_START_BTN "Start GPS"
 #define GPS_STOP_BTN "Stop GPS"
 
-
 class AWebServer {
   public:
-	AWebServer(ATcpServer* telnetServer);
+	AWebServer(ATcpServer *telnetServer);
 	~AWebServer();
 	void setup();
 	void process();
@@ -57,7 +52,7 @@ class AWebServer {
 	struct WifiItem;
 	void end();
 	void restart();
-	unsigned long getServerTime() const {return millis();}
+	unsigned long getServerTime() const { return millis(); }
 
   private:
 	char softAP_ssid[32];
@@ -69,20 +64,20 @@ class AWebServer {
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	bool _connect = false;
-	
+
 	static bool _static_init;
 
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 	AsyncEventSource events;
-	ATcpServer* telnetServer;
+	ATcpServer *telnetServer;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 
 	/* API ============================== */
-	static const char * API_P_GPSCMD;
+	static const char *API_P_GPSCMD;
 	SGraphQL api;
 
-	void wsEventHnadler(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType , void *, uint8_t *, size_t);
+	void wsEventHnadler(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType, void *, uint8_t *, size_t);
 	void notFoundHandler(AsyncWebServerRequest *request);
 	void initDefaultHeaders();
 

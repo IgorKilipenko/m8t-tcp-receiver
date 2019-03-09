@@ -79,18 +79,18 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 	client->onDisconnect([](void *r, AsyncClient *c) { ((ATcpServer *)(r))->handleDisconnect(c); }, this);
 	client->onTimeout([](void *r, AsyncClient *c, uint32_t time) { ((ATcpServer *)(r))->handleTimeOut(c, time); }, this);
 
-	serviceServer->onClient([](void *s, AsyncClient *client) {
-		const char msg[] = "Service server\n";
-		if (client){
-			client->write(msg);
-		}
-	}, this);
+	serviceServer->onClient(
+		[](void *s, AsyncClient *client) {
+			const char msg[] = "Service server\n";
+			if (client) {
+				client->write(msg);
+			}
+		},
+		this);
 }
 
 bool ATcpServer::isInProgress() const { return receiveData; }
-bool ATcpServer::isSdInitialize() const {
-	return store != nullptr && store->isInitialize();
-}
+bool ATcpServer::isSdInitialize() const { return store != nullptr && store->isInitialize(); }
 
 void ATcpServer::stopReceive() {
 	if (store) {
@@ -112,21 +112,21 @@ void ATcpServer::startReceive() {
 	server->begin();
 
 	serviceServer->begin();
-	
+
 	receiveData = true;
 	_timeEnd = 0;
 	_timeStart = millis();
 }
 
 unsigned long ATcpServer::getTimeReceive() const {
-	if (!isInProgress()){
+	if (!isInProgress()) {
 		return 0;
 	}
 	return millis() - _timeStart;
 }
 
 unsigned long ATcpServer::getTimeStart() const {
-	if (!isInProgress()){
+	if (!isInProgress()) {
 		return 0;
 	}
 	return _timeStart;
@@ -163,23 +163,6 @@ size_t ATcpServer::freeClients() {
 }
 
 size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len) {
-	/* Not work, see AsyncPrinter.cpp */
-	// size_t toWrite = 0;
-	// size_t toSend = len;
-	// while (client->space() < toSend) {
-	//	toWrite = client->space();
-	//	client->add(msg, toWrite);
-	//	while (!client->canSend())
-	//		delay(0);
-	//	client->send();
-	//	toSend -= toWrite;
-	//}
-	// client->add(msg + (len - toSend), toSend);
-	// while (!client->canSend())
-	//	delay(0);
-	// client->send();
-	// return len;
-
 	const size_t will_send = client->add(msg, len);
 	if (!will_send || !client->send()) {
 		return 0;
@@ -195,7 +178,7 @@ size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
 void ATcpServer::setup() {
 	store = new SDStore();
 	server = new AsyncServer(TCP_PORT);
-	serviceServer = new AsyncServer(TCP_PORT+1);
+	serviceServer = new AsyncServer(TCP_PORT + 1);
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);
 }
 

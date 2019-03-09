@@ -9,15 +9,6 @@
 #include <memory>
 #include "AsyncJson.h"
 #include "ArduinoJson.h"
-
-#ifdef ESP32
-//#include <AsyncWebServer.h>
-#elif defined(ESP8266)
-//#include <ESPAsyncWebServer.h>
-#else
-#error Platform not supported
-#endif
-
 #include <ESPAsyncWebServer.h>
 
 class ApiHandler;
@@ -50,7 +41,6 @@ class SGraphQL {
 	static const char *RESP_MSG;
 	static const char *CMD_START;
 	static const char *CMD_STOP;
-
 
 	SGraphQL();
 	~SGraphQL();

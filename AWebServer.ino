@@ -31,12 +31,9 @@ void AWebServer::restart() {
 }
 
 void AWebServer::setup() {
-	// strcpy(ssid, "Keenetic-9267");
-	// strcpy(password, "1234567890");
-	// saveWiFiCredentials();
 	loadWiFiCredentials();
 
-	// WiFi.hostname(hostName);
+	WiFi.hostname(hostName);
 	WiFi.mode(WIFI_AP_STA);
 	WiFi.softAP(softAP_ssid, softAP_password);
 
