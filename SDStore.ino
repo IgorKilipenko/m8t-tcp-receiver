@@ -24,6 +24,10 @@ void SDStore::generateFileName(char *name) {
 }
 
 bool SDStore::initSdCard() {
+	logger.trace("Start init SD card...\n");
+	assert(CS_PIN);
+	logger.trace("CS pin : %i\n", CS_PIN);
+
 	if (!SD.begin(CS_PIN /*, SPI_QUARTER_SPEED*/)) {
 		// initialization failed!
 		logger.debug("initialization failed!.\n");

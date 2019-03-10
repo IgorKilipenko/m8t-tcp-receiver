@@ -24,6 +24,8 @@
 #define MAX_TCP_CLIENTS 5 // Default 5 clients
 #endif
 
+typedef std::function<void(const uint8_t *, size_t)> SerialDataCallback;
+
 class ATcpServer {
   public:
 	ATcpServer();
@@ -32,18 +34,22 @@ class ATcpServer {
 	// TelnetServer methods:
 	void process();
 	void stopReceive();
-	void startReceive();
+	void startReceive(bool writeToSd = true, bool sendToTcp = true);
 	bool isInProgress() const;
 	bool isSdInitialize() const;
 	unsigned long getTimeReceive() const;
 	unsigned long getTimeStart() const;
-	void sendDataToClients(char buffer[], size_t bytesCount);
+	void sendDataToClients(const char *buffer, size_t bytesCount);
+	void onSerialData(SerialDataCallback cb) { _seralDataCallback = cb; }
 
 	void end();
-	size_t sendMessage(AsyncClient *client, const char msg[], size_t len);
+	size_t sendMessage(AsyncClient *client, const char *msg, size_t len);
 	size_t sendMessage(AsyncClient *client, String str);
 	void setup();
 	size_t availableClientsCount();
+
+	bool sendToTcpEnabled() const { return _sendToTcp; }
+	bool writeToSdEnabled() const { return _writeToSd; }
 
   private:
 	std::vector<AsyncClient *> clients; // a list to hold all clients
@@ -51,9 +57,12 @@ class ATcpServer {
 	SDStore *store = nullptr;
 	AsyncServer *server = nullptr;
 	AsyncServer *serviceServer = nullptr;
-
+	SerialDataCallback _seralDataCallback = nullptr;
 	unsigned long _timeStart;
 	unsigned long _timeEnd;
+
+	bool _writeToSd = true;
+	bool _sendToTcp = true;
 
 	size_t freeClients();
 	void handleError(AsyncClient *client, int8_t error);

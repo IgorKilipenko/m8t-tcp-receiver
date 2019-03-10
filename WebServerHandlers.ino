@@ -4,6 +4,14 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		logger.printf("ws[%s][%u] connect\n", server->url(), client->id());
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
+
+		telnetServer->onSerialData([&](const uint8_t* buf, size_t len){
+			logger.trace("Send data to WS\n");
+			if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED){
+				client->binary(reinterpret_cast<const char*>(buf), len);
+			}
+		});
+
 	} else if (type == WS_EVT_DISCONNECT) {
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
 	} else if (type == WS_EVT_ERROR) {
@@ -237,6 +245,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 	if (utils::streq(cmd, SGraphQL::CMD_START) || utils::streq(cmd, SGraphQL::CMD_STOP)) {
 		logger.trace("Start Receiver Action, cmd: {%s}\n", cmd);
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		logger.trace("Json root created\n");
 		if (utils::streq(cmd, SGraphQL::CMD_START)) {
 
 			if (telnetServer->isInProgress()) {
@@ -244,7 +253,16 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 				outJson[SGraphQL::RESP_MSG] = "Already enabled";
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 			} else {
-				telnetServer->startReceive();
+				logger.trace("SET -> Start receive\n");
+				bool writeToSd = telnetServer->writeToSdEnabled();
+				bool sendToTcp = telnetServer->sendToTcpEnabled();
+				if (json.containsKey("writeToSd")){
+					writeToSd = json.get<bool>("writeToSd");
+				}
+				if (json.containsKey("sendToTcp")){
+					sendToTcp = json.get<bool>("sendToTcp");
+				}
+				telnetServer->startReceive(writeToSd, sendToTcp);
 			}
 			objJson["timeStart"] = telnetServer->getTimeStart();
 
@@ -253,6 +271,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 				logger.debug("Already disabled");
 				outJson[SGraphQL::RESP_MSG] = "Already disabled";
 			} else {
+				logger.trace("SET -> Stop receive\n");
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 				telnetServer->stopReceive();
 			}
@@ -279,6 +298,9 @@ ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObjec
 		logger.trace("Start Receiver Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["enabled"] = telnetServer->isInProgress() ? true : false;
+		objJson["writeToSd"] = telnetServer->writeToSdEnabled();
+		objJson["sendToTcp"] = telnetServer->sendToTcpEnabled();
+		objJson["sendToWs"] = _sendReceiverDataToWs;
 		if (telnetServer->isInProgress()) {
 			objJson["timeStart"] = telnetServer->getTimeStart();
 			objJson["timeReceive"] = telnetServer->getTimeReceive();
@@ -304,8 +326,8 @@ ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject 
 	if (utils::streq(cmd, "info")) {
 		logger.trace("Start Server Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
-		objJson["server_time"] = getServerTime();
-		objJson["sd_success"] = telnetServer->isSdInitialize();
+		objJson["serverTime"] = getServerTime();
+		objJson["sdSuccess"] = telnetServer->isSdInitialize();
 		return res_ptr;
 	}
 
@@ -320,7 +342,7 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&ws);
 
-	events.onConnect([&](AsyncEventSourceClient *client) { client->send("hello!", NULL, millis(), 1000); });
+	events.onConnect([&](AsyncEventSourceClient *client) { client->send("EventService ESP GPS", NULL, millis(), 1000); });
 
 	server.addHandler(&events);
 

@@ -18,13 +18,18 @@ void ATcpServer::ATcpServer::process() {
 		char buffer[bytesCount];
 		bytesCount = Serial.readBytes(buffer, bytesCount);
 #endif
+		if (_seralDataCallback != nullptr) {
+			_seralDataCallback(reinterpret_cast<const uint8_t *>(buffer), bytesCount);
+		}
 
-		if (store->isInitialize()) {
+		if (_writeToSd && store->isInitialize()) {
 			store->writeToSD(buffer, bytesCount);
 		}
 
 		if (WiFi.status() == WL_CONNECTED) {
-			sendDataToClients(buffer, bytesCount);
+			if (_sendToTcp) {
+				sendDataToClients(buffer, bytesCount);
+			}
 		}
 
 #ifdef DEBUG
@@ -103,19 +108,35 @@ void ATcpServer::stopReceive() {
 	_timeEnd = millis();
 }
 
-void ATcpServer::startReceive() {
-	if (store->initSdCard()) {
+void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
+	logger.trace("Receiver starting...\n");
+	logger.trace("Write to SD card : [%s]\n", writeToSd ? "ENABLED" : "DISABLED");
+	logger.trace("Send to TCP : [%s]\n", sendToTcp ? "ENABLED" : "DISABLED");
+
+	_writeToSd = writeToSd;
+	_sendToTcp = sendToTcp;
+
+	assert(store != nullptr);
+	if (_writeToSd && store && !store->isInitialize() && store->initSdCard()) {
+		logger.trace("Stored initialized\n");
 		store->createFile();
+		logger.trace("File created\n");
 	}
 
-	server->setNoDelay(true);
-	server->begin();
+	//server->setNoDelay(true);
+	if (_sendToTcp){
+		server->begin();
+		logger.trace("TCP Server started\n");
+	}
 
-	serviceServer->begin();
+
+	//serviceServer->begin();
 
 	receiveData = true;
 	_timeEnd = 0;
 	_timeStart = millis();
+
+	logger.trace("Receive data started\n");
 }
 
 unsigned long ATcpServer::getTimeReceive() const {
@@ -162,7 +183,7 @@ size_t ATcpServer::freeClients() {
 	return clientCount;
 }
 
-size_t ATcpServer::sendMessage(AsyncClient *client, const char msg[], size_t len) {
+size_t ATcpServer::sendMessage(AsyncClient *client, const char *msg, size_t len) {
 	const size_t will_send = client->add(msg, len);
 	if (!will_send || !client->send()) {
 		return 0;
@@ -182,7 +203,8 @@ void ATcpServer::setup() {
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);
 }
 
-void ATcpServer::sendDataToClients(char buffer[], size_t bytesCount) {
+void ATcpServer::sendDataToClients(const char *buffer, size_t bytesCount) {
+	logger.debug("Send data to clients\n");
 	for (int i = 0; i < MAX_TCP_CLIENTS; i++) {
 		if (clients[i] && clients[i]->connected()) {
 			sendMessage(clients[i], buffer, bytesCount);

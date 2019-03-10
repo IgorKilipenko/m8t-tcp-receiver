@@ -64,6 +64,7 @@ class AWebServer {
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	bool _connect = false;
+	bool _sendReceiverDataToWs = true;
 
 	static bool _static_init;
 
