@@ -60,7 +60,7 @@ class AWebServer {
 
 	char ssid[32];
 	char password[32];
-	const char *hostName = (String("ESP_GPS_") + utils::getEspChipId()).c_str();
+	char hostName[32];
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	bool _connect = false;

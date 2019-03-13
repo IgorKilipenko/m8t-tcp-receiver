@@ -117,7 +117,7 @@ void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
 	_sendToTcp = sendToTcp;
 
 	assert(store != nullptr);
-	if (_writeToSd && store && !store->isInitialize() && store->initSdCard()) {
+	if (_writeToSd && store && (store->isInitialize() || store->initSdCard())) {
 		logger.trace("Stored initialized\n");
 		store->createFile();
 		logger.trace("File created\n");
@@ -198,6 +198,7 @@ size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
 
 void ATcpServer::setup() {
 	store = new SDStore();
+	if (_writeToSd) {store->initSdCard();}
 	server = new AsyncServer(TCP_PORT);
 	serviceServer = new AsyncServer(TCP_PORT + 1);
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);

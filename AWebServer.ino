@@ -3,9 +3,10 @@ bool AWebServer::_static_init = false;
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
-	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, api{} {
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "},server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
+	strcat(hostName, id.c_str());
 }
 
 AWebServer::~AWebServer() { end(); }
@@ -32,8 +33,11 @@ void AWebServer::restart() {
 
 void AWebServer::setup() {
 	loadWiFiCredentials();
-
+#ifdef ESP32
+	WiFi.setHostname(hostName);
+#else
 	WiFi.hostname(hostName);
+#endif
 	WiFi.mode(WIFI_AP_STA);
 	WiFi.softAP(softAP_ssid, softAP_password);
 

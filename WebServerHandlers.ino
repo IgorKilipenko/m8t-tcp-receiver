@@ -5,10 +5,10 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
 
-		telnetServer->onSerialData([&](const uint8_t* buf, size_t len){
+		telnetServer->onSerialData([&](const uint8_t *buf, size_t len) {
 			logger.trace("Send data to WS\n");
-			if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED){
-				client->binary(reinterpret_cast<const char*>(buf), len);
+			if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED) {
+				client->binary(reinterpret_cast<const char *>(buf), len);
 			}
 		});
 
@@ -157,32 +157,38 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 		if (wifiList.size() > 0) {
 			wifiList.clear();
 		}
-	}else if (utils::streq(cmd, "info")){
+	} else if (utils::streq(cmd, "info")) {
 		logger.trace("Start WIFI info\n");
 
 		JsonObject &resJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
-		
+
 		uint8_t mode = WiFi.getMode();
-		if (!mode){
+		if (!mode) {
 			logger.error("WiFi disconnected, WiFi Mode = [%s]\n", utils::wiFiModeToString(mode).c_str());
 			return nullptr;
 		}
 		resJson["mode"] = utils::wiFiModeToString(mode);
-		if (mode == WIFI_AP || mode == WIFI_AP_STA){
+		if (mode == WIFI_AP || mode == WIFI_AP_STA) {
 			JsonObject &apJson = resJson.createNestedObject("ap");
-			apJson["ap_ip"] = utils::toStringIp(WiFi.softAPIP());
-			apJson["ap_ssid"] = WiFi.softAPSSID();
+			apJson["ip"] = utils::toStringIp(WiFi.softAPIP());
+#ifdef ESP32
+			apJson["apHostName"] = WiFi.softAPgetHostname();
+#else
+			apJson["ssid"] = WiFi.softAPSSID();
+#endif
 			apJson["station_num"] = WiFi.softAPgetStationNum();
 		}
-		if (mode == WIFI_STA || WIFI_AP_STA){
+		if (mode == WIFI_STA || WIFI_AP_STA) {
 			JsonObject &staJson = resJson.createNestedObject("sta");
 			staJson["local_ip"] = utils::toStringIp(WiFi.localIP());
 			staJson["ssid"] = WiFi.SSID();
 			staJson["rssi"] = WiFi.RSSI();
+#ifdef ESP32
+			staJson["hostname"] = WiFi.getHostname();
+#else
 			staJson["hostname"] = WiFi.hostname();
+#endif
 		}
-		
-		
 
 	} else {
 		return nullptr;
@@ -256,10 +262,10 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 				logger.trace("SET -> Start receive\n");
 				bool writeToSd = telnetServer->writeToSdEnabled();
 				bool sendToTcp = telnetServer->sendToTcpEnabled();
-				if (json.containsKey("writeToSd")){
+				if (json.containsKey("writeToSd")) {
 					writeToSd = json.get<bool>("writeToSd");
 				}
-				if (json.containsKey("sendToTcp")){
+				if (json.containsKey("sendToTcp")) {
 					sendToTcp = json.get<bool>("sendToTcp");
 				}
 				telnetServer->startReceive(writeToSd, sendToTcp);
