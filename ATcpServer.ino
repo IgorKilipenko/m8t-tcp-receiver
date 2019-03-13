@@ -22,8 +22,9 @@ void ATcpServer::ATcpServer::process() {
 			_seralDataCallback(reinterpret_cast<const uint8_t *>(buffer), bytesCount);
 		}
 
-		if (_writeToSd && store->isInitialize()) {
+		if (_writeToSd && store->isInitialize() && store->isOpenFile()) {
 			store->writeToSD(buffer, bytesCount);
+			delay(1);
 		}
 
 		if (WiFi.status() == WL_CONNECTED) {
@@ -123,14 +124,13 @@ void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
 		logger.trace("File created\n");
 	}
 
-	//server->setNoDelay(true);
-	if (_sendToTcp){
+	// server->setNoDelay(true);
+	if (_sendToTcp) {
 		server->begin();
 		logger.trace("TCP Server started\n");
 	}
 
-
-	//serviceServer->begin();
+	// serviceServer->begin();
 
 	receiveData = true;
 	_timeEnd = 0;
@@ -198,7 +198,9 @@ size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
 
 void ATcpServer::setup() {
 	store = new SDStore();
-	if (_writeToSd) {store->initSdCard();}
+	if (_writeToSd) {
+		store->initSdCard();
+	}
 	server = new AsyncServer(TCP_PORT);
 	serviceServer = new AsyncServer(TCP_PORT + 1);
 	server->onClient([](void *s, AsyncClient *c) { ((ATcpServer *)(s))->handleNewClient(c); }, this);

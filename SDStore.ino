@@ -46,35 +46,53 @@ void SDStore::createFile() {
 		SD.remove(filename);
 		logger.debug("File: %s removed\n", filename);
 	}
-	sdFile = SD.open(filename, FILE_WRITE);
-	logger.debug("File: %s created\n", filename);
+	assert(sizeof(_rootPath) + sizeof(filename) < MAX_PATH_LEN);
+	char path[MAX_PATH_LEN] {0};
+	strcat(path, _rootPath);
+	strcat(path, filename);
+	sdFile = SD.open(path, FILE_WRITE);
+	if (sdFile) {
+		logger.debug("File: %s created\n", filename);
+	} else {
+		logger.error("Failed to open file for writing, file name : [%s]\n", filename);
+	}
 }
 
 void SDStore::end() {
-	if (sdFile) {
-		sdFile.close();
-	}
+	closeFile();
 	if (sdCard) {
 		SD.end();
+		logger.trace("SD card closed, is init = [%s]\n", isInitialize() ? "true" : "false");
 	}
 }
 
 void SDStore::closeFile() {
 	if (sdFile) {
+		sdFile.flush();
 		sdFile.close();
+		logger.trace("File closed, isOpenFile = [%s]\n", isOpenFile() ? "true" : "false");
 	}
 }
 
 size_t SDStore::writeToSD(const char *buffer, size_t bytesCount) { return writeToSD(reinterpret_cast<const uint8_t *>(buffer), bytesCount); }
 
 size_t SDStore::writeToSD(const uint8_t *buffer, size_t bytesCount) {
-	size_t res = sdFile.write(buffer, bytesCount);
-	sdFile.flush();
+	logger.trace("Start write to SD card...\n");
+	size_t count = sdFile.write(buffer, bytesCount);
+	if (count) {
+		sdFile.flush();
+	}
 
-	delay(1);
-	return res;
+	logger.trace("Bytes count : [%i]\n", count);
+	if (count < bytesCount) {
+		if (!count) {
+			logger.error("Write failed\n");
+		}
+		logger.debug("WARN! Not all bytes write to SD, input count = [%i], writed count = [%i]\n", bytesCount, count);
+	}
+	return count;
 }
 
-bool SDStore::isInitialize() { return sdCard ? true : false; }
+bool SDStore::isInitialize() const { return sdCard ? true : false; }
 
-bool SDStore::isOpenFile() { return sdFile ? true : false; }
+bool SDStore::isOpenFile() const { return sdFile ? true : false; }
