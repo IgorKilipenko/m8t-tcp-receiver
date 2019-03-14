@@ -52,9 +52,9 @@ void SDStore::createFile() {
 	strcat(path, filename);
 	sdFile = SD.open(path, FILE_WRITE);
 	if (sdFile) {
-		logger.debug("File: %s created\n", filename);
+		logger.debug("File: %s created\n", path);
 	} else {
-		logger.error("Failed to open file for writing, file name : [%s]\n", filename);
+		logger.error("Failed to open file for writing, file name : [%s]\n", path);
 	}
 }
 

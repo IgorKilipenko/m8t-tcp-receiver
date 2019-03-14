@@ -1,4 +1,4 @@
-#define DEBUG		// Uncomment for enable debug mode
+//#define DEBUG		// Uncomment for enable debug mode
 #define ALTSSID
 #define REST_API	// Use REST API
 
