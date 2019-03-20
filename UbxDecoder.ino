@@ -47,12 +47,16 @@ int16_t UbxDecoder::_decode() {
     logger.trace("Start decode UBX message...");
 
 	uint8_t classId = *(_buffer + 2);
-	//uint8_t msgId = *(_buffer + 3);
+	uint8_t msgId = *(_buffer + 3);
 
     switch (classId)
     {
         case (uint8_t)ClassIds::NAV:
-            return _decodeNavMsg();
+			if (_msgCallback != nullptr){
+				MessageEventPtr e = std::shared_ptr<MessageEvent>(new MessageEvent(classId, msgId, _buffer+4));
+				_msgCallback(e);
+			}
+            return static_cast<int16_t>(classId);
         default:
             return -1;
     }
@@ -78,8 +82,4 @@ bool UbxDecoder::_syncHeader(uint8_t data) {
 	_buffer[1] = data;
 
 	return _buffer[0] == Ublox::HEADER_BYTES[0] && _buffer[1] == Ublox::HEADER_BYTES[1];
-}
-
-int16_t UbxDecoder::_decodeNavMsg(){
-    return (int16_t)ClassIds::NAV;
 }

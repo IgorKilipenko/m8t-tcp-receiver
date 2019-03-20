@@ -98,8 +98,6 @@ class UbxDecoder{
     bool _testChecksum();
     bool _syncHeader(uint8_t data);
     int16_t _decode();
-    int16_t _decodeNavMsg();
-
 };
 
 

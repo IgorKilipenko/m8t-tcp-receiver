@@ -27,10 +27,8 @@ void ATcpServer::ATcpServer::process() {
 			delay(1);
 		}
 
-		if (WiFi.status() == WL_CONNECTED) {
-			if (_sendToTcp) {
-				sendDataToClients(buffer, bytesCount);
-			}
+		if (_sendToTcp && WiFi.status() == WL_CONNECTED) {
+			sendDataToClients(buffer, bytesCount);
 		}
 
 #ifdef DEBUG

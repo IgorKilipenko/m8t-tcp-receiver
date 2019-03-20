@@ -15,6 +15,8 @@
 
 #include "SDStore.h"
 #include <vector>
+#include "ublox.h"
+#include "UbxMessage.h"
 
 #ifndef TCP_PORT
 #define TCP_PORT 7042
