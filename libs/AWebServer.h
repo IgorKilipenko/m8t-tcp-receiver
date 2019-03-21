@@ -74,7 +74,6 @@ class AWebServer {
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 	AsyncEventSource events;
-	AsyncEventSource ubxMsgSource;
 	ATcpServer *telnetServer;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;

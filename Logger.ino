@@ -2,10 +2,13 @@
 	Logger
 */
 
-Logger::Logger(HardwareSerial *serial) : Print(), lout{serial} {}
+Logger::Logger(HardwareSerial *serial) : Print(), lout{serial}, _eventSource{nullptr} {}
 Logger::~Logger() {}
 
 template <typename... T> void Logger::debug(T... args) {
+#if WEB_LOG_LEVEL > 1
+	sendToEventSource("logger", args...);
+#endif
 #ifdef DEBUG
 	lout->print("[DEBUG] ");
 	lout->printf(args...);
@@ -13,6 +16,9 @@ template <typename... T> void Logger::debug(T... args) {
 }
 
 template <typename... T> void Logger::error(T... args) {
+#if WEB_LOG_LEVEL > 0
+	sendToEventSource("logger", args...);
+#endif
 #ifdef DEBUG
 	lout->print("[ERROR] ");
 	lout->printf(args...);
@@ -20,6 +26,9 @@ template <typename... T> void Logger::error(T... args) {
 }
 
 template <typename... T> void Logger::trace(T... args) {
+#if WEB_LOG_LEVEL > 2
+	sendToEventSource("logger", args...);
+#endif
 #ifdef DEBUG
 	lout->print("[TRACE] -> ");
 	lout->printf(args...);
@@ -64,3 +73,12 @@ void Logger::flush() {
 #endif
 }
 #endif
+
+template <typename... T> void Logger::sendToEventSource(const char *event, T... args) {
+	if (_eventSource != nullptr && _eventSource->count() > 0) {
+		char *msg = new char[255]{};
+		sprintf(msg, args...);
+		_eventSource->send(msg, event);
+		delete[] msg;
+	}
+}

@@ -348,13 +348,11 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&ws);
 
+	logger.setEventSource(&events);
+
 	events.onConnect([&](AsyncEventSourceClient *client) { client->send("EventService ESP GPS", NULL, millis(), 1000); });
 
 	server.addHandler(&events);
-
-	ubxMsgSource.onConnect([&](AsyncEventSourceClient *client) { client->send("Ubx messages source connect", NULL, millis(), 1000); });
-
-	server.addHandler(&ubxMsgSource);
 
 #ifdef ESP32
 	server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
@@ -459,6 +457,7 @@ void AWebServer::addOTAhandlers() {
 
 void AWebServer::addReceiverHandlers() {
 	telnetServer->onSerialData([&](const uint8_t *buffer, size_t len) {
+		logger.trace("Start parse ubx msg\n");
 		if (_decodeUbxMsg && WiFi.status() == WL_CONNECTED) {
 			for (uint8_t i = 0; i < len; i++) {
 				const int16_t code = _ubxDecoder.inputData(buffer[i]);
