@@ -35,6 +35,9 @@
 #include "SGraphQL.h"
 #endif
 
+#include "ublox.h"
+#include "UbxMessage.h"
+
 #define APSSID "ESP_ap_"
 #define APPSK "12345678"
 #define GPS_START_BTN "Start GPS"
@@ -71,8 +74,11 @@ class AWebServer {
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 	AsyncEventSource events;
+	AsyncEventSource ubxMsgSource;
 	ATcpServer *telnetServer;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
+	UbxDecoder _ubxDecoder;
+	bool _decodeUbxMsg = true;
 
 	/* API ============================== */
 	static const char *API_P_GPSCMD;
@@ -92,6 +98,7 @@ class AWebServer {
 	void disconnectStaWifi();
 	void addServerHandlers();
 	void addOTAhandlers();
+	void addReceiverHandlers();
 };
 
 struct AWebServer::WifiItem {

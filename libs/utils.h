@@ -123,7 +123,7 @@ String wiFiModeToString(uint8_t mode) {
 }
 
 template <typename T>
-T fromBytes(uint8_t * buffer, size_t len){
+T fromBytes(const uint8_t * buffer, size_t len){
 	T res;
 	memcpy(&res, buffer, len);
 	return res;

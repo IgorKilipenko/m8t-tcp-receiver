@@ -83,3 +83,4 @@ bool UbxDecoder::_syncHeader(uint8_t data) {
 
 	return _buffer[0] == Ublox::HEADER_BYTES[0] && _buffer[1] == Ublox::HEADER_BYTES[1];
 }
+

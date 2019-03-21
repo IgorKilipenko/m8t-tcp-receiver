@@ -352,6 +352,10 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&events);
 
+	ubxMsgSource.onConnect([&](AsyncEventSourceClient *client) { client->send("Ubx messages source connect", NULL, millis(), 1000); });
+
+	server.addHandler(&ubxMsgSource);
+
 #ifdef ESP32
 	server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
 #else
@@ -450,5 +454,19 @@ void AWebServer::addOTAhandlers() {
 			events.send("Recieve Failed", "ota");
 		else if (error == OTA_END_ERROR)
 			events.send("End Failed", "ota");
+	});
+}
+
+void AWebServer::addReceiverHandlers() {
+	telnetServer->onSerialData([&](const uint8_t *buffer, size_t len) {
+		if (_decodeUbxMsg && WiFi.status() == WL_CONNECTED) {
+			for (uint8_t i = 0; i < len; i++) {
+				const int16_t code = _ubxDecoder.inputData(buffer[i]);
+				if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+					NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
+					events.send("Has msg");
+				}
+			}
+		}
 	});
 }

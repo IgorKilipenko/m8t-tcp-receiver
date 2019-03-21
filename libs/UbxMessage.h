@@ -11,16 +11,17 @@ class UbxMessage {
     uint8_t getClassId() const { return _classId;}
     uint8_t getMessageId() const {return _msgId;}
     const uint8_t * getPayload() const {return _payload;}
+    virtual bool checkMessage() const {return _checkMsg;}
 
     protected:
-    uint8_t * _buffer;
     uint8_t * _payload;
     const uint8_t _classId;
     const uint8_t _msgId;
     const size_t _totalLength;
     uint16_t _payloadLength;
+    bool _checkMsg = false;
     UbxMessage(uint8_t classId, uint8_t msgId, const uint8_t * buffer, size_t len);
-    virtual void parsePayload();
+    virtual void parsePayload() = 0;
 };
 
 class NavPOSLLHMessage : public UbxMessage {

@@ -85,7 +85,8 @@ class UbxDecoder{
     UbxDecoder();
     ~UbxDecoder();
     int8_t inputData(uint8_t data);
-    
+    const uint8_t* getBuffer() const {return _buffer;}
+    uint16_t getLength() const {return _length;}
 
     private:
     uint8_t* _buffer;
@@ -114,6 +115,7 @@ class MessageEvent {
     uint8_t _msgId = 0;
     uint8_t * _payload;
 };
+
 
 
 #endif  // ublox_h

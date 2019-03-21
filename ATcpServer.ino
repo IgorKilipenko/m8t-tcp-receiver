@@ -31,6 +31,7 @@ void ATcpServer::ATcpServer::process() {
 			sendDataToClients(buffer, bytesCount);
 		}
 
+
 #ifdef DEBUG
 		delay(1000);
 #else
