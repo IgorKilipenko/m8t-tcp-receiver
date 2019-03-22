@@ -463,7 +463,7 @@ void AWebServer::addReceiverHandlers() {
 				const int16_t code = _ubxDecoder.inputData(buffer[i]);
 				if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
 					NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
-					events.send("Has msg");
+					events.send("Has msg", "ubxnav");
 				}
 			}
 		}
