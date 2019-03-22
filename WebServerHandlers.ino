@@ -348,7 +348,7 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&ws);
 
-	logger.setEventSource(&events);
+	/*logger.setEventSource(&events);  ERROR!!!!!!*/
 
 	events.onConnect([&](AsyncEventSourceClient *client) { client->send("EventService ESP GPS", NULL, millis(), 1000); });
 

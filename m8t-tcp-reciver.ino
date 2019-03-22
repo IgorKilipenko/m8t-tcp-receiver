@@ -1,4 +1,7 @@
-//#define DEBUG		// Uncomment for enable debug mode
+#define DEBUG		// Uncomment for enable debug mode
+#ifndef ESP32
+#define MOCK_RECEIVER_DATA
+#endif
 #define WEB_LOG_LEVEL 3
 #define ALTSSID
 #define REST_API	// Use REST API
@@ -25,6 +28,11 @@
 #include "libs/AWebServer.h"
 #include "libs/ATcpServer.h"
 
+#ifdef ESP32
+HardwareSerial * Receiver{&Serial1};
+#else
+HardwareSerial * Receiver{&Serial};
+#endif
 
 
 Logger logger{&Serial};		// For debug mode
@@ -33,8 +41,10 @@ ATcpServer telnetServer{};	// GPS receiver communication
 AWebServer webServer{&telnetServer};
 
 void setup() {
-
+#ifndef ESP32
 	Serial.begin(BAUND);
+#endif
+	Receiver->begin(BAUND);
 	webServer.setup();
 }
 
