@@ -74,11 +74,26 @@ void Logger::flush() {
 }
 #endif
 
-template <typename... T> void Logger::sendToEventSource(const char *event, T... args) {
+void Logger::sendToEventSource(const char *event, const char * format, ...) {
 	if (_eventSource != nullptr && _eventSource->count() > 0) {
-		char *msg = new char[255]{};
-		sprintf(msg, args...);
-		_eventSource->send(msg, event);
-		delete[] msg;
+		va_list arg;
+		va_start(arg, format);
+		char temp[64];
+		char *buffer = temp;
+		size_t len = vsnprintf(temp, sizeof(temp), format, arg);
+		va_end(arg);
+		if (len > sizeof(temp) - 1) {
+			buffer = new char[len + 1];
+			if (!buffer) {
+				return;
+			}
+			va_start(arg, format);
+			vsnprintf(buffer, len + 1, format, arg);
+			va_end(arg);
+		}
+		_eventSource->send(buffer, event);
+		if (buffer != temp) {
+			delete[] buffer;
+		}
 	}
 }

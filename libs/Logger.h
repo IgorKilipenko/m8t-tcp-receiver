@@ -28,7 +28,7 @@ class Logger : public Print {
 #endif
 	void setEventSource(AsyncEventSource * eventSource) {_eventSource = eventSource;}
 	void clearEventSource() {_eventSource = nullptr;}
-	template <typename... T> void sendToEventSource(const char*, T...);
+	void sendToEventSource(const char*, const char*, ...);
 
   private:
 	HardwareSerial *lout;

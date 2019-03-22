@@ -4,7 +4,9 @@
 ////////////////////////////////////////////////////////////////////
 
 UbxMessage::UbxMessage(uint8_t classId, uint8_t msgId, const uint8_t *buffer, size_t len) : _classId{classId}, _msgId{msgId}, _totalLength{len} {
-	assert(buffer != nullptr && len > 8 && sizeof(buffer) >= len);
+	assert(buffer != nullptr);
+	assert(len > 8);
+	assert(sizeof(buffer) >= len);
 
 	_checkMsg = buffer[2] == classId && buffer[3] == msgId;
 

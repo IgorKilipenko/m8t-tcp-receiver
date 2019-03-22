@@ -22,7 +22,7 @@ void ATcpServer::ATcpServer::process() {
 			_seralDataCallback(reinterpret_cast<const uint8_t *>(buffer), bytesCount);
 		}
 
-		if (_writeToSd && store && store->isInitialize() /*&& store->isOpenFile()*/) {
+		if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
 			store->writeToSD(buffer, bytesCount);
 			delay(1);
 		}

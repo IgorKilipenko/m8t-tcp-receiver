@@ -25,6 +25,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 
 	if (_nbyte == 6) {
 		_length = utils::fromBytes<uint16_t>(_buffer + 4, 2) + 8;
+		logger.trace("Payload length = [%d]\n", _length);
 		if (_length > Ublox::MAX_MSG_LEN) {
 			logger.trace("Length message error, length = [%d]\n", _length);
 			_nbyte = 0;
@@ -44,7 +45,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 }
 
 int16_t UbxDecoder::_decode() {
-    logger.trace("Start decode UBX message...");
+    logger.trace("Start decode UBX message...\n");
 
 	uint8_t classId = *(_buffer + 2);
 	uint8_t msgId = *(_buffer + 3);
