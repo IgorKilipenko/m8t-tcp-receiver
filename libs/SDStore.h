@@ -23,7 +23,7 @@ class SDStore {
 	void end();
 	void closeFile();
 	bool isInitialize() const;
-	bool isOpenFile() const;
+	bool isOpenFile();
 
   private:
 	File sdFile;

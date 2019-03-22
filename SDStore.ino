@@ -95,4 +95,4 @@ size_t SDStore::writeToSD(const uint8_t *buffer, size_t bytesCount) {
 
 bool SDStore::isInitialize() const { return sdCard ? true : false; }
 
-bool SDStore::isOpenFile() const { return sdFile ? true : false; }
+bool SDStore::isOpenFile() { return sdFile ? true : false; }
