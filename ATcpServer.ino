@@ -6,13 +6,13 @@ void ATcpServer::ATcpServer::process() {
 		return;
 	}
 
-#if defined (DEBUG) && defined(MOCK_RECEIVER_DATA)
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 	size_t bytesCount = 2;
 #else
 	size_t bytesCount = Receiver->available();
 #endif
 	if (bytesCount > 0) {
-#if defined (DEBUG) && defined(MOCK_RECEIVER_DATA)
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		char buffer[] = "T";
 #else
 		char buffer[bytesCount];
@@ -31,8 +31,7 @@ void ATcpServer::ATcpServer::process() {
 			sendDataToClients(buffer, bytesCount);
 		}
 
-
-#ifdef DEBUG
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		delay(1000);
 #else
 		delay(1);
