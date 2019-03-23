@@ -9,6 +9,8 @@
 /* SD card */
 #ifdef ESP32
 #define CS_PIN 5			// SD card cs_pin (default D5 GPIO5 on ESP32 DevkitV1)
+#define RXD2 16
+#define TXD2 17
 #elif defined(ESP8266)
 #define CS_PIN D8			// SD card cs_pin (default D8 on ESP8266)
 #else 
@@ -29,7 +31,7 @@
 #include "libs/ATcpServer.h"
 
 #ifdef ESP32
-HardwareSerial * Receiver{&Serial1};
+HardwareSerial * Receiver{&Serial2};
 #else
 HardwareSerial * Receiver{&Serial};
 #endif
@@ -41,10 +43,12 @@ ATcpServer telnetServer{};	// GPS receiver communication
 AWebServer webServer{&telnetServer};
 
 void setup() {
-#ifndef ESP32
+#ifdef ESP32
 	Serial.begin(BAUND);
-#endif
+	Receiver->begin(BAUND, SERIAL_8N1, RXD2, TXD2);
+#else
 	Receiver->begin(BAUND);
+#endif
 	webServer.setup();
 }
 
