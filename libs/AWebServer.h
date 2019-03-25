@@ -86,6 +86,7 @@ class AWebServer {
 	void wsEventHnadler(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType, void *, uint8_t *, size_t);
 	void notFoundHandler(AsyncWebServerRequest *request);
 	void initDefaultHeaders();
+	void receiverDataHandler(const uint8_t *buffer, size_t len);
 
 	ApiResultPtr wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
@@ -98,6 +99,7 @@ class AWebServer {
 	void addServerHandlers();
 	void addOTAhandlers();
 	void addReceiverHandlers();
+
 };
 
 struct AWebServer::WifiItem {

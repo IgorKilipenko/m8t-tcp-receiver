@@ -42,14 +42,15 @@ bool SDStore::initSdCard() {
 
 void SDStore::createFile() {
 	generateFileName(filename);
-	if (SD.exists(filename)) {
-		SD.remove(filename);
-		logger.debug("File: %s removed\n", filename);
-	}
 	assert(sizeof(_rootPath) + sizeof(filename) < MAX_PATH_LEN);
 	char path[MAX_PATH_LEN] {0};
 	strcat(path, _rootPath);
 	strcat(path, filename);
+	if (SD.exists(path)) {
+		SD.remove(path);
+		logger.debug("File: %s removed\n", filename);
+	}
+
 	sdFile = SD.open(path, FILE_WRITE);
 	if (sdFile) {
 		logger.debug("File: %s created\n", path);

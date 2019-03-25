@@ -456,16 +456,20 @@ void AWebServer::addOTAhandlers() {
 }
 
 void AWebServer::addReceiverHandlers() {
-	telnetServer->onSerialData([&](const uint8_t *buffer, size_t len) {
-		logger.trace("Start parse ubx msg\n");
-		if (_decodeUbxMsg && WiFi.status() == WL_CONNECTED) {
-			for (uint8_t i = 0; i < len; i++) {
-				const int16_t code = _ubxDecoder.inputData(buffer[i]);
-				if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
-					//NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
-					events.send("Has msg", "ubxnav");
-				}
-			}
-		}
-	});
+	telnetServer->onSerialData(std::bind(&AWebServer::receiverDataHandler, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
+//				if (_decodeUbxMsg) {
+//					for (uint16_t i = 0; i < len; i++) {
+//				//		// logger.trace("Buffer length [%d]\n", len);
+//						const int16_t code = _ubxDecoder.inputData(buffer[i]);
+//						if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+//						//	// NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
+//							events.send("Has msg", "ubxnav");
+//						}
+//					}
+//				}
+
+	ws.binaryAll((const char *)buffer, len);
 }

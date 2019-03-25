@@ -18,9 +18,6 @@ void ATcpServer::ATcpServer::process() {
 		char buffer[bytesCount];
 		bytesCount = Receiver->readBytes(buffer, bytesCount);
 #endif
-		if (_seralDataCallback != nullptr) {
-			//_seralDataCallback(reinterpret_cast<const uint8_t *>(buffer), bytesCount);
-		}
 
 		if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
 			store->writeToSD(buffer, bytesCount);
@@ -30,6 +27,10 @@ void ATcpServer::ATcpServer::process() {
 		if (_sendToTcp && WiFi.status() == WL_CONNECTED) {
 			sendDataToClients(buffer, bytesCount);
 		}
+
+		//if (_seralDataCallback != nullptr) {
+		//	_seralDataCallback((const uint8_t *)buffer, bytesCount);
+		//}
 
 #if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		delay(1000);
