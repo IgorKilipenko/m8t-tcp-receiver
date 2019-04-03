@@ -33,6 +33,7 @@ void AWebServer::restart() {
 }
 
 void AWebServer::setup() {
+
 	loadWiFiCredentials();
 #ifdef ESP32
 	WiFi.setHostname(hostName);

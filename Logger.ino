@@ -9,7 +9,7 @@ template <typename... T> void Logger::debug(T... args) {
 #if WEB_LOG_LEVEL > 1
 	sendToEventSource("logger", args...);
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && LOG_LEVEL > 1
 	lout->print("[DEBUG] ");
 	lout->printf(args...);
 #endif
@@ -19,7 +19,7 @@ template <typename... T> void Logger::error(T... args) {
 #if WEB_LOG_LEVEL > 0
 	sendToEventSource("logger", args...);
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && LOG_LEVEL > 0
 	lout->print("[ERROR] ");
 	lout->printf(args...);
 #endif
@@ -29,7 +29,7 @@ template <typename... T> void Logger::trace(T... args) {
 #if WEB_LOG_LEVEL > 2
 	sendToEventSource("logger", args...);
 #endif
-#ifdef DEBUG
+#if defined(DEBUG) && LOG_LEVEL > 2
 	lout->print("[TRACE] -> ");
 	lout->printf(args...);
 #endif

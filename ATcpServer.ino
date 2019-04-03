@@ -28,9 +28,9 @@ void ATcpServer::ATcpServer::process() {
 			sendDataToClients(buffer, bytesCount);
 		}
 
-		//if (_seralDataCallback != nullptr) {
-		//	_seralDataCallback((const uint8_t *)buffer, bytesCount);
-		//}
+		if (_seralDataCallback != nullptr) {
+			_seralDataCallback((const uint8_t *)buffer, bytesCount);
+		}
 
 #if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		delay(1000);

@@ -22,7 +22,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 		}
 	}
 	
-	if (_nbyte == 2 && _buffer[_nbyte] != static_cast<int8_t>(_allowedClasses)) {
+	if (_nbyte == 2 && data != static_cast<uint8_t>(ClassIds::NAV)) {
 		_nbyte = 0;
 		return 0;
 	}
