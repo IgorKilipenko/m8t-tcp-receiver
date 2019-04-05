@@ -9,10 +9,7 @@
 #define CS_PIN 5			// SD card cs_pin (default D5 GPIO5 on ESP32 DevkitV1)
 #define RXD2 16
 #define TXD2 17
-<<<<<<< HEAD
-=======
 HardwareSerial * Receiver{&Serial2};
->>>>>>> ubx_iss1
 #elif defined(ESP8266)
 #define CS_PIN D8			// SD card cs_pin (default D8 on ESP8266)
 #define MOCK_RECEIVER_DATA
