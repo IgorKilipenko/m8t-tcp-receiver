@@ -40,16 +40,10 @@ AWebServer webServer{&telnetServer};
 
 void setup() {
 #ifdef ESP32
-<<<<<<< HEAD
-	Serial.begin(BAUND, SERIAL_8N1, RXD2, TXD2);
-#else
-	Serial.begin(BAUND);
-=======
 	Serial.begin(BAUD_SERIAL);
 	Receiver->begin(BAUND, SERIAL_8N1, RXD2, TXD2);
 #else
 	Receiver->begin(BAUND);
->>>>>>> ubx_iss1
 #endif
 	webServer.setup();
 }
