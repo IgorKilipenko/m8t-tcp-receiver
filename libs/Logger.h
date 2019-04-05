@@ -1,7 +1,10 @@
 #ifndef Logger_h
 #define Logger_h
 
+#define FS_NO_GLOBALS
+
 #include "Arduino.h"
+#include <ESPAsyncWebServer.h>
 
 #ifdef DEBUG
 #define log_info(M, ...) Serial.printf("[INFO] (%s:%d) " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
@@ -23,9 +26,13 @@ class Logger : public Print {
 #ifdef ESP8266
 	void flush() override;
 #endif
+	void setEventSource(AsyncEventSource * eventSource) {_eventSource = eventSource;}
+	void clearEventSource() {_eventSource = nullptr;}
+	void sendToEventSource(const char*, const char*, ...);
 
   private:
 	HardwareSerial *lout;
+	AsyncEventSource * _eventSource;
 };
 
 #endif

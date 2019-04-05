@@ -5,12 +5,12 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
 
-		telnetServer->onSerialData([&](const uint8_t *buf, size_t len) {
-			logger.trace("Send data to WS\n");
-			if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED) {
-				client->binary(reinterpret_cast<const char *>(buf), len);
-			}
-		});
+		//              telnetServer->onSerialData([&](const uint8_t *buf, size_t len) {
+		//              	logger.trace("Send data to WS\n");
+		//              	if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED) {
+		//              		client->binary(reinterpret_cast<const char *>(buf), len);
+		//              	}
+		//              });
 
 	} else if (type == WS_EVT_DISCONNECT) {
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
@@ -137,7 +137,12 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "scan")) {
 		logger.debug("Start scan WIFI\n");
+		delay(500);
 		int8_t n = scanWiFi();
+		if (n == -1) {
+			delay(1000);
+			n = scanWiFi();
+		}
 		JsonArray &arrayJson = outJson.createNestedArray(SGraphQL::RESP_VALUE);
 		logger.debug("Scan end, item count: %i\n", n);
 		if (n > 0) {
@@ -348,6 +353,8 @@ void AWebServer::addServerHandlers() {
 
 	server.addHandler(&ws);
 
+	/*logger.setEventSource(&events);  ERROR!!!!!!*/
+
 	events.onConnect([&](AsyncEventSourceClient *client) { client->send("EventService ESP GPS", NULL, millis(), 1000); });
 
 	server.addHandler(&events);
@@ -451,4 +458,28 @@ void AWebServer::addOTAhandlers() {
 		else if (error == OTA_END_ERROR)
 			events.send("End Failed", "ota");
 	});
+}
+
+void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&AWebServer::receiverDataHandler, this, std::placeholders::_1, std::placeholders::_2)); }
+
+void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
+	if (_decodeUbxMsg) {
+		for (uint16_t i = 0; i < len; i++) {
+	//		// logger.trace("Buffer length [%d]\n", len);
+			const int16_t code = _ubxDecoder.inputData(buffer[i]);
+			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+			//	// NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
+				
+				const uint8_t * buffer = _ubxDecoder.getBuffer();
+				const uint16_t len = _ubxDecoder.getLength();
+				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)){
+					logger.debug("Has NAV POSLLH msg\n");
+					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+				}
+				
+			}
+		}
+	}
+
+	//ws.binaryAll((const char *)buffer, len);
 }

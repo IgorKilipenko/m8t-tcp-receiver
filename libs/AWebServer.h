@@ -35,6 +35,9 @@
 #include "SGraphQL.h"
 #endif
 
+#include "ublox.h"
+#include "UbxMessage.h"
+
 #define APSSID "ESP_ap_"
 #define APPSK "12345678"
 #define GPS_START_BTN "Start GPS"
@@ -73,6 +76,8 @@ class AWebServer {
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
+	UbxDecoder _ubxDecoder;
+	bool _decodeUbxMsg = true;
 
 	/* API ============================== */
 	static const char *API_P_GPSCMD;
@@ -81,6 +86,7 @@ class AWebServer {
 	void wsEventHnadler(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType, void *, uint8_t *, size_t);
 	void notFoundHandler(AsyncWebServerRequest *request);
 	void initDefaultHeaders();
+	void receiverDataHandler(const uint8_t *buffer, size_t len);
 
 	ApiResultPtr wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
@@ -92,6 +98,8 @@ class AWebServer {
 	void disconnectStaWifi();
 	void addServerHandlers();
 	void addOTAhandlers();
+	void addReceiverHandlers();
+
 };
 
 struct AWebServer::WifiItem {

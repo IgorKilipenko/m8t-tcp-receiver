@@ -51,6 +51,14 @@
         "xtree": "cpp",
         "chrono": "cpp",
         "ratio": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "array": "cpp",
+        "*.tcc": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cwctype": "cpp",
+        "deque": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp"
     }
 }

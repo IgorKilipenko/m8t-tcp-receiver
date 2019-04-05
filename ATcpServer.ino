@@ -6,34 +6,33 @@ void ATcpServer::ATcpServer::process() {
 		return;
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 	size_t bytesCount = 2;
 #else
-	size_t bytesCount = Serial.available();
+	size_t bytesCount = Receiver->available();
 #endif
 	if (bytesCount > 0) {
-#ifdef DEBUG
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		char buffer[] = "T";
 #else
 		char buffer[bytesCount];
-		bytesCount = Serial.readBytes(buffer, bytesCount);
+		bytesCount = Receiver->readBytes(buffer, bytesCount);
 #endif
-		if (_seralDataCallback != nullptr) {
-			_seralDataCallback(reinterpret_cast<const uint8_t *>(buffer), bytesCount);
-		}
 
-		if (_writeToSd && store->isInitialize() && store->isOpenFile()) {
+		if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
 			store->writeToSD(buffer, bytesCount);
 			delay(1);
 		}
 
-		if (WiFi.status() == WL_CONNECTED) {
-			if (_sendToTcp) {
-				sendDataToClients(buffer, bytesCount);
-			}
+		if (_sendToTcp && WiFi.status() == WL_CONNECTED) {
+			sendDataToClients(buffer, bytesCount);
 		}
 
-#ifdef DEBUG
+		if (_seralDataCallback != nullptr) {
+			_seralDataCallback((const uint8_t *)buffer, bytesCount);
+		}
+
+#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
 		delay(1000);
 #else
 		delay(1);
@@ -44,8 +43,8 @@ void ATcpServer::ATcpServer::process() {
 void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
-	logger.printf("\n Data received from client %s\n", client->remoteIP().toString().c_str());
-	Serial.write((uint8_t *)data, len);
+	logger.printf("\n Data from client to receiver %s\n", client->remoteIP().toString().c_str());
+	Receiver->write((uint8_t *)data, len);
 }
 
 void ATcpServer::handleDisconnect(AsyncClient *client) {

@@ -2,6 +2,7 @@
 #define utils_h
 
 #include "Arduino.h"
+#include <array>
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -16,6 +17,15 @@
 #include <algorithm>
 
 namespace utils {
+template <typename T, size_t len> 
+using SharedBytesPtr = std::shared_ptr<T*>;
+
+template <typename T, size_t len> 
+using SharedArrayPtr = std::shared_ptr<std::array<T, len>>;
+
+template <size_t len> 
+using SharedByteArrayPtr = SharedArrayPtr<uint8_t, len>;
+
 
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args &&... args) { return std::unique_ptr<T>(new T(std::forward<Args>(args)...)); }
@@ -97,20 +107,26 @@ String getEspChipId() {
 #endif
 }
 
-String wiFiModeToString(uint8_t mode){
-	switch (mode)
-	{
-		case 0:
-			return "WIFI_OFF";
-		case 1:
-			return "WIFI_STA";
-		case 2: 
-			return "WIFI_AP";
-		case 3:
-			return "WIFI_AP_STA";
-		default:
-			return "unknown";
+String wiFiModeToString(uint8_t mode) {
+	switch (mode) {
+	case 0:
+		return "WIFI_OFF";
+	case 1:
+		return "WIFI_STA";
+	case 2:
+		return "WIFI_AP";
+	case 3:
+		return "WIFI_AP_STA";
+	default:
+		return "unknown";
 	}
+}
+
+template <typename T>
+T fromBytes(const uint8_t * buffer, size_t len){
+	T res;
+	memcpy(&res, buffer, len);
+	return res;
 }
 
 } // namespace utils
