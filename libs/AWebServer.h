@@ -39,7 +39,7 @@
 #include "UbxMessage.h"
 
 #define APSSID "ESP_ap_"
-#define APPSK "12345678"
+#define APPSK "1234567890"
 #define GPS_START_BTN "Start GPS"
 #define GPS_STOP_BTN "Stop GPS"
 

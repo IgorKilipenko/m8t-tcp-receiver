@@ -41,7 +41,7 @@ void AWebServer::setup() {
 	WiFi.hostname(hostName);
 #endif
 	WiFi.mode(WIFI_AP_STA);
-	WiFi.softAP(softAP_ssid, softAP_password);
+	WiFi.softAP(softAP_ssid, /*"1234567890"*/softAP_password);
 
 	connectStaWifi(ssid, password);
 
