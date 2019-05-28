@@ -7,6 +7,7 @@ AWebServer::AWebServer(ATcpServer *telnetServer)
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
+	
 }
 
 AWebServer::~AWebServer() { end(); }
@@ -63,9 +64,12 @@ void AWebServer::setup() {
 		wifiList.clear();
 	}
 	telnetServer->setup();
+	_ntripClient = new NtripClient{Receiver};
 
 	initDefaultHeaders();
 	server.begin();
+
+	_ntripClient->connect("82.202.202.138", 2102,  "sbr5037", "940172", "NVSB3_2");
 }
 
 /** Credentials ================================================ */

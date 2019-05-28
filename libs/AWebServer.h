@@ -28,6 +28,7 @@
 
 #include <SPIFFSEditor.h>
 #include "ATcpServer.h"
+#include "NtripClient.h"
 
 #ifdef REST_API
 #include <AsyncJson.h>
@@ -75,6 +76,7 @@ class AWebServer {
 	AsyncWebSocket ws;
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
+	NtripClient * _ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
 	bool _decodeUbxMsg = true;

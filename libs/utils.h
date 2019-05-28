@@ -17,15 +17,11 @@
 #include <algorithm>
 
 namespace utils {
-template <typename T, size_t len> 
-using SharedBytesPtr = std::shared_ptr<T*>;
+template <typename T, size_t len> using SharedBytesPtr = std::shared_ptr<T *>;
 
-template <typename T, size_t len> 
-using SharedArrayPtr = std::shared_ptr<std::array<T, len>>;
+template <typename T, size_t len> using SharedArrayPtr = std::shared_ptr<std::array<T, len>>;
 
-template <size_t len> 
-using SharedByteArrayPtr = SharedArrayPtr<uint8_t, len>;
-
+template <size_t len> using SharedByteArrayPtr = SharedArrayPtr<uint8_t, len>;
 
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... Args> std::unique_ptr<T> make_unique(Args &&... args) { return std::unique_ptr<T>(new T(std::forward<Args>(args)...)); }
@@ -122,11 +118,30 @@ String wiFiModeToString(uint8_t mode) {
 	}
 }
 
-template <typename T>
-T fromBytes(const uint8_t * buffer, size_t len){
+template <typename T> T fromBytes(const uint8_t *buffer, size_t len) {
 	T res;
 	memcpy(&res, buffer, len);
 	return res;
+}
+
+/* Source: https://github.com/tomojitakasu/RTKLIB/blob/71db0ffa0d9735697c6adfd06fdf766d0e5ce807/src/stream.c */
+int encbase64(char *str, const unsigned char *byte, int n) {
+	const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	int i, j, k, b;
+
+
+	for (i = j = 0; i / 8 < n;) {
+		for (k = b = 0; k < 6; k++, i++) {
+			b <<= 1;
+			if (i / 8 < n)
+				b |= (byte[i / 8] >> (7 - i % 8)) & 0x1;
+		}
+		str[j++] = table[b];
+	}
+	while (j & 0x3)
+		str[j++] = '=';
+	str[j] = '\0';
+	return j;
 }
 
 } // namespace utils
