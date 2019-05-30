@@ -8,6 +8,7 @@ const char *SGraphQL::CMD = "cmd";
 
 const char *SGraphQL::WIFI = "wifi";	// WiFi Component
 const char *SGraphQL::GPS = "receiver"; // GPS receiver Conponent
+const char *SGraphQL::NTRIP = "ntrip"; // Ntrip
 const char *SGraphQL::SERVER = "server";
 
 const char *SGraphQL::RESP_VALUE = "value";

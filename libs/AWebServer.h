@@ -28,7 +28,7 @@
 
 #include <SPIFFSEditor.h>
 #include "ATcpServer.h"
-#include "NtripClient.h"
+#include "NtripClientSync.h"
 
 #ifdef REST_API
 #include <AsyncJson.h>
@@ -76,7 +76,7 @@ class AWebServer {
 	AsyncWebSocket ws;
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
-	NtripClient * _ntripClient;
+	NtripClientSync * _ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
 	bool _decodeUbxMsg = true;
@@ -95,6 +95,8 @@ class AWebServer {
 	ApiResultPtr receiverActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 	ApiResultPtr serverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
+	ApiResultPtr ntripActionHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
+	ApiResultPtr ntripQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 
 	bool connectStaWifi(const char *ssid, const char *password);
 	void disconnectStaWifi();

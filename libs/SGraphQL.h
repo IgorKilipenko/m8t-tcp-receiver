@@ -32,6 +32,7 @@ class SGraphQL {
 
 	static const char *WIFI;
 	static const char *GPS;
+	static const char *NTRIP;
 	static const char *SERVER;
 
 	static const char *RESP_ERR;

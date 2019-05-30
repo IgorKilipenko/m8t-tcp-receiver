@@ -260,8 +260,9 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 		if (utils::streq(cmd, SGraphQL::CMD_START)) {
 
 			if (telnetServer->isInProgress()) {
-				logger.debug("Already enabled");
-				outJson[SGraphQL::RESP_MSG] = "Already enabled";
+				const char *msg = "Already enabled\n";
+				logger.debug(msg);
+				outJson[SGraphQL::RESP_MSG] = msg;
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 			} else {
 				logger.trace("SET -> Start receive\n");
@@ -279,8 +280,9 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 
 		} else {
 			if (!telnetServer->isInProgress()) {
-				logger.debug("Already disabled");
-				outJson[SGraphQL::RESP_MSG] = "Already disabled";
+				const char *msg = "Already disabled\n";
+				logger.debug(msg);
+				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
 				logger.trace("SET -> Stop receive\n");
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
@@ -298,7 +300,7 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 }
 
 ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
-	logger.debug("Start on receiver ACTION\n");
+	logger.debug("Start on receiver QUERY\n");
 	reqJson.prettyPrintTo(logger);
 	logger.debug("\n");
 
@@ -343,6 +345,79 @@ ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject 
 	}
 
 	JsonObject &errJson = outJson.createNestedObject(SGraphQL::RESP_ERR);
+	errJson["message"] = String("Not found command : ") + cmd;
+
+	return res_ptr;
+}
+
+ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
+	logger.debug("Start on rntrip ACTION\n");
+	json.prettyPrintTo(logger);
+	logger.debug("\n");
+
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+	const char *cmd = json.get<const char *>(SGraphQL::CMD);
+	if (utils::streq(cmd, SGraphQL::CMD_START) || utils::streq(cmd, SGraphQL::CMD_STOP)) {
+		logger.trace("Start NtripClient Action, cmd: {%s}\n", cmd);
+		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		logger.trace("Json root created\n");
+
+		if (utils::streq(cmd, SGraphQL::CMD_START)) { // Enable Ntrip Client
+			if (_ntripClient->isEnabled()) {
+				const char *msg = "Ntrip Client already receiving data / enabled\n";
+				logger.debug(msg);
+				outJson[SGraphQL::RESP_MSG] = msg;
+			} else {
+				const char *host = json.containsKey("host") ? json.get<const char *>("host") : "82.202.202.138";
+				uint16_t port = json.containsKey("port") ? json.get<uint16_t>("port") : 2102;
+				const char *mntpnt = json.containsKey("mntpnt") ? json.get<const char *>("mntpnt") : "NVSB3_2";
+				const char *user = json.containsKey("user") ? json.get<const char *>("user") : "sbr5037";
+				const char *passwd = json.containsKey("passwd") ? json.get<const char *>("passwd") : "940172";
+
+				if (_ntripClient->connect(host, port, user, passwd, mntpnt)){
+					logger.debug("Ntrip client connected");
+				}
+			}
+		} else {
+			if (!_ntripClient->isEnabled()) {
+				const char *msg = "Ntrip Client already disabled\n";
+				logger.debug(msg);
+				outJson[SGraphQL::RESP_MSG] = msg;
+			}else{
+				_ntripClient->stop();
+			}
+		}
+
+		objJson["enabled"] = _ntripClient->isEnabled();
+		return res_ptr;
+	}
+
+	/* Not Found Command */
+	char msg[256]{0};
+	sprintf(msg, "Ntrip Client Not found command: [%s]\n", cmd);
+	JsonObject &errJson = outJson.createNestedObject(SGraphQL::RESP_ERR);
+	errJson["message"] = msg;
+	return res_ptr;
+}
+
+
+ApiResultPtr AWebServer::ntripQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
+	logger.debug("Start Ntrip QUERY\n");
+	reqJson.prettyPrintTo(logger);
+	logger.debug("\n");
+
+	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
+
+	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
+	if (utils::streq(cmd, "state")) {
+		logger.trace("Start Ntrip Query\n");
+		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
+		objJson["enabled"] =  _ntripClient && _ntripClient->isEnabled();
+
+		return res_ptr;
+	}
+
+	JsonObject &errJson = outJson.createNestedObject("error");
 	errJson["message"] = String("Not found command : ") + cmd;
 
 	return res_ptr;
@@ -432,6 +507,8 @@ void AWebServer::addServerHandlers() {
 	api.on(SGraphQL::GPS, SGraphQL::QUERY, std::bind(&AWebServer::receiverQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	api.on(SGraphQL::GPS, SGraphQL::ACTION, std::bind(&AWebServer::receiverActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	api.on(SGraphQL::SERVER, SGraphQL::QUERY, std::bind(&AWebServer::serverQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::NTRIP, SGraphQL::ACTION, std::bind(&AWebServer::ntripActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+	api.on(SGraphQL::NTRIP, SGraphQL::QUERY, std::bind(&AWebServer::ntripQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	server.addHandler(apiHandler);
 
 #endif // REST_API
@@ -448,15 +525,20 @@ void AWebServer::addOTAhandlers() {
 	});
 	ArduinoOTA.onError([&](ota_error_t error) {
 		if (error == OTA_AUTH_ERROR)
-			events.send("Auth Failed", "ota");
+			//events.send("Auth Failed", "ota");
+			logger.error("OTA Auth Failed");
 		else if (error == OTA_BEGIN_ERROR)
-			events.send("Begin Failed", "ota");
+			//events.send("Begin Failed", "ota");
+			logger.error("OTA Begin Failed");
 		else if (error == OTA_CONNECT_ERROR)
-			events.send("Connect Failed", "ota");
+			//events.send("Connect Failed", "ota");
+			logger.error("OTA Connect Failed");
 		else if (error == OTA_RECEIVE_ERROR)
-			events.send("Recieve Failed", "ota");
+			//events.send("Recieve Failed", "ota");
+			logger.error("OTA Recieve Failed");
 		else if (error == OTA_END_ERROR)
-			events.send("End Failed", "ota");
+			//events.send("End Failed", "ota");
+			logger.error("OTA End Failed");
 	});
 }
 
@@ -465,21 +547,21 @@ void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&A
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 	if (_decodeUbxMsg) {
 		for (uint16_t i = 0; i < len; i++) {
-	//		// logger.trace("Buffer length [%d]\n", len);
+			//		// logger.trace("Buffer length [%d]\n", len);
 			const int16_t code = _ubxDecoder.inputData(buffer[i]);
 			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
-			//	// NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
-				
-				const uint8_t * buffer = _ubxDecoder.getBuffer();
+				//	// NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
+
+				const uint8_t *buffer = _ubxDecoder.getBuffer();
 				const uint16_t len = _ubxDecoder.getLength();
-				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)){
+				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
 					logger.debug("Has NAV POSLLH msg\n");
 					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
 				}
-				
 			}
 		}
+		delay(1);
 	}
 
-	//ws.binaryAll((const char *)buffer, len);
+	// ws.binaryAll((const char *)buffer, len);
 }

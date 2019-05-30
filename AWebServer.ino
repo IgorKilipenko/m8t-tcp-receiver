@@ -64,12 +64,15 @@ void AWebServer::setup() {
 		wifiList.clear();
 	}
 	telnetServer->setup();
-	_ntripClient = new NtripClient{Receiver};
+	#ifdef ESP32
+	_ntripClient = new NtripClientSync{RTCM};
+	#else
+	_ntripClient = new NtripClientSync{Receiver};
+	#endif
+	//_ntripClient = new NtripClient{Receiver};
 
 	initDefaultHeaders();
 	server.begin();
-
-	_ntripClient->connect("82.202.202.138", 2102,  "sbr5037", "940172", "NVSB3_2");
 }
 
 /** Credentials ================================================ */
@@ -204,9 +207,13 @@ void AWebServer::process() {
 		}
 	}
 
+	ArduinoOTA.handle();
 	if (!telnetServer->isInProgress()) {
-		ArduinoOTA.handle();
-	} else {
 		telnetServer->process();
+		delay(1);
+	} 
+	if (_ntripClient->isEnabled()) {
+		_ntripClient->receiveNtrip();
+		delay(1);
 	}
 }

@@ -32,11 +32,11 @@ void ATcpServer::ATcpServer::process() {
 			_seralDataCallback((const uint8_t *)buffer, bytesCount);
 		}
 
-#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
-		delay(1000);
-#else
-		delay(1);
-#endif
+//#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
+//		delay(1000);
+//#else
+//		delay(1);
+//#endif
 	}
 }
 
@@ -206,7 +206,7 @@ void ATcpServer::setup() {
 }
 
 void ATcpServer::sendDataToClients(const char *buffer, size_t bytesCount) {
-	logger.debug("Send data to clients\n");
+	logger.trace("Send data to clients\n");
 	for (int i = 0; i < MAX_TCP_CLIENTS; i++) {
 		if (clients[i] && clients[i]->connected()) {
 			sendMessage(clients[i], buffer, bytesCount);
