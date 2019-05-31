@@ -114,9 +114,9 @@ void NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t por
 
 	assert(host && port && user && pass);
 
-	char buff[1024], sec[512], *p = buff;
-	p += sprintf(p, "GET %s/%s HTTP/1.1\r\n", host, mntpnt);
-	//p += sprintf(p, "HOST: %s\r\n", host);
+	char buff[1024]{0}, sec[512], *p = buff;
+	p += sprintf(p, "GET /%s HTTP/1.0\r\n", mntpnt);
+	p += sprintf(p, "HOST: %s\r\n", host);
 	p += sprintf(p, "Ntrip-Version: Ntrip/2.0\r\n");
 	p += sprintf(p, "User-Agent: NTRIP %s/2.0\r\n", NTRIP_AGENT);
 	if (nmea) {
@@ -139,14 +139,14 @@ void NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t por
 
 	//_client->write(connStr, p-buff);
 
-	const char *str = "GET /NVSB3_2 HTTP/1.0\r\n"
-					  "HOST: NVSB3_2\r\n"
-					  "Ntrip-Version: Ntrip/2.0\r\n"
-					  "User-Agent: NTRIP ESP_GPS/2.0\r\n"
-					  "Authorization: Basic c2JyNTAzNzo5NDAxNzI=\r\n\r\n";
-	size_t count = _client->write((const uint8_t *)str, strlen(str));
+	//const char *str = "GET /NVSB3_2 HTTP/1.0\r\n"
+	//				  "HOST: NVSB3_2\r\n"
+	//				  "Ntrip-Version: Ntrip/2.0\r\n"
+	//				  "User-Agent: NTRIP ESP_GPS/2.0\r\n"
+	//				  "Authorization: Basic c2JyNTAzNzo5NDAxNzI=\r\n\r\n";
+	size_t count = _client->write((const uint8_t *)connStr /*str*/, strlen(connStr) /*strlen(str)*/);
 
-	logger.debug("Conn str write count - %i\n", count);
+	logger.debug("Conn str write count - %i\n", connStr /*str*/);
 
 	uint64_t start = millis();
 	while (!_client->available() && millis() - start < 1000) {
