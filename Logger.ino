@@ -10,7 +10,7 @@ template <typename... T> void Logger::debug(T... args) {
 	sendToEventSource("logger", args...);
 #endif
 #if defined(DEBUG) && LOG_LEVEL > 1
-	lout->print("[DEBUG] ");
+	//lout->print("[DEBUG] ");
 	lout->printf(args...);
 #endif
 }

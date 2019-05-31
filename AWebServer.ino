@@ -64,12 +64,9 @@ void AWebServer::setup() {
 		wifiList.clear();
 	}
 	telnetServer->setup();
-#ifdef ESP32
-	_ntripClient = new NtripClientSync{RTCM};
-#else
-	_ntripClient = new NtripClientSync{Receiver};
-#endif
-	//_ntripClient = new NtripClient{Receiver};
+
+	_ntripClient = new NtripClientSync{Receiver};		
+
 
 	initDefaultHeaders();
 	server.begin();
