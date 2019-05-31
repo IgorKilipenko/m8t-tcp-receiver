@@ -48,7 +48,7 @@ void NtripClientSync::stop() {
 }
 
 bool NtripClientSync::requestNtrip() {
-	const char *httpok = "ICY 200 OK\r\n" /*"HTTP/1.1 200 OK"*/;
+	const char *httpok = /*"ICY 200 OK\r\n"*/ "HTTP/1.1 200 OK";
 	uint8_t buffer[NTRIP_BUFFER_LENGTH]{0};
 	size_t len = read(buffer, strlen(httpok));
 	char respMsg[len + 1]{0};
@@ -56,6 +56,9 @@ bool NtripClientSync::requestNtrip() {
 	
 	memcpy(respMsg, buffer, len);
 	if (strncmp(httpok, respMsg, len) != 0) {
+		uint8_t resp[256]{0};
+		strcat((char*)resp, (char*)respMsg);
+		read(resp + len, 256-len); 
 		logger.debug("Error response from ntrip server. Response: %s\n", respMsg);
 		_connectedNtrip = true;
 		return false;
@@ -112,8 +115,8 @@ void NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t por
 	assert(host && port && user && pass);
 
 	char buff[1024], sec[512], *p = buff;
-	p += sprintf(p, "GET /%s HTTP/1.0\r\n", mntpnt);
-	p += sprintf(p, "HOST: %s\r\n", mntpnt);
+	p += sprintf(p, "GET %s/%s HTTP/1.1\r\n", host, mntpnt);
+	//p += sprintf(p, "HOST: %s\r\n", host);
 	p += sprintf(p, "Ntrip-Version: Ntrip/2.0\r\n");
 	p += sprintf(p, "User-Agent: NTRIP %s/2.0\r\n", NTRIP_AGENT);
 	if (nmea) {
