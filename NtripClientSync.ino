@@ -48,11 +48,14 @@ void NtripClientSync::stop() {
 }
 
 bool NtripClientSync::requestNtrip() {
-	const char * res ="HTTP/1.1 200 OK";
-	const size_t len = read(_buffer, strlen(res));
+	const char *httpok = "ICY 200 OK\r\n" /*"HTTP/1.1 200 OK"*/;
+	uint8_t buffer[NTRIP_BUFFER_LENGTH]{0};
+	size_t len = read(buffer, strlen(httpok));
 	char respMsg[len + 1]{0};
-	memcpy(respMsg, _buffer, len);
-	if (strcmp(res, respMsg) != 0) {
+
+	
+	memcpy(respMsg, buffer, len);
+	if (strncmp(httpok, respMsg, len) != 0) {
 		logger.debug("Error response from ntrip server. Response: %s\n", respMsg);
 		_connectedNtrip = true;
 		return false;
@@ -67,8 +70,18 @@ size_t NtripClientSync::receiveNtrip() {
 	if (!isEnabled()) {
 		return 0;
 	}
-	size_t count = read(_buffer, NTRIP_BUFFER_LENGTH);
-	count = _uart->write(_buffer, count);
+	uint8_t buffer[NTRIP_BUFFER_LENGTH]{0};
+	size_t count = read(buffer, NTRIP_BUFFER_LENGTH);
+	if (count) {
+		logger.debug("Count %i\n", count);
+		//count = Receiver->write(_buffer, count);
+		size_t i = 0;
+		for (; i < count; i++){
+			Receiver->write(buffer[i]);
+			logger.write(buffer[i]);
+		}
+	}
+
 	return count;
 }
 
@@ -82,6 +95,7 @@ size_t NtripClientSync::read(uint8_t *buffer, size_t len) {
 	if (byteCount > 0) {
 		len = std::min(byteCount, len);
 		count = _client->read(buffer, len);
+		//utils::ethernetDechunk((char*)buffer);
 		logger.debug("Count %i\n", count);
 	}
 	return count;
@@ -136,3 +150,6 @@ void NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t por
 		delay(10);
 	}
 }
+
+
+

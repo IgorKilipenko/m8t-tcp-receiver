@@ -3,11 +3,11 @@ bool AWebServer::_static_init = false;
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
-	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "},server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{} ,api{} {
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{},
+	  _ubxDecoder{}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
-	
 }
 
 AWebServer::~AWebServer() { end(); }
@@ -42,7 +42,7 @@ void AWebServer::setup() {
 	WiFi.hostname(hostName);
 #endif
 	WiFi.mode(WIFI_AP_STA);
-	WiFi.softAP(softAP_ssid, /*"1234567890"*/softAP_password);
+	WiFi.softAP(softAP_ssid, /*"1234567890"*/ softAP_password);
 
 	connectStaWifi(ssid, password);
 
@@ -64,11 +64,11 @@ void AWebServer::setup() {
 		wifiList.clear();
 	}
 	telnetServer->setup();
-	#ifdef ESP32
+#ifdef ESP32
 	_ntripClient = new NtripClientSync{RTCM};
-	#else
+#else
 	_ntripClient = new NtripClientSync{Receiver};
-	#endif
+#endif
 	//_ntripClient = new NtripClient{Receiver};
 
 	initDefaultHeaders();
@@ -207,11 +207,11 @@ void AWebServer::process() {
 		}
 	}
 
-	ArduinoOTA.handle();
 	if (!telnetServer->isInProgress()) {
+		ArduinoOTA.handle();
+	} else {
 		telnetServer->process();
-		delay(1);
-	} 
+	}
 	if (_ntripClient->isEnabled()) {
 		_ntripClient->receiveNtrip();
 		delay(1);

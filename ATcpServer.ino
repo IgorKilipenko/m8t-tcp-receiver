@@ -43,16 +43,22 @@ void ATcpServer::ATcpServer::process() {
 void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
-	logger.printf("\n Data from client to receiver %s\n", client->remoteIP().toString().c_str());
+	logger.debug("\n Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
+	#ifdef DEBUG
+	logger.printf("=========================\n");
+	logger.write((uint8_t *)data, len);
+	logger.printf("\n-- packet count : [%i] bytes--\n", len);
+	logger.printf("=========================\n");
+	#endif
 	Receiver->write((uint8_t *)data, len);
 }
 
 void ATcpServer::handleDisconnect(AsyncClient *client) {
-	logger.printf("\n Client %s disconnected \n", client->remoteIP().toString().c_str());
+	logger.debug("\n Client %s disconnected \n", client->remoteIP().toString().c_str());
 	// delete client;
 	// client = nullptr;
 	const size_t availableClients = freeClients();
-	logger.printf("Available clints count: %i \n", availableClients);
+	logger.debug("Available clints count: %i \n", availableClients);
 }
 
 void ATcpServer::handleTimeOut(AsyncClient *client, uint32_t time) { logger.printf("\n Client ACK timeout ip: %s \n", client->remoteIP().toString().c_str()); }

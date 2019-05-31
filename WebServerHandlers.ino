@@ -368,7 +368,7 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 				logger.debug(msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
-				const char *host = json.containsKey("host") ? json.get<const char *>("host") : "82.202.202.138";
+				const char *host = json.containsKey("host") ? json.get<const char *>("host") : "192.168.1.50"/*"82.202.202.138"*/;
 				uint16_t port = json.containsKey("port") ? json.get<uint16_t>("port") : 2102;
 				const char *mntpnt = json.containsKey("mntpnt") ? json.get<const char *>("mntpnt") : "NVSB3_2";
 				const char *user = json.containsKey("user") ? json.get<const char *>("user") : "sbr5037";

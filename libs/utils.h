@@ -144,6 +144,46 @@ int encbase64(char *str, const unsigned char *byte, int n) {
 	return j;
 }
 
+int ethernetDechunk( char* pChunk )
+{
+    int bytes_removed = -1;
+    int chunk_size_length = 0;
+
+    if (pChunk)
+    {
+        while (((*pChunk != '\n') && (*pChunk != '\r')) && *pChunk)
+        {
+            pChunk++;
+            chunk_size_length++;
+        }
+
+        if ((*pChunk == '\r') || (*pChunk == '\n'))
+        {
+            while ((*pChunk == '\r') || (*pChunk == '\n'))
+            {
+                pChunk++;
+                chunk_size_length++;
+            }
+
+            // Do a memmove on the string, length is +1 to ensure we get a termninating NULL
+            memmove(pChunk - chunk_size_length, pChunk, strlen(pChunk) + 1);
+            bytes_removed = chunk_size_length;
+
+            // If there is a final \r\n, remove it
+            pChunk += (strlen(pChunk) - 2);
+            if (((*pChunk == '\r') && (*(pChunk + 1) == '\n')) ||
+                ((*pChunk == '\n') && (*(pChunk + 1) == '\r')))
+            {
+                *pChunk++ = 0;
+                *pChunk = 0;
+                bytes_removed += 2;
+            }
+        }
+    }
+
+    return bytes_removed;
+}
+
 } // namespace utils
 
 #endif

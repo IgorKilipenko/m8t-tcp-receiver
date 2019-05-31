@@ -25,7 +25,7 @@
 #define NTRIP_RSP_HTTP "HTTP/"  /* ntrip response: http */
 #define NTRIP_RSP_ERROR "ERROR" /* ntrip response: error */
 
-#define NTRIP_BUFFER_LENGTH 256
+#define NTRIP_BUFFER_LENGTH 512
 
 
 class NtripClientSync {
