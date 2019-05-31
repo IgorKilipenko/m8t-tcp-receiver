@@ -48,7 +48,7 @@ void NtripClientSync::stop() {
 }
 
 bool NtripClientSync::requestNtrip() {
-	const char *httpok = /*"ICY 200 OK\r\n"*/ "HTTP/1.1 200 OK";
+	const char *httpok = "ICY 200 OK\r\n" /*"HTTP/1.1 200 OK"*/;
 	uint8_t buffer[NTRIP_BUFFER_LENGTH]{0};
 	size_t len = read(buffer, strlen(httpok));
 	char respMsg[len + 1]{0};
@@ -117,8 +117,8 @@ void NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t por
 	char buff[1024]{0}, sec[512], *p = buff;
 	p += sprintf(p, "GET /%s HTTP/1.0\r\n", mntpnt);
 	p += sprintf(p, "HOST: %s\r\n", host);
-	p += sprintf(p, "Ntrip-Version: Ntrip/2.0\r\n");
-	p += sprintf(p, "User-Agent: NTRIP %s/2.0\r\n", NTRIP_AGENT);
+	p += sprintf(p, "Ntrip-Version: Ntrip/1.0\r\n");
+	p += sprintf(p, "User-Agent: NTRIP %s/1.0\r\n", NTRIP_AGENT);
 	if (nmea) {
 		p += sprintf(p, "Ntrip-GGA: %s\r\n", nmea);
 	}
