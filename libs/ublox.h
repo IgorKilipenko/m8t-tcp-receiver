@@ -104,4 +104,25 @@ class MessageEvent {
 	uint8_t *_payload;
 };
 
+class UbloxTransport : public Stream {
+  public:
+	UbloxTransport(Stream &outStream, size_t buff_len = 1024);
+	~UbloxTransport() override;
+	int available() override;
+	int read() override;
+	int peek() override;
+	void flush() override;
+	size_t write(uint8_t) override;
+	size_t setBufferBytes(uint8_t);
+	size_t setBufferBytes(const uint8_t *, size_t);
+	int availableSet();
+
+  private:
+	Stream &_outStream;
+	uint8_t *_buffer;
+	uint8_t *_curr{nullptr};
+
+	bool _check();
+};
+
 #endif // ublox_h

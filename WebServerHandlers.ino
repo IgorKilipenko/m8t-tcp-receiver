@@ -369,12 +369,12 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
 				const char *host = json.containsKey("host") ? json.get<const char *>("host") : /*"192.168.1.50"*/ "82.202.202.138";
-				uint16_t port = json.containsKey("port") ? json.get<uint16_t>("port") :/*7048*/ 2102;
+				uint16_t port = json.containsKey("port") ? json.get<uint16_t>("port") : /*7048*/ 2102;
 				const char *mntpnt = json.containsKey("mountPoint") ? json.get<const char *>("mountPoint") : "NVSB3_2";
 				const char *user = json.containsKey("user") ? json.get<const char *>("user") : "sbr5037";
 				const char *passwd = json.containsKey("password") ? json.get<const char *>("password") : "pass";
 
-				if (_ntripClient->connect(host, port, user, passwd, mntpnt)){
+				if (_ntripClient->connect(host, port, user, passwd, mntpnt)) {
 					logger.debug("Ntrip client connected");
 				}
 			}
@@ -383,7 +383,7 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 				const char *msg = "Ntrip Client already disabled\n";
 				logger.debug(msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
-			}else{
+			} else {
 				_ntripClient->stop();
 			}
 		}
@@ -400,7 +400,6 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 	return res_ptr;
 }
 
-
 ApiResultPtr AWebServer::ntripQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
 	logger.debug("Start Ntrip QUERY\n");
 	reqJson.prettyPrintTo(logger);
@@ -412,7 +411,7 @@ ApiResultPtr AWebServer::ntripQueryHandler(const char *event, const JsonObject &
 	if (utils::streq(cmd, "state")) {
 		logger.trace("Start Ntrip Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
-		objJson["enabled"] =  _ntripClient && _ntripClient->isEnabled();
+		objJson["enabled"] = _ntripClient && _ntripClient->isEnabled();
 
 		return res_ptr;
 	}
@@ -525,19 +524,19 @@ void AWebServer::addOTAhandlers() {
 	});
 	ArduinoOTA.onError([&](ota_error_t error) {
 		if (error == OTA_AUTH_ERROR)
-			//events.send("Auth Failed", "ota");
+			// events.send("Auth Failed", "ota");
 			logger.error("OTA Auth Failed");
 		else if (error == OTA_BEGIN_ERROR)
-			//events.send("Begin Failed", "ota");
+			// events.send("Begin Failed", "ota");
 			logger.error("OTA Begin Failed");
 		else if (error == OTA_CONNECT_ERROR)
-			//events.send("Connect Failed", "ota");
+			// events.send("Connect Failed", "ota");
 			logger.error("OTA Connect Failed");
 		else if (error == OTA_RECEIVE_ERROR)
-			//events.send("Recieve Failed", "ota");
+			// events.send("Recieve Failed", "ota");
 			logger.error("OTA Recieve Failed");
 		else if (error == OTA_END_ERROR)
-			//events.send("End Failed", "ota");
+			// events.send("End Failed", "ota");
 			logger.error("OTA End Failed");
 	});
 }
@@ -546,22 +545,25 @@ void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&A
 
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 	if (_decodeUbxMsg) {
-		for (uint16_t i = 0; i < len; i++) {
-			//		// logger.trace("Buffer length [%d]\n", len);
-			const int16_t code = _ubxDecoder.inputData(buffer[i]);
-			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
-				//	// NavPOSLLHMessage navMsg { _ubxDecoder.getBuffer(),  _ubxDecoder.getLength()};
+		//		for (uint16_t i = 0; i < len; i++) {
+		//			const int16_t code = _ubxDecoder.inputData(buffer[i]);
+		//			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+		//				const uint8_t *buffer = _ubxDecoder.getBuffer();
+		//				const uint16_t len = _ubxDecoder.getLength();
+		//				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
+		//					logger.debug("Has NAV POSLLH msg\n");
+		//					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+		//				}
+		//			}
+		//		}
+		//		delay(1);
 
-				const uint8_t *buffer = _ubxDecoder.getBuffer();
-				const uint16_t len = _ubxDecoder.getLength();
-				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
-					logger.debug("Has NAV POSLLH msg\n");
-					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
-				}
-			}
+		_transport->setBufferBytes(buffer, len);
+
+
+		if (_autoPVT && _gps->getPVT()) {
+			long lat = _gps->getLatitude();
+			logger.debug("LAT: [%ld]", lat);
 		}
-		delay(1);
 	}
-
-	// ws.binaryAll((const char *)buffer, len);
 }

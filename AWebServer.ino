@@ -4,7 +4,7 @@ const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
 	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{},
-	  _ubxDecoder{}, api{} {
+	  _ubxDecoder{}, _gps{new SFE_UBLOX_GPS}, _transport{new UbloxTransport(*Receiver, 1024)}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
@@ -63,7 +63,20 @@ void AWebServer::setup() {
 	if (nets > 0) {
 		wifiList.clear();
 	}
+
 	telnetServer->setup();
+
+	if (_gps->begin((Stream&)(*_transport))){
+		logger.debug("GPS Receiver connected");
+		_autoPVT = _gps->setAutoPVT(true);
+		if (_autoPVT){
+			logger.debug("Auto PVT enabled");
+		}
+		
+	}else{
+		logger.error("GPS Receiver not connected\n");
+	}
+
 
 	_ntripClient = new NtripClientSync{Receiver};		
 

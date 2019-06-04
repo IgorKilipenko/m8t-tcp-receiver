@@ -38,6 +38,7 @@
 
 #include "ublox.h"
 #include "UbxMessage.h"
+#include <SparkFun_Ublox_Arduino_Library.h>
 
 #define APSSID "ESP_ap_"
 #define APPSK "1234567890"
@@ -76,9 +77,11 @@ class AWebServer {
 	AsyncWebSocket ws;
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
-	NtripClientSync * _ntripClient;
+	NtripClientSync *_ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
+	SFE_UBLOX_GPS *_gps;
+	UbloxTransport *_transport;
 	bool _decodeUbxMsg = true;
 
 	/* API ============================== */
@@ -104,6 +107,7 @@ class AWebServer {
 	void addOTAhandlers();
 	void addReceiverHandlers();
 
+	bool _autoPVT{false};
 };
 
 struct AWebServer::WifiItem {
