@@ -39,8 +39,8 @@ class NtripClientSync {
 	bool connect(const char *host, uint16_t port, const char *user, const char *pass, const char *mountPoint, const char *nmea = nullptr);
 	void stop();
 	bool isEnabled();
-	size_t receiveNtrip();
-	size_t read(uint8_t * buffer, size_t length);
+	int receiveNtrip();
+	int read(uint8_t * buffer, size_t length);
 	
 
   private:
@@ -58,7 +58,7 @@ class NtripClientSync {
 
 	size_t buildConnStr(char* connStr, const char *host, uint16_t port, const char *user, const char *pass, const char *mountPoint, const char *nmea = nullptr);
 	bool requestNtrip();
-	size_t readLine(uint8_t *buffer, size_t len);
+	int readLine(uint8_t *buffer, size_t len);
 };
 
 #endif // NtripClientSync_h

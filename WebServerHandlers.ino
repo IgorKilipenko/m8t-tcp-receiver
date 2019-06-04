@@ -370,9 +370,9 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 			} else {
 				const char *host = json.containsKey("host") ? json.get<const char *>("host") : /*"192.168.1.50"*/ "82.202.202.138";
 				uint16_t port = json.containsKey("port") ? json.get<uint16_t>("port") :/*7048*/ 2102;
-				const char *mntpnt = json.containsKey("mntpnt") ? json.get<const char *>("mntpnt") : "NVSB3_2";
+				const char *mntpnt = json.containsKey("mountPoint") ? json.get<const char *>("mountPoint") : "NVSB3_2";
 				const char *user = json.containsKey("user") ? json.get<const char *>("user") : "sbr5037";
-				const char *passwd = json.containsKey("passwd") ? json.get<const char *>("passwd") : "pass";
+				const char *passwd = json.containsKey("password") ? json.get<const char *>("password") : "pass";
 
 				if (_ntripClient->connect(host, port, user, passwd, mntpnt)){
 					logger.debug("Ntrip client connected");

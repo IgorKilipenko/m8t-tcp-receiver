@@ -1,4 +1,4 @@
-#define DEBUG		// Uncomment for enable debug mode
+//#define DEBUG		// Uncomment for enable debug mode
 #define LOG_LEVEL 2
 #define WEB_LOG_LEVEL 3
 #define ALTSSID

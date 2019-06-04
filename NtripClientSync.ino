@@ -36,6 +36,8 @@ bool NtripClientSync::connect(const char *host, uint16_t port, const char *user,
 			}
 			connected = requestNtrip();
 		}
+	}else{
+		logger.error("Clent connection error, not connected\n");
 	}
 
 	if (connected) {
@@ -45,8 +47,9 @@ bool NtripClientSync::connect(const char *host, uint16_t port, const char *user,
 		strcpy(_mntpnt, mntpnt);
 		strcpy(_connectionString, connStr);
 		_port = port;
-	} else if (_client->connected()) {
+	} else if (!_client->connected()) {
 		_client->stop();
+		logger.error("Ntrip server reject connection, not connected\n");
 	}
 
 	_connectedNtrip = connected;
@@ -64,7 +67,11 @@ bool NtripClientSync::requestNtrip() {
 	// const char *httpok = "ICY 200 OK\r\n" /*"HTTP/1.1 200 OK"*/;
 
 	uint8_t buffer[NTRIP_BUFFER_LENGTH]{0};
-	size_t len = readLine(buffer, 128);
+	int len = readLine(buffer, 128);
+
+	if (len <= 0){
+		logger.error("Response frome Ntrip server not contain headers [%s | %s]\n", NTRIP_RSP_OK_CLI, NTRIP_HTTP_OK);
+	}
 
 	if (len >= strlen(NTRIP_RSP_OK_CLI) && memcmp((uint8_t *)NTRIP_RSP_OK_CLI, buffer, strlen(NTRIP_RSP_OK_CLI)) == 0) {
 		logger.debug("Connection to ntrip success. Response: %s\n", buffer);
@@ -72,60 +79,56 @@ bool NtripClientSync::requestNtrip() {
 		// FIX Next -> will by ICY 200 OK\r\n in response body FOR FIX
 		logger.debug("Connection to ntrip success. Response: %s\n", buffer);
 	} else {
-		logger.debug("\nError response from ntrip server. Response: %s\n", buffer);
+		logger.debug("Error response from ntrip server. Response: %s\n", buffer);
 		_connectedNtrip = false;
 		return false;
 	}
 
 	read(buffer + len, sizeof(buffer) - len);
-	logger.debug("\nError response from ntrip server. Response: %s\n", buffer);
+	logger.debug("Response from ntrip server. Response: [%s]\n", buffer);
 
 	_connectedNtrip = true;
 	return _connectedNtrip;
 }
 
-size_t NtripClientSync::receiveNtrip() {
+int NtripClientSync::receiveNtrip() {
 	if (!isEnabled()) {
-		return 0;
+		logger.error("Receive data error, Ntrip server not enabled\n");
+		return -1;
 	}
-	size_t count = read(_buffer, NTRIP_BUFFER_LENGTH);
-	if (count) {
-		logger.debug("Count %i\n", count);
-		// count = Receiver->write(_buffer, count);
-		size_t i = 0;
-		logger.debug("\n=======================\n");
-		for (; i < count; i++) {
-			_uart->write(_buffer[i]);
-#ifdef DEBUG
-			logger.write(_buffer[i]);
-#endif
-		}
-		logger.debug("\n=======================\n");
+	int count = read(_buffer, NTRIP_BUFFER_LENGTH);
+	if (count > 0) {
+		count = _uart->write(_buffer, count);
+		logger.debug("Write [%i] bytes\n", count);
+	}else{
+		return -1;
 	}
 
 	return count;
 }
 
-size_t NtripClientSync::read(uint8_t *buffer, size_t len) {
+int NtripClientSync::read(uint8_t *buffer, size_t len) {
 	if (!_client->connected()) {
-		logger.debug("Read err ntrip\n");
-		return 0;
+		logger.error("Read err ntrip, client not connected\n");
+		return -1;
 	}
-	size_t count = 0;
-	size_t byteCount = _client->available();
-	if (byteCount > 0) {
-		len = std::min(byteCount, len);
+	int count = _client->available();
+	if (count > 0) {
+		len = std::min((size_t)count, len);
 		count = _client->read(buffer, len);
 		// utils::ethernetDechunk((char*)buffer);
-		logger.debug("Count %i\n", count);
+		logger.debug("Read [%i] bytes\n", count);
+	}else if (count < 0){
+		logger.error("Erro read NTRIP data from stream, res = [%i]\n", count);
+		return -1;
 	}
 	return count;
 }
 
-size_t NtripClientSync::readLine(uint8_t *buffer, size_t len) {
+int NtripClientSync::readLine(uint8_t *buffer, size_t len) {
 	if (!_client->connected()) {
-		logger.debug("Read err ntrip\n");
-		return 0;
+		logger.error("Read err ntrip, client not connected\n");
+		return -1;
 	}
 	return _client->readBytesUntil('\r', buffer, len);
 }
@@ -138,7 +141,10 @@ bool NtripClientSync::isEnabled() {
 
 size_t NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t port, const char *user, const char *pass, const char *mntpnt, const char *nmea) {
 
-	assert(host && port && user && pass);
+	if (!host || !user || !pass || !mntpnt){
+		logger.error("Build connection string (NTRIP) error, empty args\n");
+		return 0;
+	}
 
 	char buff[1024]{0}, sec[512], *p = buff;
 	p += sprintf(p, "GET /%s HTTP/1.0\r\n", mntpnt);
