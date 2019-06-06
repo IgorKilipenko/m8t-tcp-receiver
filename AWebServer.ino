@@ -3,14 +3,24 @@ bool AWebServer::_static_init = false;
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
-	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{},
-	  _ubxDecoder{}, _gps{new SFE_UBLOX_GPS}, _transport{new UbloxTransport(*Receiver, 1024)}, api{} {
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
+	  _transport{new UbloxTransport(*Receiver)}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
+
+	_gps = new UBLOX_GPS(_transport);
 }
 
-AWebServer::~AWebServer() { end(); }
+AWebServer::~AWebServer() {
+	end();
+	if (_gps != nullptr) {
+		delete _gps;
+	}
+	if (_transport != nullptr) {
+		delete _transport;
+	}
+}
 
 void AWebServer::end() {
 	SPIFFS.end();
@@ -66,20 +76,7 @@ void AWebServer::setup() {
 
 	telnetServer->setup();
 
-	if (_gps->begin((Stream&)(*_transport))){
-		logger.debug("GPS Receiver connected");
-		_autoPVT = _gps->setAutoPVT(true);
-		if (_autoPVT){
-			logger.debug("Auto PVT enabled");
-		}
-		
-	}else{
-		logger.error("GPS Receiver not connected\n");
-	}
-
-
-	_ntripClient = new NtripClientSync{Receiver};		
-
+	_ntripClient = new NtripClientSync{Receiver};
 
 	initDefaultHeaders();
 	server.begin();
@@ -206,6 +203,25 @@ void AWebServer::disconnectStaWifi() {
 	WiFi.disconnect(false);
 }
 
+void AWebServer::initializeGpsReceiver() {
+	logger.trace("Start GPS BEGIN\n");
+	_gps->enableDebugging(logger.getStream());
+	if (_gps->begin()) {
+		logger.debug("GPS Receiver connected\n");
+		if (!_autoPVT) {
+			_autoPVT = _gps->setAutoPVT(true, 1000);
+			if (_autoPVT) {
+				logger.debug("Auto PVT enabled\n");
+			}
+		}
+		_gpsIsInint = true;
+
+	} else {
+		logger.error("GPS Receiver not connected\n");
+		_gpsIsInint = false;
+	}
+}
+
 /** Main process */
 void AWebServer::process() {
 	if (_connect) {
@@ -219,11 +235,22 @@ void AWebServer::process() {
 
 	if (!telnetServer->isInProgress()) {
 		ArduinoOTA.handle();
-	} else {
-		telnetServer->process();
 	}
+
+	telnetServer->process();
+	if (!_gpsIsInint) {
+		initializeGpsReceiver();
+	} 
+	//else {
+	//	if (_autoPVT && _gps->getPVT(1000)) {
+	//		long lat = _gps->getLatitude();
+	//		logger.debug("LAT: [%ld]", lat);
+	//	}
+	//}
+
 	if (_ntripClient->isEnabled()) {
 		_ntripClient->receiveNtrip();
-		delay(1);
 	}
+
+	delay(1);
 }

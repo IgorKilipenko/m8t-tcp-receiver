@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 #include "utils.h"
+#include <queue>
+#include <SparkFun_Ublox_Arduino_Library.h> // Source - https://github.com/sparkfun/SparkFun_Ublox_Arduino_Library/
 
 enum class ClassIds : uint8_t;
 enum class NavMessageIds : uint8_t;
@@ -106,23 +108,41 @@ class MessageEvent {
 
 class UbloxTransport : public Stream {
   public:
-	UbloxTransport(Stream &outStream, size_t buff_len = 1024);
+	static const size_t MAX_BUFFER_SIZE;
+	UbloxTransport(Stream &outStream);
 	~UbloxTransport() override;
 	int available() override;
 	int read() override;
 	int peek() override;
 	void flush() override;
 	size_t write(uint8_t) override;
-	size_t setBufferBytes(uint8_t);
-	size_t setBufferBytes(const uint8_t *, size_t);
-	int availableSet();
+	size_t push(uint8_t);
+	size_t push(const uint8_t *, size_t);
+	int availableForPush();
+	void clear();
+	int pushFromOutStream();
+	void setWaitResponse(bool);
+	Stream &getOutStream();
 
   private:
-	Stream &_outStream;
+	Stream *_outStream;
 	uint8_t *_buffer;
 	uint8_t *_curr{nullptr};
+	std::queue<uint8_t> _queue;
+	bool _waitResponse = false;
+};
 
-	bool _check();
+class UBLOX_GPS : public SFE_UBLOX_GPS {
+  public:
+	UBLOX_GPS(UbloxTransport *);
+	virtual ~UBLOX_GPS();
+
+	bool checkUbloxSerial() override;
+
+	bool begin();
+
+  private:
+	UbloxTransport *_transport = nullptr;
 };
 
 #endif // ublox_h

@@ -545,25 +545,23 @@ void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&A
 
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 	if (_decodeUbxMsg) {
-		//		for (uint16_t i = 0; i < len; i++) {
-		//			const int16_t code = _ubxDecoder.inputData(buffer[i]);
-		//			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
-		//				const uint8_t *buffer = _ubxDecoder.getBuffer();
-		//				const uint16_t len = _ubxDecoder.getLength();
-		//				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
-		//					logger.debug("Has NAV POSLLH msg\n");
-		//					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
-		//				}
-		//			}
-		//		}
-		//		delay(1);
-
-		_transport->setBufferBytes(buffer, len);
-
-
-		if (_autoPVT && _gps->getPVT()) {
-			long lat = _gps->getLatitude();
-			logger.debug("LAT: [%ld]", lat);
+		for (uint16_t i = 0; i < len; i++) {
+			const int16_t code = _ubxDecoder.inputData(buffer[i]);
+			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+				const uint8_t *buffer = _ubxDecoder.getBuffer();
+				const uint16_t len = _ubxDecoder.getLength();
+				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
+					logger.debug("Has NAV POSLLH msg\n");
+					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+				}
+			}
 		}
+		delay(1);
+
+
+		//if (_transport->push(buffer, len) < 0){
+		//	_transport->clear();
+		//}
+
 	}
 }

@@ -36,9 +36,9 @@ template <typename... T> void Logger::trace(T... args) {
 }
 
 size_t Logger::write(const uint8_t *buffer, size_t len) {
-#ifdef DEBUG
+//#ifdef DEBUG
 	return lout->write(buffer, len);
-#endif
+//#endif
 	return 0;
 }
 
@@ -60,9 +60,9 @@ size_t Logger::write(const uint16_t wc) {
 }
 
 size_t Logger::write(const uint8_t c) {
-#ifdef DEBUG
+//#ifdef DEBUG
 	return lout->write(c);
-#endif
+#//endif
 	return 0;
 }
 
@@ -96,4 +96,8 @@ void Logger::sendToEventSource(const char *event, const char * format, ...) {
 			delete[] buffer;
 		}
 	}
+}
+
+Stream& Logger::getStream(){
+	return {*lout};
 }

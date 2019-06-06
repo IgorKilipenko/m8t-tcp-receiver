@@ -2,41 +2,32 @@ ATcpServer::ATcpServer() : clients{MAX_TCP_CLIENTS, nullptr} {}
 ATcpServer::~ATcpServer() { end(); }
 
 void ATcpServer::ATcpServer::process() {
-	if (!receiveData) {
-		return;
-	}
 
-#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
-	size_t bytesCount = 2;
-#else
-	size_t bytesCount = Receiver->available();
-#endif
+	// if (!receiveData) {
+	//	return;
+	//}
+
+	int bytesCount = Receiver->available();
 	if (bytesCount > 0) {
-#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
-		char buffer[] = "T";
-#else
 		char buffer[bytesCount];
 		bytesCount = Receiver->readBytes(buffer, bytesCount);
-#endif
-
-		if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
-			store->writeToSD(buffer, bytesCount);
-			delay(1);
-		}
-
-		if (_sendToTcp && WiFi.status() == WL_CONNECTED) {
-			sendDataToClients(buffer, bytesCount);
-		}
 
 		if (_seralDataCallback != nullptr) {
 			_seralDataCallback((const uint8_t *)buffer, bytesCount);
 		}
 
-//#if defined(DEBUG) && defined(MOCK_RECEIVER_DATA)
-//		delay(1000);
-//#else
-//		delay(1);
-//#endif
+		if (receiveData) {
+			if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
+				store->writeToSD(buffer, bytesCount);
+				// delay(1);
+			}
+
+			if (_sendToTcp && WiFi.status() == WL_CONNECTED) {
+				sendDataToClients(buffer, bytesCount);
+			}
+		}
+	} else if (bytesCount < 0) {
+		logger.debug("Error reading serial, available bytes count: [%d]\n", bytesCount);
 	}
 }
 
@@ -44,12 +35,12 @@ void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf(
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
 	logger.debug("\n Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
-	#ifdef DEBUG
+#ifdef DEBUG
 	logger.printf("=========================\n");
 	logger.write((uint8_t *)data, len);
 	logger.printf("\n-- packet count : [%i] bytes--\n", len);
 	logger.printf("=========================\n");
-	#endif
+#endif
 	Receiver->write((uint8_t *)data, len);
 }
 

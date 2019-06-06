@@ -38,7 +38,7 @@
 
 #include "ublox.h"
 #include "UbxMessage.h"
-#include <SparkFun_Ublox_Arduino_Library.h>
+//#include <SparkFun_Ublox_Arduino_Library.h>
 
 #define APSSID "ESP_ap_"
 #define APPSK "1234567890"
@@ -58,6 +58,7 @@ class AWebServer {
 	void end();
 	void restart();
 	unsigned long getServerTime() const { return millis(); }
+	void initializeGpsReceiver();
 
   private:
 	char softAP_ssid[32];
@@ -69,6 +70,7 @@ class AWebServer {
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	bool _connect = false;
+	bool _gpsIsInint = false;
 	bool _sendReceiverDataToWs = true;
 
 	static bool _static_init;
@@ -80,7 +82,7 @@ class AWebServer {
 	NtripClientSync *_ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
-	SFE_UBLOX_GPS *_gps;
+	UBLOX_GPS *_gps;
 	UbloxTransport *_transport;
 	bool _decodeUbxMsg = true;
 

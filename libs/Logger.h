@@ -29,6 +29,7 @@ class Logger : public Print {
 	void setEventSource(AsyncEventSource * eventSource) {_eventSource = eventSource;}
 	void clearEventSource() {_eventSource = nullptr;}
 	void sendToEventSource(const char*, const char*, ...);
+	Stream& getStream();
 
   private:
 	HardwareSerial *lout;

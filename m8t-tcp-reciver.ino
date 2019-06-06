@@ -35,7 +35,6 @@ HardwareSerial * Receiver{&Serial};
 #include "libs/ATcpServer.h"
 
 
-
 Logger logger{&Serial};		// For debug mode
 ATcpServer telnetServer{};	// GPS receiver communication
 
@@ -52,4 +51,6 @@ void setup() {
 	webServer.setup();
 }
 
-void loop() { webServer.process(); }
+void loop() { 
+	webServer.process(); 
+}
