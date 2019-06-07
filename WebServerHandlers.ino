@@ -550,18 +550,30 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
 				const uint8_t *buffer = _ubxDecoder.getBuffer();
 				const uint16_t len = _ubxDecoder.getLength();
-				if (buffer[3] == static_cast<uint8_t>(NavMessageIds::POSLLH)) {
+
+				bool sendMsg = false;
+				switch (buffer[3]) {
+				case static_cast<uint8_t>(NavMessageIds::PVT):
+					logger.debug("Has PVT msg\n");
+					sendMsg = true;
+					break;
+				case static_cast<uint8_t>(NavMessageIds::POSLLH):
 					logger.debug("Has NAV POSLLH msg\n");
+					sendMsg = true;
+					break;
+				default:
+					sendMsg = false;
+					break;
+				}
+				if (sendMsg) {
 					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
 				}
 			}
 		}
 		delay(1);
 
-
-		//if (_transport->push(buffer, len) < 0){
+		// if (_transport->push(buffer, len) < 0){
 		//	_transport->clear();
 		//}
-
 	}
 }
