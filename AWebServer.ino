@@ -208,12 +208,12 @@ void AWebServer::initializeGpsReceiver() {
 	_gps->enableDebugging(logger.getStream());
 	if (_gps->begin()) {
 		logger.debug("GPS Receiver connected\n");
-		if (!_autoPVT) {
-			_autoPVT = _gps->setAutoPVT(true, 1000);
-			if (_autoPVT) {
-				logger.debug("Auto PVT enabled\n");
-			}
-		}
+		//if (!_autoPVT) {
+		//	_autoPVT = _gps->setAutoPVT(true, 1000);
+		//	if (_autoPVT) {
+		//		logger.debug("Auto PVT enabled\n");
+		//	}
+		//}
 		_gpsIsInint = true;
 
 	} else {
@@ -241,12 +241,6 @@ void AWebServer::process() {
 	if (!_gpsIsInint) {
 		initializeGpsReceiver();
 	} 
-	//else {
-	//	if (_autoPVT && _gps->getPVT(1000)) {
-	//		long lat = _gps->getLatitude();
-	//		logger.debug("LAT: [%ld]", lat);
-	//	}
-	//}
 
 	if (_ntripClient->isEnabled()) {
 		_ntripClient->receiveNtrip();
