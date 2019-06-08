@@ -3,7 +3,7 @@ bool AWebServer::_static_init = false;
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
-	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ws"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ubx"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
 	  _transport{new UbloxTransport(*Receiver)}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
