@@ -99,7 +99,7 @@ int NtripClientSync::receiveNtrip() {
 	int count = read(_buffer, NTRIP_BUFFER_LENGTH);
 	if (count > 0) {
 		count = _uart->write(_buffer, count);
-		logger.debug("Write [%i] bytes\n", count);
+		logger.trace("Write [%i] to gps ntrip (rtcm) bytes\n", count);
 	}else{
 		return -1;
 	}
@@ -117,7 +117,7 @@ int NtripClientSync::read(uint8_t *buffer, size_t len) {
 		len = std::min((size_t)count, len);
 		count = _client->read(buffer, len);
 		// utils::ethernetDechunk((char*)buffer);
-		logger.debug("Read [%i] bytes\n", count);
+		logger.trace("Read from ntrip server [%i] bytes\n", count);
 	}else if (count < 0){
 		logger.error("Erro read NTRIP data from stream, res = [%i]\n", count);
 		return -1;
