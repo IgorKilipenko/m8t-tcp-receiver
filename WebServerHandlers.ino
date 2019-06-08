@@ -5,78 +5,15 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
 
-		//              telnetServer->onSerialData([&](const uint8_t *buf, size_t len) {
-		//              	logger.trace("Send data to WS\n");
-		//              	if (_sendReceiverDataToWs && client != nullptr && client->status() == WS_CONNECTED) {
-		//              		client->binary(reinterpret_cast<const char *>(buf), len);
-		//              	}
-		//              });
-
 	} else if (type == WS_EVT_DISCONNECT) {
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
 	} else if (type == WS_EVT_ERROR) {
 		logger.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
-		ws.close(client->id);
+		client->close();
 	} else if (type == WS_EVT_PONG) {
 		logger.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
-		AwsFrameInfo *info = (AwsFrameInfo *)arg;
-		String msg = "";
-		if (info->final && info->index == 0 && info->len == len) {
-			// the whole message is in a single frame and we got all of it's data
-			logger.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT) ? "text" : "binary", info->len);
-
-			if (info->opcode == WS_TEXT) {
-				for (size_t i = 0; i < info->len; i++) {
-					msg += (char)data[i];
-				}
-			} else {
-				char buff[3];
-				for (size_t i = 0; i < info->len; i++) {
-					sprintf(buff, "%02x ", (uint8_t)data[i]);
-					msg += buff;
-				}
-			}
-			logger.printf("%s\n", msg.c_str());
-
-			if (info->opcode == WS_TEXT)
-				client->text("I got your text message");
-			else
-				client->binary("I got your binary message");
-		} else {
-			// message is comprised of multiple frames or the frame is split into multiple packets
-			if (info->index == 0) {
-				if (info->num == 0)
-					logger.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT) ? "text" : "binary");
-				logger.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
-			}
-
-			logger.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT) ? "text" : "binary", info->index, info->index + len);
-
-			if (info->opcode == WS_TEXT) {
-				for (size_t i = 0; i < info->len; i++) {
-					msg += (char)data[i];
-				}
-			} else {
-				char buff[3];
-				for (size_t i = 0; i < info->len; i++) {
-					sprintf(buff, "%02x ", (uint8_t)data[i]);
-					msg += buff;
-				}
-			}
-			logger.printf("%s\n", msg.c_str());
-
-			if ((info->index + len) == info->len) {
-				logger.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-				if (info->final) {
-					logger.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT) ? "text" : "binary");
-					if (info->message_opcode == WS_TEXT)
-						client->text("I got your text message");
-					else
-						client->binary("I got your binary message");
-				}
-			}
-		}
+		//AwsFrameInfo *info = (AwsFrameInfo *)arg;
 	}
 }
 
@@ -552,26 +489,32 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 				const uint8_t *buffer = _ubxDecoder.getBuffer();
 				const uint16_t len = _ubxDecoder.getLength();
 
-				bool sendMsg = false;
+				bool hasMsg = false;
 				switch (buffer[3]) {
 				case static_cast<uint8_t>(NavMessageIds::PVT):
 					logger.trace("Has PVT msg\n");
-					sendMsg = true;
+					hasMsg = true;
 					break;
 				case static_cast<uint8_t>(NavMessageIds::POSLLH):
 					logger.trace("Has NAV POSLLH msg\n");
-					sendMsg = true;
+					hasMsg = true;
 					break;
 				case static_cast<uint8_t>(NavMessageIds::HPPOSLLH):
 					logger.trace("Has NAV HPPOSLLH msg\n");
-					sendMsg = true;
+					hasMsg = true;
 					break;
 				default:
-					sendMsg = false;
+					hasMsg = false;
 					break;
 				}
-				if (sendMsg) {
-					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+
+				if (hasMsg) {
+					if (millis() - _ubxWsLastSendTime >= _ubxWsSendInterval) {
+						ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+						_ubxWsLastSendTime = millis();
+					}else if (_ubxWsWaitResp >= 0 && ws.hasClient(_ubxWsWaitResp) ){
+						ws.binary(_ubxWsWaitResp, (const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+					}
 				}
 			}
 		}
