@@ -554,11 +554,11 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 				bool sendMsg = false;
 				switch (buffer[3]) {
 				case static_cast<uint8_t>(NavMessageIds::PVT):
-					logger.debug("Has PVT msg\n");
+					logger.trace("Has PVT msg\n");
 					sendMsg = true;
 					break;
 				case static_cast<uint8_t>(NavMessageIds::POSLLH):
-					logger.debug("Has NAV POSLLH msg\n");
+					logger.trace("Has NAV POSLLH msg\n");
 					sendMsg = true;
 					break;
 				default:
