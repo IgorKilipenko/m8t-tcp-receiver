@@ -16,6 +16,7 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
 	} else if (type == WS_EVT_ERROR) {
 		logger.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
+		ws.close(client->id);
 	} else if (type == WS_EVT_PONG) {
 		logger.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
