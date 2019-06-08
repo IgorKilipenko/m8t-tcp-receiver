@@ -561,6 +561,10 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 					logger.trace("Has NAV POSLLH msg\n");
 					sendMsg = true;
 					break;
+				case static_cast<uint8_t>(NavMessageIds::HPPOSLLH):
+					logger.trace("Has NAV HPPOSLLH msg\n");
+					sendMsg = true;
+					break;
 				default:
 					sendMsg = false;
 					break;
