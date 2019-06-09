@@ -16,7 +16,6 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 	} else if (type == WS_EVT_DATA) {
 		// AwsFrameInfo *info = (AwsFrameInfo *)arg;
 		_waitRespTime = millis();
-
 	}
 }
 
@@ -520,43 +519,27 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 					hasMsg = false;
 					break;
 				}
-
-				if (isReqClsId && (buffer[3] == _requstedMsgId)) {
-					hasMsg = true;
-					logger.debug("Send response for clientId [%d], classId [%d] msgId [%d]\n", _ubxWsWaitResp, _requstedClassId, _requstedMsgId);
-					// Responsed (stop wait)
-					_ubxWsWaitResp = -1;
-					_requstedClassId = 0;
-					_requstedMsgId = 0;
-					_waitRespTime = 0;
-				} else if (hasMsg) {
-					if (millis() - _ubxWsLastSendTime >= _ubxWsSendInterval) {
-						_ubxWsLastSendTime = millis();
-					}else{
-						hasMsg = false;
-					}
-				}
-
-				if (hasMsg){
-					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
-				}
-
-			} else if (_ubxWsWaitResp >= 0) {
-				_waitRespTime = millis() - _waitRespTime;
-				if (_waitRespTime > 250) {
-					logger.debug("Timeout wait response, time wait for clientId [%d] : [%ld]\n", _ubxWsWaitResp, _waitRespTime);
-					// Timeout wait response
-					_ubxWsWaitResp = -1;
-					_requstedClassId = 0;
-					_requstedMsgId = 0;
-					_waitRespTime = 0;
-				}
+			}
+			if (hasMsg) {
+				ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
 			}
 		}
-		delay(1);
-
-		// if (_transport->push(buffer, len) < 0){
-		//	_transport->clear();
-		//}
+		else if (_ubxWsWaitResp >= 0) {
+			_waitRespTime = millis() - _waitRespTime;
+			if (_waitRespTime > 250) {
+				logger.debug("Timeout wait response, time wait for clientId [%d] : [%ld]\n", _ubxWsWaitResp, _waitRespTime);
+				// Timeout wait response
+				_ubxWsWaitResp = -1;
+				_requstedClassId = 0;
+				_requstedMsgId = 0;
+				_waitRespTime = 0;
+			}
+		}
 	}
+	delay(1);
+
+	// if (_transport->push(buffer, len) < 0){
+	//	_transport->clear();
+	//}
+}
 }
