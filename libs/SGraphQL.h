@@ -29,7 +29,6 @@ class SGraphQL {
 	static const char *UNDEFINED;
 	static const char *ALL;
 	static const char *CMD;
-
 	static const char *WIFI;
 	static const char *GPS;
 	static const char *NTRIP;
