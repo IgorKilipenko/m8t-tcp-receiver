@@ -485,21 +485,25 @@ void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&A
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 	if (_decodeUbxMsg) {
 		for (uint16_t i = 0; i < len; i++) {
-			const int16_t code = _ubxDecoder.inputData(buffer[i]);
+			const int8_t code = _ubxDecoder.inputData(buffer[i]);
 			const bool isClsId = (code > 0 && _ubxDecoder.getLength() > 0);
-			bool isNavClsId = false;
 
-			if (isClsId) {
-				isNavClsId = (code == static_cast<int16_t>(ClassIds::NAV));
+			if (!isClsId) {
+				continue;
 			}
 
-			if (isNavClsId) {
-				const uint8_t *buffer = _ubxDecoder.getBuffer();
-				const uint16_t len = _ubxDecoder.getLength();
+			const uint8_t *ubxPacket = _ubxDecoder.getBuffer();
+			const uint16_t packetLen = _ubxDecoder.getLength();
+			bool hasMsg = false;
 
-				bool hasMsg = false;
+			logger.debug("ClassId: [%X], MsgId: [%X]\n", ubxPacket[2], ubxPacket[3]);
 
-				switch (buffer[3]) {
+			const uint8_t clsId = ubxPacket[2];
+
+			switch (clsId) {
+			case static_cast<uint8_t>(ClassIds::NAV):
+
+				switch (ubxPacket[3]) {
 				case static_cast<uint8_t>(NavMessageIds::PVT):
 					logger.trace("Has PVT msg\n");
 					hasMsg = true;
@@ -512,20 +516,47 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 					logger.trace("Has NAV HPPOSLLH msg\n");
 					hasMsg = true;
 					break;
-				default:
-					hasMsg = false;
+				}
+				break;
+
+			case static_cast<uint8_t>(ClassIds::CFG):
+				switch (ubxPacket[3]) {
+				case static_cast<uint8_t>(CfgMessageIds::RATE):
+					logger.trace("Has CFG RATE msg\n");
+					hasMsg = true;
 					break;
 				}
+				break;
+			case static_cast<uint8_t>(ClassIds::RXM):
+				hasMsg = false; // Not send raw data to ws
+				break;
 
-				if (hasMsg) {
-					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
-				}
+			default:
+				hasMsg = true;
+				break;
+			}
+
+			if (hasMsg) {
+				logger.debug("Send to ws [%ld] bytes", len);
+				ws.binaryAll((const char *)ubxPacket, packetLen);
 			}
 		}
-		delay(1);
 
-		// if (_transport->push(buffer, len) < 0){
-		//	_transport->clear();
-		//}
+		delay(1);
+	} else {
+		for (int i = 0; i < len; i++) {
+			_ubxWsBuffer.push(buffer[i]);
+		}
+		const size_t size = _ubxWsBuffer.size();
+		//const unsigned long waitTime = millis() - _lastUbxWsSendTime;
+		if (size >= 512 || (size > 0 && (millis() - _lastUbxWsSendTime > 1000))) {
+			uint8_t buff[size]{0};
+			for (int i = 0; i < size; i++)  {
+				buff[i] = _ubxWsBuffer.front();
+				_ubxWsBuffer.pop();
+			}
+			ws.binaryAll((const char *)buff, size);
+			_lastUbxWsSendTime = millis();
+		}
 	}
 }

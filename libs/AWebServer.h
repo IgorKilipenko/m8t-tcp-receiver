@@ -5,6 +5,7 @@
 
 #include "Arduino.h"
 //#include <string>
+#include <queue>
 
 #ifdef ESP32
 #include "WiFi.h"
@@ -84,7 +85,9 @@ class AWebServer {
 	UbxDecoder _ubxDecoder;
 	UBLOX_GPS *_gps;
 	UbloxTransport *_transport;
-	bool _decodeUbxMsg = true;
+	bool _decodeUbxMsg = false;
+	std::queue<uint8_t> _ubxWsBuffer;
+	unsigned long _lastUbxWsSendTime = 0;
 
 	/* API ============================== */
 	static const char *API_P_GPSCMD;
