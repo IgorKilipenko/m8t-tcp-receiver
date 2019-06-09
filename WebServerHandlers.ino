@@ -15,7 +15,6 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		logger.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
 		// AwsFrameInfo *info = (AwsFrameInfo *)arg;
-		_waitRespTime = millis();
 	}
 }
 
@@ -489,14 +488,12 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 			const int16_t code = _ubxDecoder.inputData(buffer[i]);
 			const bool isClsId = (code > 0 && _ubxDecoder.getLength() > 0);
 			bool isNavClsId = false;
-			bool isReqClsId = false;
 
 			if (isClsId) {
 				isNavClsId = (code == static_cast<int16_t>(ClassIds::NAV));
-				isReqClsId = (_ubxWsWaitResp >= 0 && ws.hasClient(_ubxWsWaitResp)) && (code == _requstedClassId);
 			}
 
-			if (isNavClsId || isReqClsId) {
+			if (isNavClsId) {
 				const uint8_t *buffer = _ubxDecoder.getBuffer();
 				const uint16_t len = _ubxDecoder.getLength();
 
@@ -519,27 +516,16 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 					hasMsg = false;
 					break;
 				}
-			}
-			if (hasMsg) {
-				ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
-			}
-		}
-		else if (_ubxWsWaitResp >= 0) {
-			_waitRespTime = millis() - _waitRespTime;
-			if (_waitRespTime > 250) {
-				logger.debug("Timeout wait response, time wait for clientId [%d] : [%ld]\n", _ubxWsWaitResp, _waitRespTime);
-				// Timeout wait response
-				_ubxWsWaitResp = -1;
-				_requstedClassId = 0;
-				_requstedMsgId = 0;
-				_waitRespTime = 0;
-			}
-		}
-	}
-	delay(1);
 
-	// if (_transport->push(buffer, len) < 0){
-	//	_transport->clear();
-	//}
-}
+				if (hasMsg) {
+					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+				}
+			}
+		}
+		delay(1);
+
+		// if (_transport->push(buffer, len) < 0){
+		//	_transport->clear();
+		//}
+	}
 }
