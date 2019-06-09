@@ -22,7 +22,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 		}
 	}
 	
-	if (_nbyte == 2 && data != static_cast<uint8_t>(ClassIds::NAV)) {
+	if (_nbyte == 2 && (data < static_cast<uint8_t>(ClassIds::NAV) || data > static_cast<uint8_t>(ClassIds::SEC) || data == static_cast<uint8_t>(ClassIds::RXM))) {
 		_nbyte = 0;
 		return 0;
 	}
@@ -51,7 +51,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 	return 0;
 }
 
-int16_t UbxDecoder::_decode() {
+int8_t UbxDecoder::_decode() {
 	logger.trace("Start decode UBX message...\n");
 
 	uint8_t classId = *(_buffer + 2);
@@ -63,10 +63,8 @@ int16_t UbxDecoder::_decode() {
 			MessageEventPtr e = std::shared_ptr<MessageEvent>(new MessageEvent(classId, msgId, _buffer+4));
 			_msgCallback(e);
 		}
-		return static_cast<int16_t>(classId);
-	default:
-		return -1;
 	}
+	return static_cast<int8_t>(classId);
 }
 
 bool UbxDecoder::_testChecksum() {

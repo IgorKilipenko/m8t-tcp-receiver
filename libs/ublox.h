@@ -10,6 +10,7 @@ enum class ClassIds : uint8_t;
 enum class NavMessageIds : uint8_t;
 enum class RxmMessageIds : uint8_t;
 enum class SecMessageIds : uint8_t;
+enum class CfgMessageIds : uint8_t;
 class MessageEvent;
 
 using MessageEventPtr = std::shared_ptr<MessageEvent>;
@@ -70,6 +71,16 @@ enum class RxmMessageIds : uint8_t { MEASX = 0x14, PMREQ = 0x41, RAWX = 0x15, RL
 
 enum class SecMessageIds : uint8_t { UNIQID = 0x03 };
 
+enum class CfgMessageIds : uint8_t {
+	PRT = 0x00,
+	RST = 0x04,
+	RATE = 0x08,
+	CFG = 0x09,
+	VALSET = 0x8A,
+	VALGET = 0x8B,
+	VALDEL = 0x8C
+};
+
 class UbxDecoder {
   public:
 	UbxDecoder();
@@ -89,7 +100,7 @@ class UbxDecoder {
 
 	bool _testChecksum();
 	bool _syncHeader(uint8_t data);
-	int16_t _decode();
+	int8_t _decode();
 };
 
 class MessageEvent {
