@@ -78,8 +78,14 @@ class AWebServer {
 	AsyncWebServer server;
 	AsyncWebSocket ws;
 	unsigned long _ubxWsLastSendTime = 0;
-	unsigned long _ubxWsSendInterval = 1000;	// Interval in ms send messages to ubxWS clients
+	unsigned long _ubxWsSendInterval = 0;	// Interval in ms send messages to ubxWS clients
+	// Wait response ubxWs ---------
+	uint8_t _requstedClassId = 0;
+	uint8_t _requstedMsgId = 0;
 	int32_t _ubxWsWaitResp = -1;
+	unsigned long _waitRespTime = 0;
+	unsigned long _maxWaitRespTime = 250;
+	// ------------------------------
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
 	NtripClientSync *_ntripClient;

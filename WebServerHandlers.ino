@@ -7,13 +7,16 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 
 	} else if (type == WS_EVT_DISCONNECT) {
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
+		client->close();
 	} else if (type == WS_EVT_ERROR) {
 		logger.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
 		client->close();
 	} else if (type == WS_EVT_PONG) {
 		logger.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
-		//AwsFrameInfo *info = (AwsFrameInfo *)arg;
+		// AwsFrameInfo *info = (AwsFrameInfo *)arg;
+		_waitRespTime = millis();
+
 	}
 }
 
@@ -485,11 +488,21 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 	if (_decodeUbxMsg) {
 		for (uint16_t i = 0; i < len; i++) {
 			const int16_t code = _ubxDecoder.inputData(buffer[i]);
-			if (code > 0 && code == static_cast<int16_t>(ClassIds::NAV) && _ubxDecoder.getLength() > 0) {
+			const bool isClsId = (code > 0 && _ubxDecoder.getLength() > 0);
+			bool isNavClsId = false;
+			bool isReqClsId = false;
+
+			if (isClsId) {
+				isNavClsId = (code == static_cast<int16_t>(ClassIds::NAV));
+				isReqClsId = (_ubxWsWaitResp >= 0 && ws.hasClient(_ubxWsWaitResp)) && (code == _requstedClassId);
+			}
+
+			if (isNavClsId || isReqClsId) {
 				const uint8_t *buffer = _ubxDecoder.getBuffer();
 				const uint16_t len = _ubxDecoder.getLength();
 
 				bool hasMsg = false;
+
 				switch (buffer[3]) {
 				case static_cast<uint8_t>(NavMessageIds::PVT):
 					logger.trace("Has PVT msg\n");
@@ -508,13 +521,35 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 					break;
 				}
 
-				if (hasMsg) {
+				if (isReqClsId && (buffer[3] == _requstedMsgId)) {
+					hasMsg = true;
+					logger.debug("Send response for clientId [%d], classId [%d] msgId [%d]\n", _ubxWsWaitResp, _requstedClassId, _requstedMsgId);
+					// Responsed (stop wait)
+					_ubxWsWaitResp = -1;
+					_requstedClassId = 0;
+					_requstedMsgId = 0;
+					_waitRespTime = 0;
+				} else if (hasMsg) {
 					if (millis() - _ubxWsLastSendTime >= _ubxWsSendInterval) {
-						ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
 						_ubxWsLastSendTime = millis();
-					}else if (_ubxWsWaitResp >= 0 && ws.hasClient(_ubxWsWaitResp) ){
-						ws.binary(_ubxWsWaitResp, (const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+					}else{
+						hasMsg = false;
 					}
+				}
+
+				if (hasMsg){
+					ws.binaryAll((const char *)_ubxDecoder.getBuffer(), _ubxDecoder.getLength());
+				}
+
+			} else if (_ubxWsWaitResp >= 0) {
+				_waitRespTime = millis() - _waitRespTime;
+				if (_waitRespTime > 250) {
+					logger.debug("Timeout wait response, time wait for clientId [%d] : [%ld]\n", _ubxWsWaitResp, _waitRespTime);
+					// Timeout wait response
+					_ubxWsWaitResp = -1;
+					_requstedClassId = 0;
+					_requstedMsgId = 0;
+					_waitRespTime = 0;
 				}
 			}
 		}
