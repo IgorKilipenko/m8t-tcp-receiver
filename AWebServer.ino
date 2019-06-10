@@ -51,8 +51,9 @@ void AWebServer::setup() {
 #else
 	WiFi.hostname(hostName);
 #endif
-	WiFi.mode(WIFI_AP_STA);
+	
 	WiFi.softAP(softAP_ssid, /*"1234567890"*/ softAP_password);
+	WiFi.mode(WIFI_AP_STA);
 
 	connectStaWifi(ssid, password);
 
@@ -165,7 +166,7 @@ int8_t AWebServer::scanWiFi() {
 bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 	logger.debug("connectStaWifi -> ssid : %s, password: %s\n", ssid, password);
 	logger.debug("connectStaWifi -> start connect WiFi\n");
-	if (ssid && password) {
+	if (ssid && password && strlen(ssid) > 0 && strlen(password) > 0) {
 		if (WiFi.isConnected()) {
 			logger.debug("connectStaWifi -> disconnect\n");
 			delay(100);
@@ -185,7 +186,7 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 		}
 		logger.debug("connectStaWifi -> STA connected\n");
 		// restart();
-	} else {
+	} else { // ??? For FIX
 		logger.println("WiFi connected");
 		logger.print("IP address: ");
 		logger.println(WiFi.localIP());

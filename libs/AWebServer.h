@@ -65,9 +65,9 @@ class AWebServer {
 	char softAP_ssid[32];
 	char softAP_password[64];
 
-	char ssid[32];
-	char password[32];
-	char hostName[32];
+	char ssid[32]{0};
+	char password[32]{0};
+	char hostName[32]{0};
 	const char *http_username = "admin";
 	const char *http_password = "admin";
 	bool _connect = false;
