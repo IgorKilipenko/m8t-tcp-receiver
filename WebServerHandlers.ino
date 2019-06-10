@@ -549,7 +549,7 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 		}
 		const size_t size = _ubxWsBuffer.size();
 		//const unsigned long waitTime = millis() - _lastUbxWsSendTime;
-		if (size >= 512 || (size > 0 && (millis() - _lastUbxWsSendTime > 1000))) {
+		if (size >= 1024*2 || (size > 0 && (millis() - _lastUbxWsSendTime > 1000))) {
 			uint8_t buff[size]{0};
 			for (int i = 0; i < size; i++)  {
 				buff[i] = _ubxWsBuffer.front();
