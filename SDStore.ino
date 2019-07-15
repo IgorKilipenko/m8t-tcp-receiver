@@ -132,7 +132,7 @@ void SDStore::end() {
 void SDStore::closeFile() {
 	logger.debug("Start closing file\n");
 	if (sdFile) {
-		sdFile.flush();
+		//sdFile.flush();
 		sdFile.close();
 		logger.trace("File closed, isOpenFile = [%s]\n", isOpenFile() ? "true" : "false");
 	}
