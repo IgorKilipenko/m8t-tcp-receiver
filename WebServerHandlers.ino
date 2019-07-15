@@ -1,7 +1,7 @@
 /** WebSocket events */
 void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 	if (type == WS_EVT_CONNECT) {
-		logger.printf("ws[%s][%u] connect\n", server->url(), client->id());
+		logger.debug("ws[%s][%u] connect\n", server->url(), client->id());
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
 
@@ -9,57 +9,57 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
 		client->close();
 	} else if (type == WS_EVT_ERROR) {
-		logger.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
+		logger.debug("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
 		client->close();
 	} else if (type == WS_EVT_PONG) {
-		logger.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
+		logger.debug("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
 		// AwsFrameInfo *info = (AwsFrameInfo *)arg;
 	}
 }
 
 void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
-	logger.printf("NOT_FOUND: ");
+	logger.trace("NOT_FOUND: ");
 	if (request->method() == HTTP_GET)
-		logger.printf("GET");
+		logger.trace("GET");
 	else if (request->method() == HTTP_POST)
-		logger.printf("POST");
+		logger.trace("POST");
 	else if (request->method() == HTTP_DELETE)
-		logger.printf("DELETE");
+		logger.trace("DELETE");
 	else if (request->method() == HTTP_PUT)
-		logger.printf("PUT");
+		logger.trace("PUT");
 	else if (request->method() == HTTP_PATCH)
-		logger.printf("PATCH");
+		logger.trace("PATCH");
 	else if (request->method() == HTTP_HEAD)
-		logger.printf("HEAD");
+		logger.trace("HEAD");
 	else if (request->method() == HTTP_OPTIONS) {
 		// request->send(200);
 		// return;
 	} else
-		logger.printf("UNKNOWN");
+		logger.trace("UNKNOWN");
 	logger.printf(" http://%s%s\n", request->host().c_str(), request->url().c_str());
 
 	if (request->contentLength()) {
-		logger.printf("_CONTENT_TYPE: %s\n", request->contentType().c_str());
-		logger.printf("_CONTENT_LENGTH: %u\n", request->contentLength());
+		logger.trace("_CONTENT_TYPE: %s\n", request->contentType().c_str());
+		logger.trace("_CONTENT_LENGTH: %u\n", request->contentLength());
 	}
 
 	int headers = request->headers();
 	int i;
 	for (i = 0; i < headers; i++) {
 		AsyncWebHeader *h = request->getHeader(i);
-		logger.printf("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
+		logger.trace("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
 	}
 
 	int params = request->params();
 	for (i = 0; i < params; i++) {
 		AsyncWebParameter *p = request->getParam(i);
 		if (p->isFile()) {
-			logger.printf("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+			logger.trace("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
 		} else if (p->isPost()) {
-			logger.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+			logger.trace("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
 		} else {
-			logger.printf("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+			logger.trace("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
 		}
 	}
 
@@ -68,14 +68,14 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 }
 
 ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
-	logger.trace("Start on wifi QUERY\n");
-	logger.trace(":");
+	logger.debug("Start on wifi QUERY\n");
+	logger.debug(":");
 	json.prettyPrintTo(logger);
-	logger.print("\n");
+	logger.debug("\n");
 
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "scan")) {
-		logger.debug("Start scan WIFI\n");
+		logger.trace("Start scan WIFI\n");
 		delay(500);
 		int8_t n = scanWiFi();
 		if (n == -1) {
@@ -83,11 +83,8 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 			n = scanWiFi();
 		}
 		JsonArray &arrayJson = outJson.createNestedArray(SGraphQL::RESP_VALUE);
-		logger.debug("Scan end, item count: %i\n", n);
 		if (n > 0) {
-			uint8_t i = 0;
 			for (auto const &item : wifiList) {
-				logger.debug("n:%i,", i++);
 				JsonObject &resJson = arrayJson.createNestedObject();
 				resJson["rssi"] = item->rssi;
 				resJson["ssid"] = item->ssid;
@@ -348,7 +345,7 @@ ApiResultPtr AWebServer::ntripQueryHandler(const char *event, const JsonObject &
 
 	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "state")) {
-		logger.trace("Start Ntrip Query\n");
+		logger.trace("Start Ntrip Query State\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["enabled"] = _ntripClient && _ntripClient->isEnabled();
 
