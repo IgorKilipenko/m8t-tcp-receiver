@@ -34,13 +34,16 @@ void ATcpServer::ATcpServer::process() {
 void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
+	uint8_t buffer[len]{0};
+
 	logger.debug("\n Handle data -> Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
 	logger.trace("=========================\n");
-	//logger.trace((uint8_t *)data, len);
+	//logger.write((uint8_t *)data, len);
 	logger.trace("\n-- packet count : [%i] bytes--\n", len);
 	logger.trace("=========================\n");
 	
-	Receiver->write((uint8_t *)data, len);
+	memcpy(buffer, (uint8_t*)data, len); 
+	Receiver->write(buffer, len);
 }
 
 void ATcpServer::handleDisconnect(AsyncClient *client) {
