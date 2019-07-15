@@ -16,7 +16,6 @@
 #include "SDStore.h"
 #include <vector>
 
-
 #ifndef TCP_PORT
 #define TCP_PORT 7042
 #endif
@@ -24,6 +23,8 @@
 #ifndef MAX_TCP_CLIENTS
 #define MAX_TCP_CLIENTS 5 // Default 5 clients
 #endif
+
+#define BUFFER_SIZE 2048
 
 typedef std::function<void(const uint8_t *, size_t)> SerialDataCallback;
 
@@ -71,6 +72,8 @@ class ATcpServer {
 	void handleDisconnect(AsyncClient *client);
 	void handleTimeOut(AsyncClient *client, uint32_t time);
 	void handleNewClient(AsyncClient *client);
+	char _buffer[BUFFER_SIZE]{0};
+	void _processData(char *buffer, int len);
 };
 
 #endif

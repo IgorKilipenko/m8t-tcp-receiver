@@ -3,18 +3,23 @@ ATcpServer::~ATcpServer() { end(); }
 
 void ATcpServer::ATcpServer::process() {
 
-	// if (!receiveData) {
-	//	return;
-	//}
-
 	int bytesCount = Receiver->available();
-	if (bytesCount > 0) {
-		char buffer[bytesCount];
-		bytesCount = Receiver->readBytes(buffer, bytesCount);
 
-		if (_seralDataCallback != nullptr) {
-			_seralDataCallback((const uint8_t *)buffer, bytesCount);
-		}
+	if (bytesCount <= 0) {
+		return;
+	}
+
+	int len = Receiver->readBytes(_buffer, bytesCount);
+	if (len != bytesCount) {
+		logger.error("Not all bytes read from uart, available: [%i], read: [%i]\n", bytesCount, len);
+	}
+	if (len > 0) {
+		_processData(_buffer, len);
+	}
+}
+
+void ATcpServer::_processData(char *buffer, int bytesCount) {
+	if (bytesCount > 0) {
 
 		if (receiveData) {
 			if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
@@ -26,6 +31,11 @@ void ATcpServer::ATcpServer::process() {
 				sendDataToClients(buffer, bytesCount);
 			}
 		}
+
+		if (_seralDataCallback != nullptr) {
+			_seralDataCallback((const uint8_t *)buffer, bytesCount);
+		}
+
 	} else if (bytesCount < 0) {
 		logger.debug("Error reading serial, available bytes count: [%d]\n", bytesCount);
 	}
@@ -38,11 +48,11 @@ void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
 
 	logger.debug("\n Handle data -> Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
 	logger.trace("=========================\n");
-	//logger.write((uint8_t *)data, len);
+	// logger.write((uint8_t *)data, len);
 	logger.trace("\n-- packet count : [%i] bytes--\n", len);
 	logger.trace("=========================\n");
-	
-	memcpy(buffer, (uint8_t*)data, len); 
+
+	memcpy(buffer, (uint8_t *)data, len);
 	Receiver->write(buffer, len);
 }
 
