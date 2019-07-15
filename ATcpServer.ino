@@ -34,13 +34,12 @@ void ATcpServer::ATcpServer::process() {
 void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
-	logger.debug("\n Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
-#ifdef DEBUG
-	logger.printf("=========================\n");
-	logger.write((uint8_t *)data, len);
-	logger.printf("\n-- packet count : [%i] bytes--\n", len);
-	logger.printf("=========================\n");
-#endif
+	logger.debug("\n Handle data -> Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
+	logger.trace("=========================\n");
+	//logger.trace((uint8_t *)data, len);
+	logger.trace("\n-- packet count : [%i] bytes--\n", len);
+	logger.trace("=========================\n");
+	
 	Receiver->write((uint8_t *)data, len);
 }
 
@@ -96,7 +95,8 @@ bool ATcpServer::isSdInitialize() const { return store != nullptr && store->isIn
 
 void ATcpServer::stopReceive() {
 	if (store) {
-		store->end();
+		logger.debug("Stop store\n");
+		store->closeFile();
 	}
 	if (server) {
 		server->end();
