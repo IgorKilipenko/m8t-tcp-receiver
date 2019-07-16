@@ -2,14 +2,12 @@
 #define sgraphql_h
 
 #include "Arduino.h"
+#include <ESPAsyncWebServer.h>
 #include "ArduinoJson.h"
-//#include "utils.h"
 #include <list>
 #include <queue>
 #include <memory>
 #include "AsyncJson.h"
-#include "ArduinoJson.h"
-#include <ESPAsyncWebServer.h>
 
 class ApiHandler;
 class ApiResult;
