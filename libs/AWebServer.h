@@ -31,11 +31,9 @@
 #include "ATcpServer.h"
 #include "NtripClientSync.h"
 
-#ifdef REST_API
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include "SGraphQL.h"
-#endif
 
 #include "ublox.h"
 #include "UbxMessage.h"
@@ -60,6 +58,7 @@ class AWebServer {
 	void restart();
 	unsigned long getServerTime() const { return millis(); }
 	void initializeGpsReceiver();
+	bool isCanSendData();
 
   private:
 	char softAP_ssid[32];
