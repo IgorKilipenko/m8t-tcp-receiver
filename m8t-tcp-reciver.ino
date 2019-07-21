@@ -5,7 +5,6 @@
 #define WEB_LOG_LEVEL 3
 
 #define ALTSSID
-#define REST_API // Use REST API
 
 /* SD card */
 #ifdef ESP32
@@ -40,7 +39,7 @@ HardwareSerial *Receiver{&Serial};
 /* Serial */
 #define BAUD_SERIAL 115200 // Debug Serial baund rate
 #define BAUND_RECEIVER 921600	   // GPS receiver baund rate
-#define SERIAL_SIZE_RX 1024
+#define SERIAL_SIZE_RX 1024*2
 
 #include "libs/utils.h"
 #include "libs/Logger.h"
