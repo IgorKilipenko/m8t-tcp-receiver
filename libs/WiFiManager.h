@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "utils.h"
+#include <WiFi.h>
 
 class WiFiManager {
   public:
@@ -12,6 +13,7 @@ class WiFiManager {
 	void connectSTA(const char *ssid, const char *password);
 	bool setApModeOnly();
 	void setup();
+	
 
   private:
 	char *ap_ssid;
@@ -19,13 +21,9 @@ class WiFiManager {
 	char *ssid;
 	char *password;
 
-	WiFiEventHandler stationConnectedHandler;
-	WiFiEventHandler stationDisconnectedHandler;
-	//WiFiEventHandler probeRequestPrintHandler;
-	//WiFiEventHandler probeRequestBlinkHandler;
-
     void onStationConnected(const WiFiEventSoftAPModeStationConnected&);
     void onStationDisconnected(const WiFiEventSoftAPModeStationDisconnected&);
+	void WiFiPrintEvent(WiFiEvent_t event);
 };
 
 #endif // WiFiManager_h
