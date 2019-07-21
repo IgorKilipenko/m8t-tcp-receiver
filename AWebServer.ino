@@ -249,3 +249,8 @@ void AWebServer::process() {
 
 	delay(1);
 }
+
+
+bool AWebServer::isCanSendData(){
+	return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected());
+}

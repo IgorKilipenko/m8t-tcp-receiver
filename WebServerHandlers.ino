@@ -9,8 +9,12 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
 		client->close();
 	} else if (type == WS_EVT_ERROR) {
+		logger.error("Ws error\n");
 		logger.debug("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
-		client->close();
+		if (client) {
+			client->close();
+		}
+
 	} else if (type == WS_EVT_PONG) {
 		logger.debug("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
@@ -389,8 +393,6 @@ void AWebServer::addServerHandlers() {
 			logger.printf("BodyEnd: %u\n", total);
 	});
 
-#ifdef REST_API
-
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
 		logger.debug("API \n");
@@ -433,8 +435,6 @@ void AWebServer::addServerHandlers() {
 				logger.debug("Then action complite with err code: {%i}");
 			}
 		}
-
-		// delete response;
 	});
 
 	api.on(SGraphQL::WIFI, SGraphQL::QUERY, std::bind(&AWebServer::wifiQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
@@ -445,8 +445,6 @@ void AWebServer::addServerHandlers() {
 	api.on(SGraphQL::NTRIP, SGraphQL::ACTION, std::bind(&AWebServer::ntripActionHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	api.on(SGraphQL::NTRIP, SGraphQL::QUERY, std::bind(&AWebServer::ntripQueryHandler, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	server.addHandler(apiHandler);
-
-#endif // REST_API
 }
 
 void AWebServer::addOTAhandlers() {
@@ -480,6 +478,9 @@ void AWebServer::addOTAhandlers() {
 void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&AWebServer::receiverDataHandler, this, std::placeholders::_1, std::placeholders::_2)); }
 
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
+	if (!isCanSendData() || !ws.count()) {
+		return;
+	}
 	if (_decodeUbxMsg) {
 		for (uint16_t i = 0; i < len; i++) {
 			const int8_t code = _ubxDecoder.inputData(buffer[i]);
@@ -545,10 +546,10 @@ void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
 			_ubxWsBuffer.push(buffer[i]);
 		}
 		const size_t size = _ubxWsBuffer.size();
-		//const unsigned long waitTime = millis() - _lastUbxWsSendTime;
-		if (size >= 1024*2 || (size > 0 && (millis() - _lastUbxWsSendTime > 1000))) {
+		// const unsigned long waitTime = millis() - _lastUbxWsSendTime;
+		if (size >= 1024 * 2 || (size > 0 && (millis() - _lastUbxWsSendTime > 1000))) {
 			uint8_t buff[size]{0};
-			for (int i = 0; i < size; i++)  {
+			for (int i = 0; i < size; i++) {
 				buff[i] = _ubxWsBuffer.front();
 				_ubxWsBuffer.pop();
 			}
