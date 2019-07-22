@@ -1,4 +1,0 @@
-data/www/*
-www/src/client/components/api-socket.js
-m8t-tcp-reciver.ino.nodemcu.bin
-.vscode
