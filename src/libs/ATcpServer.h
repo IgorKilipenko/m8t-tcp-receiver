@@ -6,15 +6,13 @@
 #ifdef ESP32
 #include <WiFi.h>
 #include <AsyncTCP.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
 #else
 #error Platform not supported
 #endif
 
 #include "SDStore.h"
 #include <vector>
+#include "WiFiManager.h"
 
 #ifndef TCP_PORT
 #define TCP_PORT 7042
@@ -26,11 +24,13 @@
 
 #define BUFFER_SIZE 2048
 
+extern const WiFiManager _WIFI;
+
 typedef std::function<void(const uint8_t *, size_t)> SerialDataCallback;
 
 class ATcpServer {
   public:
-	ATcpServer();
+	ATcpServer(HardwareSerial &_receiver, HardwareSerial &rtcm);
 	~ATcpServer();
 
 	// TelnetServer methods:
@@ -54,6 +54,8 @@ class ATcpServer {
 	bool writeToSdEnabled() const { return _writeToSd; }
 
   private:
+	HardwareSerial *_receiver = nullptr;
+	HardwareSerial *_rtcm = nullptr;
 	std::vector<AsyncClient *> clients; // a list to hold all clients
 	bool receiveData = false;
 	SDStore *store = nullptr;

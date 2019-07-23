@@ -47,19 +47,20 @@ HardwareSerial *Receiver{&Serial};
 #include "libs/ATcpServer.h"
 
 Logger logger{&Serial};	// For debug mode
-ATcpServer telnetServer{}; // GPS receiver communication
-
-AWebServer webServer{&telnetServer};
+WiFiManager wifiManager{};
+ATcpServer telnetServer{*Receiver, *RTCM}; // GPS receiver communication
+AWebServer webServer{&telnetServer, &wifiManager};
 
 void setup() {
-#ifdef ESP32
 	Serial.begin(BAUD_SERIAL);
 	Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2);
 	RTCM->begin(38400, SERIAL_8N1, RXD1, TXD1);
-#else
-	Receiver->begin(BAUND_RECEIVER);
-#endif
 	Receiver->setRxBufferSize(SERIAL_SIZE_RX);
+	
+	String hostName = String("ESP_GPS_") + utils::getEspChipId();
+	wifiManager.setup(hostName.c_str());
+	
+	enableCore1WDT();
 	webServer.setup();
 }
 

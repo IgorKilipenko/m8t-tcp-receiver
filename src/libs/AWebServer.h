@@ -6,17 +6,13 @@
 #include "Arduino.h"
 //#include <string>
 #include <queue>
+#include "WiFiManager.h"
 
 #ifdef ESP32
 #include "WiFi.h"
 #include <AsyncTCP.h>
 #include <ESPmDNS.h>
 #include "SPIFFS.h"
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESP8266mDNS.h>
-#include <Hash.h> // ESP8266 only
 #else
 #error Platform not supported
 #endif
@@ -46,7 +42,7 @@
 
 class AWebServer {
   public:
-	AWebServer(ATcpServer *telnetServer);
+	AWebServer(ATcpServer *telnetServer, WiFiManager *wifiManager);
 	~AWebServer();
 	void setup();
 	void process();
@@ -58,7 +54,7 @@ class AWebServer {
 	void restart();
 	unsigned long getServerTime() const { return millis(); }
 	void initializeGpsReceiver();
-	bool isCanSendData();
+	bool isCanSendData() const { return _wifiManager->apEnabled() || _wifiManager->staConnected(); }
 
   private:
 	char softAP_ssid[32];
@@ -82,7 +78,7 @@ class AWebServer {
 	NtripClientSync *_ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
-	//UBLOX_GPS *_gps;
+	// UBLOX_GPS *_gps;
 	UbloxTransport *_transport;
 	bool _decodeUbxMsg = false;
 	std::queue<uint8_t> _ubxWsBuffer;
@@ -112,6 +108,7 @@ class AWebServer {
 	void addReceiverHandlers();
 
 	bool _autoPVT{false};
+	WiFiManager *_wifiManager;
 };
 
 struct AWebServer::WifiItem {

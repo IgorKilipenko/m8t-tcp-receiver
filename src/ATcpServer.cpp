@@ -1,17 +1,19 @@
-ATcpServer::ATcpServer() : clients{MAX_TCP_CLIENTS, nullptr} {}
+#include "libs/ATcpServer.h"
+
+ATcpServer::ATcpServer(HardwareSerial &receiver, HardwareSerial &rtcm) : _receiver{&receiver}, _rtcm{&rtcm}, clients{MAX_TCP_CLIENTS, nullptr} {}
 ATcpServer::~ATcpServer() { end(); }
 
 void ATcpServer::ATcpServer::process() {
 
-	int bytesCount = Receiver->available();
+	int bytesCount = _receiver->available();
 
 	if (bytesCount <= 0) {
 		return;
 	}
 
-	int len = Receiver->readBytes(_buffer, bytesCount);
+	int len = _receiver->readBytes(_buffer, bytesCount);
 	if (len != bytesCount) {
-		logger.error("Not all bytes read from uart, available: [%i], read: [%i]\n", bytesCount, len);
+		log_e("Not all bytes read from uart, available: [%i], read: [%i]\n", bytesCount, len);
 	}
 	if (len > 0) {
 		_processData(_buffer, len);
@@ -37,44 +39,44 @@ void ATcpServer::_processData(char *buffer, int bytesCount) {
 		}
 
 	} else if (bytesCount < 0) {
-		logger.debug("Error reading serial, available bytes count: [%d]\n", bytesCount);
+		log_d("Error reading serial, available bytes count: [%d]\n", bytesCount);
 	}
 }
 
-void ATcpServer::handleError(AsyncClient *client, int8_t error) { logger.printf("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
+void ATcpServer::handleError(AsyncClient *client, int8_t error) { log_d("\n Connection error %s from client %s \n", client->errorToString(error), client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleData(AsyncClient *client, void *data, size_t len) {
 	uint8_t buffer[len]{0};
 
-	logger.debug("\n Handle data -> Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
-	logger.trace("=========================\n");
+	log_d("\n Handle data -> Data from client to receiver %s: \n", client->remoteIP().toString().c_str());
+	log_v("=========================\n");
 	// logger.write((uint8_t *)data, len);
-	logger.trace("\n-- packet count : [%i] bytes--\n", len);
-	logger.trace("=========================\n");
+	log_v("\n-- packet count : [%i] bytes--\n", len);
+	log_v("=========================\n");
 
 	memcpy(buffer, (uint8_t *)data, len);
-	Receiver->write(buffer, len);
+	_receiver->write(buffer, len);
 }
 
 void ATcpServer::handleDisconnect(AsyncClient *client) {
-	logger.debug("\n Client %s disconnected \n", client->remoteIP().toString().c_str());
+	log_d("\n Client %s disconnected \n", client->remoteIP().toString().c_str());
 	// delete client;
 	// client = nullptr;
 	const size_t availableClients = freeClients();
-	logger.debug("Available clints count: %i \n", availableClients);
+	log_d("Available clints count: %i \n", availableClients);
 }
 
-void ATcpServer::handleTimeOut(AsyncClient *client, uint32_t time) { logger.printf("\n Client ACK timeout ip: %s \n", client->remoteIP().toString().c_str()); }
+void ATcpServer::handleTimeOut(AsyncClient *client, uint32_t time) { log_d("\n Client ACK timeout ip: %s \n", client->remoteIP().toString().c_str()); }
 
 void ATcpServer::handleNewClient(AsyncClient *client) {
-	logger.printf("\n New client connecting to server, ip: %s\n", client->remoteIP().toString().c_str());
+	log_d("\n New client connecting to server, ip: %s\n", client->remoteIP().toString().c_str());
 
 	// add to list
 	int i = 0;
 	for (; i < MAX_TCP_CLIENTS; i++) {
 		if (!clients[i] || clients[i]->free()) {
 			clients[i] = client;
-			logger.printf("Client connected, ip address: %s\n\t-> Connected clients count: %i \n", client->remoteIP().toString().c_str(), availableClientsCount());
+			log_d("Client connected, ip address: %s\n\t-> Connected clients count: %i \n", client->remoteIP().toString().c_str(), availableClientsCount());
 			break;
 		}
 	}
@@ -83,7 +85,7 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 		// reply to client
 		const char reply[] = "403 Forbidden";
 		sendMessage(client, reply, strlen(reply));
-		logger.printf("Client not connected, server is busy with %d active connections\n", MAX_TCP_CLIENTS);
+		log_d("Client not connected, server is busy with %d active connections\n", MAX_TCP_CLIENTS);
 		client->close(true);
 	}
 
@@ -108,7 +110,7 @@ bool ATcpServer::isSdInitialize() const { return store != nullptr && store->isIn
 
 void ATcpServer::stopReceive() {
 	if (store) {
-		logger.debug("Stop store\n");
+		log_d("Stop store\n");
 		store->closeFile();
 	}
 	if (server) {
@@ -119,24 +121,24 @@ void ATcpServer::stopReceive() {
 }
 
 void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
-	logger.trace("Receiver starting...\n");
-	logger.trace("Write to SD card : [%s]\n", writeToSd ? "ENABLED" : "DISABLED");
-	logger.trace("Send to TCP : [%s]\n", sendToTcp ? "ENABLED" : "DISABLED");
+	log_v("Receiver starting...\n");
+	log_v("Write to SD card : [%s]\n", writeToSd ? "ENABLED" : "DISABLED");
+	log_v("Send to TCP : [%s]\n", sendToTcp ? "ENABLED" : "DISABLED");
 
 	_writeToSd = writeToSd;
 	_sendToTcp = sendToTcp;
 
 	assert(store != nullptr);
 	if (_writeToSd && store && (store->isInitialize() || store->initSdCard())) {
-		logger.trace("Stored initialized\n");
+		log_v("Stored initialized\n");
 		store->createFile();
-		logger.trace("File created\n");
+		log_v("File created\n");
 	}
 
 	// server->setNoDelay(true);
 	if (_sendToTcp) {
 		server->begin();
-		logger.trace("TCP Server started\n");
+		log_v("TCP Server started\n");
 	}
 
 	// serviceServer->begin();
@@ -145,7 +147,7 @@ void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
 	_timeEnd = 0;
 	_timeStart = millis();
 
-	logger.trace("Receive data started\n");
+	log_v("Receive data started\n");
 }
 
 unsigned long ATcpServer::getTimeReceive() const {
@@ -216,7 +218,7 @@ void ATcpServer::setup() {
 }
 
 void ATcpServer::sendDataToClients(const char *buffer, size_t bytesCount) {
-	logger.trace("Send data to clients\n");
+	log_v("Send data to clients\n");
 	for (int i = 0; i < MAX_TCP_CLIENTS; i++) {
 		if (clients[i] && clients[i]->connected()) {
 			sendMessage(clients[i], buffer, bytesCount);

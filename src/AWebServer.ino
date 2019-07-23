@@ -2,12 +2,16 @@ bool AWebServer::_static_init = false;
 
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
-AWebServer::AWebServer(ATcpServer *telnetServer)
+AWebServer::AWebServer(ATcpServer *telnetServer, WiFiManager *wifiManager)
 	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ubx"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
-	  _transport{new UbloxTransport(*Receiver)}, api{} {
+	  _transport{new UbloxTransport(*Receiver)}, api{}, _wifiManager{wifiManager} {
 	String id = utils::getEspChipId();
-	strcat(softAP_ssid, id.c_str());
-	strcat(hostName, id.c_str());
+	String buff = softAP_ssid + id;
+	memcpy(softAP_ssid, buff.c_str(), buff.length());
+	buff = hostName + id;
+	memcpy(hostName, buff.c_str(), buff.length());
+
+	log_d("softAP_ssid: [%s], softAP_password: [%s]\n", softAP_ssid, softAP_password);
 
 	//_gps = new UBLOX_GPS(_transport);
 }
@@ -43,15 +47,9 @@ void AWebServer::restart() {
 void AWebServer::setup() {
 
 	loadWiFiCredentials();
-#ifdef ESP32
-	WiFi.setHostname(hostName);
-#else
-	WiFi.hostname(hostName);
-#endif
-	
-	WiFi.softAP(softAP_ssid, /*"1234567890"*/ softAP_password);
-	WiFi.mode(WIFI_AP_STA);
 
+	_wifiManager->connectAp(softAP_ssid, softAP_password);
+	delay(1000);
 	connectStaWifi(ssid, password);
 
 	addOTAhandlers();
@@ -164,32 +162,34 @@ bool AWebServer::connectStaWifi(const char *ssid, const char *password) {
 	logger.debug("connectStaWifi -> ssid : %s, password: %s\n", ssid, password);
 	logger.debug("connectStaWifi -> start connect WiFi\n");
 	if (ssid && password && strlen(ssid) > 0 && strlen(password) > 0) {
-		if (WiFi.isConnected()) {
+		if (_wifiManager->staConnected()) {
 			logger.debug("connectStaWifi -> disconnect\n");
-			delay(100);
-			disconnectStaWifi();
-			delay(1000);
+			//delay(100);
+			//disconnectStaWifi();
+			//delay(1000);
+			_wifiManager->staDisconnect();
+			delay(500);
+			
+
 		}
-		logger.debug("connectStaWifi -> begin, ssid : %s, pass: %s\n", ssid, password);
-		WiFi.mode(WIFI_AP_STA);
-		WiFi.begin(ssid, password);
-		logger.debug("connectStaWifi -> wait connectiom status\n");
-		delay(1000);
-		uint64_t start = millis();
-		while (WiFi.waitForConnectResult() != WL_CONNECTED && millis() - start < 6000) {
-			// if (WiFi.status() != WL_CONNECTED){
-			logger.printf("STA: Failed!\n");
-			return false;
-		}
-		logger.debug("connectStaWifi -> STA connected\n");
+		return _wifiManager->waitConnectionSta(ssid, password);
+		//logger.debug("connectStaWifi -> begin, ssid : %s, pass: %s\n", ssid, password);
+		//WiFi.mode(WIFI_AP_STA);
+		//WiFi.begin(ssid, password);
+		//logger.debug("connectStaWifi -> wait connectiom status\n");
+		//delay(1000);
+		//uint64_t start = millis();
+		//while (WiFi.waitForConnectResult() != WL_CONNECTED && millis() - start < 6000) {
+		//	// if (WiFi.status() != WL_CONNECTED){
+		//	logger.printf("STA: Failed!\n");
+		//	return false;
+		//}
+		//logger.debug("connectStaWifi -> STA connected\n");
 		// restart();
-	} else { // ??? For FIX
-		logger.println("WiFi connected");
-		logger.print("IP address: ");
-		logger.println(WiFi.localIP());
-		return true;
+	} else { 
+		log_e("ssid or password filed for connection sta");
+		return false;
 	}
-	return true;
 }
 
 void AWebServer::disconnectStaWifi() {
@@ -198,7 +198,9 @@ void AWebServer::disconnectStaWifi() {
 	if (telnetServer != nullptr && telnetServer->isInProgress()) {
 		telnetServer->stopReceive();
 	}
-	WiFi.disconnect(false);
+	//WiFi.disconnect(false);
+	_wifiManager->apDisconnect();
+	_wifiManager->staDisconnect();
 }
 
 void AWebServer::initializeGpsReceiver() {
@@ -215,6 +217,9 @@ void AWebServer::initializeGpsReceiver() {
 
 /** Main process */
 void AWebServer::process() {
+	//if (!_wifiManager->apEnabled()){
+	//	_wifiManager->connectAp(softAP_ssid, softAP_password);
+	//}
 	if (_connect) {
 		if (connectStaWifi(ssid, password)) {
 			_connect = false;
@@ -238,9 +243,4 @@ void AWebServer::process() {
 	}
 
 	delay(1);
-}
-
-
-bool AWebServer::isCanSendData(){
-	return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected());
 }
