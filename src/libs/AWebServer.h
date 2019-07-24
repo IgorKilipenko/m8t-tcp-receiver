@@ -12,11 +12,6 @@
 #include <AsyncTCP.h>
 #include <ESPmDNS.h>
 #include "SPIFFS.h"
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESP8266mDNS.h>
-#include <Hash.h> // ESP8266 only
 #else
 #error Platform not supported
 #endif
@@ -34,10 +29,10 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include "SGraphQL.h"
+#include "WiFiManager.h"
 
 #include "ublox.h"
 #include "UbxMessage.h"
-//#include <SparkFun_Ublox_Arduino_Library.h>
 
 #define APSSID "ESP_ap_"
 #define APPSK "1234567890"
@@ -53,7 +48,6 @@ class AWebServer {
 	void loadWiFiCredentials();
 	void saveWiFiCredentials();
 	int8_t scanWiFi();
-	struct WifiItem;
 	void end();
 	void restart();
 	unsigned long getServerTime() const { return millis(); }
@@ -110,17 +104,7 @@ class AWebServer {
 	void addServerHandlers();
 	void addOTAhandlers();
 	void addReceiverHandlers();
-
 	bool _autoPVT{false};
-};
-
-struct AWebServer::WifiItem {
-	int32_t rssi;
-	String ssid;
-	String bssid;
-	int32_t channel;
-	uint8_t secure;
-	bool hidden;
 };
 
 #endif // AWebServer_h

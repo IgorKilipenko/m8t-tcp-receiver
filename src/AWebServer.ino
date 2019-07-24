@@ -4,7 +4,7 @@ const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
 	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ubx"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
-	  _transport{new UbloxTransport(*Receiver)}, api{} {
+	  _transport{new UbloxTransport(*Receiver)}, api{}} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
@@ -147,9 +147,6 @@ int8_t AWebServer::scanWiFi() {
 			wifi->bssid = WiFi.BSSIDstr(i);
 			wifi->channel = WiFi.channel(i);
 			wifi->secure = WiFi.encryptionType(i);
-#ifdef ESP8266
-			wifi->hidden = WiFi.isHidden(i) ? "true" : "false";
-#endif
 			wifiList.push_back(std::move(wifi));
 		}
 		WiFi.scanDelete();
