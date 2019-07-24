@@ -3,8 +3,8 @@ bool AWebServer::_static_init = false;
 const char *AWebServer::API_P_GPSCMD = "cmd";
 
 AWebServer::AWebServer(ATcpServer *telnetServer)
-	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ubx"}, events{"/events"}, telnetServer{telnetServer}, wifiList{}, _ubxDecoder{},
-	  _transport{new UbloxTransport(*Receiver)}, api{} {
+	: softAP_ssid{APSSID}, softAP_password{APPSK}, ssid{APSSID}, password{APPSK}, hostName{"GPS IoT "}, server{80}, ws{"/ubx"}, events{"/events"}, telnetServer{telnetServer}, wifiList{},
+	  _ubxDecoder{}, _transport{new UbloxTransport(*Receiver)}, api{} {
 	String id = utils::getEspChipId();
 	strcat(softAP_ssid, id.c_str());
 	strcat(hostName, id.c_str());
@@ -48,11 +48,13 @@ void AWebServer::setup() {
 #else
 	WiFi.hostname(hostName);
 #endif
-	
+
 	WiFi.softAP(softAP_ssid, /*"1234567890"*/ softAP_password);
 	WiFi.mode(WIFI_AP_STA);
 
-	connectStaWifi(ssid, password);
+	// connectStaWifi(ssid, password);
+	WM.waitConnectionSta(ssid, password);
+	// utils::waitAtTime([&]() { return WM.staConnected(); }, 1000, 10);
 
 	addOTAhandlers();
 
@@ -201,7 +203,7 @@ void AWebServer::disconnectStaWifi() {
 void AWebServer::initializeGpsReceiver() {
 	logger.trace("Start GPS BEGIN\n");
 	//_gps->enableDebugging(logger.getStream());
-	//if (_gps->begin()) {
+	// if (_gps->begin()) {
 	//	logger.debug("GPS Receiver connected\n");
 	//	_gpsIsInint = true;
 	//} else {
@@ -228,7 +230,7 @@ void AWebServer::process() {
 	telnetServer->process();
 	if (!_gpsIsInint) {
 		initializeGpsReceiver();
-	} 
+	}
 
 	if (_ntripClient->isEnabled()) {
 		_ntripClient->receiveNtrip();
@@ -237,7 +239,4 @@ void AWebServer::process() {
 	delay(1);
 }
 
-
-bool AWebServer::isCanSendData(){
-	return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected());
-}
+bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected()); }
