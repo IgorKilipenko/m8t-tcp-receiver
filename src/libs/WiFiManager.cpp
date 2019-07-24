@@ -1,7 +1,7 @@
 
 #include "WiFiManager.h"
 
-WiFiManager::WiFiManager() : _eventIds{} {}
+WiFiManager::WiFiManager() : _eventIds{}, _wifiList{} {}
 WiFiManager::~WiFiManager() {
 	log_d("-> Destruct WiFi manager\n");
 	removeEvents();
@@ -238,13 +238,13 @@ int16_t WiFiManager::_scanDoneCb() {
 		}
 		log_d("Not availeble networks, count: [%i]\n", n);
 		for (int i = 0; i < n; i++) {
-			WifiItem item{};
-			item.rssi = WiFi.RSSI(i);
-			item.ssid = WiFi.SSID(i);
-			item.bssid = WiFi.BSSIDstr(i);
-			item.channel = WiFi.channel(i);
-			item.secure = WiFi.encryptionType(i);
-			_wifiList.push_back(item);
+			auto wifi = std::shared_ptr<WifiItem>(new WifiItem);
+			wifi->rssi = WiFi.RSSI(i);
+			wifi->ssid = WiFi.SSID(i);
+			wifi->bssid = WiFi.BSSIDstr(i);
+			wifi->channel = WiFi.channel(i);
+			wifi->secure = WiFi.encryptionType(i);
+			_wifiList.push_back(std::move(wifi));
 		}
 		WiFi.scanDelete();
 		_scanComplete = true;
@@ -285,7 +285,6 @@ WiFiEventId_t WiFiManager::onStationConnected(WifiEventHandler callback, bool on
 			callback(info);
 		},
 		SYSTEM_EVENT_STA_CONNECTED, once);
-	return
 }
 
 WiFiEventId_t WiFiManager::onApConnected(WifiEventHandler callback, bool once) {
@@ -298,7 +297,10 @@ WiFiEventId_t WiFiManager::onApConnected(WifiEventHandler callback, bool once) {
 		SYSTEM_EVENT_AP_START, once);
 }
 
-bool WiFiManager::connectStaSync(const char *ssid, const char *password) {
+/*int16_t WiFiManager::scanWiFiSync(const char *ssid, const char *password) {
+	if (_wifiList.size() > 0) {
+		_wifiList.clear();
+	}
 	int n = WiFi.scanComplete();
 	if (n == -2) {
 		WiFi.scanNetworks(true);
@@ -310,11 +312,13 @@ bool WiFiManager::connectStaSync(const char *ssid, const char *password) {
 			wifi->bssid = WiFi.BSSIDstr(i);
 			wifi->channel = WiFi.channel(i);
 			wifi->secure = WiFi.encryptionType(i);
-			wifiList.push_back(std::move(wifi));
+			_wifiList.push_back(std::move(wifi));
 		}
 		WiFi.scanDelete();
 		if (WiFi.scanComplete() == -2) {
 			WiFi.scanNetworks(true);
 		}
 	}
-}
+
+	return n;
+}*/

@@ -48,7 +48,7 @@ HardwareSerial *Receiver{&Serial};
 #include "libs/WiFiManager.h"
 
 Logger logger{&Serial};	// For debug mode
-WiFiManager WM{}
+WiFiManager WM{};
 ATcpServer telnetServer{}; // GPS receiver communication
 
 AWebServer webServer{&telnetServer};

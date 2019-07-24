@@ -49,7 +49,7 @@ struct WifiItem {
 };
 
 typedef std::function<void(WiFiEventInfo_t info)> WifiEventHandler;
-typedef std::function<void(const std::vector<WifiItem> &wifiList)> WifiScanHandler;
+typedef std::function<void(const std::vector<std::shared_ptr<WifiItem>> &wifiList)> WifiScanHandler;
 
 class WiFiManager {
   public:
@@ -92,7 +92,7 @@ class WiFiManager {
 	bool _staConnected = false;
 	bool _apEnabled = false;
 	bool _scanComplete = false;
-	std::vector<std::shared_ptr<WifiItem>> wifiList;
+	std::vector<std::shared_ptr<WifiItem>> _wifiList;
 	Logger *_logger = nullptr;
 
 	int16_t _scanDoneCb();
