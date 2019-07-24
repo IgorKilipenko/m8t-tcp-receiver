@@ -202,28 +202,22 @@ bool WiFiManager::staDisconnect(int delayTime) {
 
 bool WiFiManager::waitEnabledAp(const char *ssid, const char *password) {
 	log_d("Start\n");
-	unsigned long start = millis();
-	while (!apEnabled() && millis() - start < 100000) {
-		connectAp(ssid, password);
-		vTaskDelay(10 / portTICK_PERIOD_MS);
-	}
+	connectAp(ssid, password);
+	utils::waitAtTime([&]() { return apEnabled(); }, 1000, 10);
 	return apEnabled();
 }
 
 bool WiFiManager::waitConnectionSta(const char *ssid, const char *password) {
-	log_d("Start\n");
-	unsigned long start = millis();
-	while (!staConnected() && millis() - start < 100000) {
-		connectSta(ssid, password);
-		vTaskDelay(10 / portTICK_PERIOD_MS);
-	}
+	log_d("Start waitConnectionSta\n");
+	connectSta(ssid, password);
+	utils::waitAtTime([&]() { return staConnected(); }, 1000, 10);
 	return staConnected();
 }
 
 int16_t WiFiManager::_scanDoneCb() {
 	log_d("Start\n");
 	_scanComplete = false;
-	//_wifiList.clear();
+	_wifiList.clear();
 	int n = WiFi.scanComplete();
 	log_d("Availeble networks, scanComplete: [%i]\n", n);
 	if (n == -1) {
