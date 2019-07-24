@@ -57,7 +57,6 @@ class WiFiManager {
 	~WiFiManager();
 	void setup(const char *ap_hostname);
 	bool connectSta(const char *ssid, const char *password);
-	bool connectStaSync(const char *ssid, const char *password);
 	bool connectAp(const char *ap_ssid, const char *ap_password);
 	WiFiEventId_t onStationConnected(WifiEventHandler, bool = false);
 	// WiFiEventId_t onStationDisconnected(WiFiEvent_t event);
