@@ -215,11 +215,17 @@ void AWebServer::initializeGpsReceiver() {
 /** Main process */
 void AWebServer::process() {
 	if (_connect) {
-		if (connectStaWifi(ssid, password)) {
+		//if (connectStaWifi(ssid, password)) {
+		//	_connect = false;
+		//	logger.debug("Reconnected\n");
+		//	saveWiFiCredentials();
+		//	logger.debug("Saved WiFi credentials\n");
+		//}
+		if (WM.waitConnectionSta(ssid, password)){
+			log_w("STA reconnected success\n");
 			_connect = false;
-			logger.debug("Reconnected\n");
-			saveWiFiCredentials();
-			logger.debug("Saved WiFi credentials\n");
+		}else {
+			log_w("Connection STA timeout\n");
 		}
 	}
 

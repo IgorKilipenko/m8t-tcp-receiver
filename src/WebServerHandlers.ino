@@ -80,8 +80,8 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "scan")) {
 		logger.trace("Start scan WIFI\n");
-		delay(500);
-		int8_t n = scanWiFi();
+		delay(100);
+		/*int8_t n = scanWiFi();
 		if (n == -1) {
 			delay(1000);
 			n = scanWiFi();
@@ -101,7 +101,32 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 		}
 		if (wifiList.size() > 0) {
 			wifiList.clear();
+		}*/
+
+		JsonArray &arrayJson = outJson.createNestedArray(SGraphQL::RESP_VALUE);
+
+		if (WM.staConnected()) {
+			WM.scanWiFiAsync();
+			utils::waitAtTime([&]() { log_d("Wait.... DONE -> [%s]", WM.lastScanComplete() ? "TRUE" : "FALSE"); return WM.lastScanComplete(); }, 30000, 10);
+			if (WM.lastScanComplete()) {
+
+				ApRecords list{};
+				WM.getApRecords(list);
+				log_d("Record size = [%i]", list.size());
+				for (auto const &item : list) {
+					JsonObject &resJson = arrayJson.createNestedObject();
+					resJson["rssi"] = item->rssi;
+					resJson["ssid"] = item->ssid;
+					resJson["bssid"] = item->bssid;
+					resJson["channel"] = item->channel;
+					resJson["secure"] = item->secure;
+					resJson["hidden"] = item->hidden;
+				}
+			}
 		}
+
+		//WM.onWifiScanDone()
+
 	} else if (utils::streq(cmd, "info")) {
 		logger.trace("Start WIFI info\n");
 

@@ -48,14 +48,15 @@ struct WifiItem {
 	bool hidden;
 };
 
+typedef std::vector<std::shared_ptr<WifiItem>> ApRecords;
 typedef std::function<void(WiFiEventInfo_t info)> WifiEventHandler;
-typedef std::function<void(const std::vector<std::shared_ptr<WifiItem>> &wifiList)> WifiScanHandler;
+typedef std::function<void(const std::vector<std::shared_ptr<WifiItem>> wifiList)> WifiScanHandler;
 
 class WiFiManager {
   public:
 	WiFiManager();
 	~WiFiManager();
-	void setup(const char *ap_hostname);
+	bool setup(const char *ap_hostname);
 	bool connectSta(const char *ssid, const char *password);
 	bool connectAp(const char *ap_ssid, const char *ap_password);
 	WiFiEventId_t onStationConnected(WifiEventHandler, bool = false);
@@ -74,7 +75,10 @@ class WiFiManager {
 	bool waitEnabledAp(const char *ssid, const char *password);
 	bool waitConnectionSta(const char *ssid, const char *password);
 	int16_t scanWiFiAsync();
-	WiFiEventId_t onWifiScanDone(WifiScanHandler callback, bool once = false); 
+	WiFiEventId_t onWifiScanDone(WifiScanHandler callback, bool once = false);
+	const ApRecords &getApRecords() const { return _wifiList; }
+	void getApRecords(ApRecords &list) const { list = _wifiList; }
+	bool lastScanComplete() const { return _scanDone; }
 
   private:
 	WiFiClass *_wifi;
@@ -90,13 +94,17 @@ class WiFiManager {
 	std::vector<WiFiEventId_t> _eventIds;
 	bool _staConnected = false;
 	bool _apEnabled = false;
-	bool _scanComplete = false;
-	std::vector<std::shared_ptr<WifiItem>> _wifiList;
+	bool _scanDone = false;
+	ApRecords _wifiList;
 	Logger *_logger = nullptr;
-
+	static bool _lock;
+	static void lock() { WiFiManager::_lock = true; }
+	static void unlock() { WiFiManager::_lock = false; }
+	static bool isLocked() { 
+		return WiFiManager::_lock; 
+	}
+	unsigned long _lastScanTime;
 	int16_t _scanDoneCb();
 };
-
-
 
 #endif // WiFiManager_h

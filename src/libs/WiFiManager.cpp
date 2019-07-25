@@ -1,6 +1,8 @@
 
 #include "WiFiManager.h"
 
+bool WiFiManager::_lock = false;
+
 WiFiManager::WiFiManager() : _eventIds{}, _wifiList{} {}
 WiFiManager::~WiFiManager() {
 	log_d("-> Destruct WiFi manager\n");
@@ -157,66 +159,140 @@ WiFiEventId_t WiFiManager::_onWiFiEvent(WifiEventHandler callback, system_event_
 	return eventID;
 }
 
-void WiFiManager::setup(const char *ap_hostname) {
+bool WiFiManager::setup(const char *ap_hostname) {
 	log_d("Setup");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
+	WiFiManager::lock();
+
 	_ap_hostname = ap_hostname;
 
 	// delete old config
 	WiFi.disconnect(true);
 	delay(500);
 
-	// WiFiEventId_t eventID = WiFi.onEvent(std::bind(&WiFiManager::_wifiPrintEvent, this, std::placeholders::_1));
-	//_eventIds.push_back(eventID);
+	WiFiEventId_t eventID = WiFi.onEvent(std::bind(&WiFiManager::_wifiPrintEvent, this, std::placeholders::_1));
+	_eventIds.push_back(eventID);
+
+	WiFiManager::unlock();
+
+	return true;
 }
 
 bool WiFiManager::connectAp(const char *ap_ssid, const char *ap_password) {
 	log_d("Start\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
+	WiFiManager::lock();
+
 	_ap_ssid = ap_ssid;
 	_ap_password = ap_password;
 	log_d("AP ssid: [%s], AP pass: [%s]\n", _ap_ssid.c_str(), _ap_password.c_str());
-	return WiFi.softAP(_ap_ssid.c_str(), _ap_password.c_str());
+	bool res = WiFi.softAP(_ap_ssid.c_str(), _ap_password.c_str());
+
+	WiFiManager::unlock();
+
+	return res;
 }
 
 bool WiFiManager::connectSta(const char *ssid, const char *password) {
 	log_d("Start\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
+	WiFiManager::lock();
+
 	_ssid = ssid;
 	_password = password;
 	WiFi.mode(WIFI_AP_STA);
 	log_d("ssid: [%s], pass: [%s]\n", _ssid.c_str(), _password.c_str());
-	return WiFi.begin(_ssid.c_str(), _password.c_str());
+	bool res = WiFi.begin(_ssid.c_str(), _password.c_str());
+
+	WiFiManager::unlock();
+
+	return res;
 }
 
 bool WiFiManager::apDisconnect(int delayTime) {
 	log_d("Start\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
+	WiFiManager::lock();
+
 	bool res = WiFi.softAPdisconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
+
+	WiFiManager::unlock();
+
 	return res;
 }
 
 bool WiFiManager::staDisconnect(int delayTime) {
 	log_d("Start\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
+	WiFiManager::lock();
+
 	bool res = WiFi.disconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
+
+	WiFiManager::unlock();
+
 	return res;
 }
 
 bool WiFiManager::waitEnabledAp(const char *ssid, const char *password) {
 	log_d("Start\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
 	connectAp(ssid, password);
 	utils::waitAtTime([&]() { return apEnabled(); }, 1000, 10);
-	return apEnabled();
+	bool res = apEnabled();
+
+	return res;
 }
 
 bool WiFiManager::waitConnectionSta(const char *ssid, const char *password) {
 	log_d("Start waitConnectionSta\n");
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return false;
+	}
+
 	connectSta(ssid, password);
 	utils::waitAtTime([&]() { return staConnected(); }, 1000, 10);
-	return staConnected();
+	bool res = staConnected();
+
+	return res;
 }
 
 int16_t WiFiManager::_scanDoneCb() {
 	log_d("Start\n");
-	_scanComplete = false;
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return -3;
+	}
+
+	WiFiManager::lock();
+
+	_scanDone = false;
 	_wifiList.clear();
 	int n = WiFi.scanComplete();
 	log_d("Availeble networks, scanComplete: [%i]\n", n);
@@ -230,7 +306,7 @@ int16_t WiFiManager::_scanDoneCb() {
 		if (n == 0) {
 			log_d("Not availeble networks, scanComplete: [%i]\n", n);
 		}
-		log_d("Not availeble networks, count: [%i]\n", n);
+		log_d("Networks, count: [%i]\n", n);
 		for (int i = 0; i < n; i++) {
 			auto wifi = std::shared_ptr<WifiItem>(new WifiItem);
 			wifi->rssi = WiFi.RSSI(i);
@@ -238,23 +314,44 @@ int16_t WiFiManager::_scanDoneCb() {
 			wifi->bssid = WiFi.BSSIDstr(i);
 			wifi->channel = WiFi.channel(i);
 			wifi->secure = WiFi.encryptionType(i);
-			_wifiList.push_back(std::move(wifi));
+			_wifiList.push_back(wifi);
 		}
 		WiFi.scanDelete();
-		_scanComplete = true;
+		_scanDone = true;
 	}
+
+	WiFiManager::unlock();
 
 	return n;
 }
 
 int16_t WiFiManager::scanWiFiAsync() {
 	log_d("Start\n");
-	_scanComplete = false;
+	if (WiFiManager::isLocked()) {
+		log_w("Is global isLocked\n");
+		return -3;
+	}
+	
+	unsigned time = millis();
+	if (time - _lastScanTime < 30000){
+		if (lastScanComplete()){
+			return _wifiList.size();
+		}
+	}
+
+	_lastScanTime = time;
+
+	WiFiManager::lock();
+
+	_scanDone = false;
 	_wifiList.clear();
 	int16_t n = WiFi.scanNetworks(true);
 	if (n == -2) {
 		log_e("Wifi sacn filed\n");
 	}
+
+	WiFiManager::unlock();
+
 	return n;
 }
 
@@ -263,7 +360,7 @@ WiFiEventId_t WiFiManager::onWifiScanDone(WifiScanHandler callback, bool once) {
 	return _onWiFiEvent(
 		[&](WiFiEventInfo_t info) {
 			log_d("Add Event");
-			bool complete = utils::waitAtTime([&]() { return _scanComplete; }, 200, 10);
+			bool complete = utils::waitAtTime([&]() { return _scanDone; }, 200, 10);
 			if (complete) {
 				callback(_wifiList);
 			}
