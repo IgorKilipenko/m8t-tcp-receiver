@@ -54,12 +54,19 @@ ATcpServer telnetServer{}; // GPS receiver communication
 AWebServer webServer{&telnetServer};
 
 void setup() {
+	enableCore0WDT();
+	log_v("========= CORE -> [%i]", xPortGetCoreID());
 	Serial.begin(BAUD_SERIAL);
 	Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2);
 	RTCM->begin(38400, SERIAL_8N1, RXD1, TXD1);
+	
 	Receiver->setRxBufferSize(SERIAL_SIZE_RX);
-	WM.setup("esp_ap_host");
+	String hostName = String("ESP_GPS_") + utils::getEspChipId();
+	
+	WM.setup(hostName.c_str());
 	webServer.setup();
+
+	//webServer.run();
 }
 
 void loop() { webServer.process(); }

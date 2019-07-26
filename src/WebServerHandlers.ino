@@ -107,7 +107,7 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 
 		if (WM.staConnected()) {
 			WM.scanWiFiAsync();
-			utils::waitAtTime([&]() { log_d("Wait.... DONE -> [%s]", WM.lastScanComplete() ? "TRUE" : "FALSE"); return WM.lastScanComplete(); }, 30000, 10);
+			utils::waitAtTime([&]() { log_d("Wait.... DONE -> [%s]", WM.lastScanComplete() ? "TRUE" : "FALSE"); return WM.lastScanComplete(); }, 10000, 10);
 			if (WM.lastScanComplete()) {
 
 				ApRecords list{};
@@ -125,7 +125,29 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 			}
 		}
 
-		//WM.onWifiScanDone()
+		/*
+		log_v("========= CORE -> [%i]", xPortGetCoreID());
+		WM.onWifiScanDone([&](ApRecords list){
+			log_v("========= CORE -> [%i]", xPortGetCoreID());
+			if (WM.lastScanComplete()) {
+				log_v("========= CORE -> [%i]", xPortGetCoreID());
+				//ApRecords list{};
+				//WM.getApRecords(list);
+				log_d("Record size = [%i]", list.size());
+				for (auto const &item : list) {
+					//JsonObject &resJson = arrayJson.createNestedObject();
+					//resJson["rssi"] = item->rssi;
+					//resJson["ssid"] = item->ssid;
+					//resJson["bssid"] = item->bssid;
+					//resJson["channel"] = item->channel;
+					//resJson["secure"] = item->secure;
+					//resJson["hidden"] = item->hidden;
+					log_d("Record size = [%s]", item->ssid);
+				}
+			}
+		}, true);
+		WM.scanWiFiAsync();
+		*/
 
 	} else if (utils::streq(cmd, "info")) {
 		logger.trace("Start WIFI info\n");

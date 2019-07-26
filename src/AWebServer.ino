@@ -215,16 +215,16 @@ void AWebServer::initializeGpsReceiver() {
 /** Main process */
 void AWebServer::process() {
 	if (_connect) {
-		//if (connectStaWifi(ssid, password)) {
+		// if (connectStaWifi(ssid, password)) {
 		//	_connect = false;
 		//	logger.debug("Reconnected\n");
 		//	saveWiFiCredentials();
 		//	logger.debug("Saved WiFi credentials\n");
 		//}
-		if (WM.waitConnectionSta(ssid, password)){
+		if (WM.waitConnectionSta(ssid, password)) {
 			log_w("STA reconnected success\n");
 			_connect = false;
-		}else {
+		} else {
 			log_w("Connection STA timeout\n");
 		}
 	}
@@ -242,7 +242,22 @@ void AWebServer::process() {
 		_ntripClient->receiveNtrip();
 	}
 
-	delay(1);
+	 delay(1);
 }
+
+/** Main process */
+void AWebServer::_process(void *arg) {
+	AWebServer *_this = (AWebServer *)arg;
+	micros();
+	vTaskDelay(10);
+	//_this->setup();
+	//for (;;) {
+	//	_this->process();
+	//	vTaskDelay(1 / portTICK_PERIOD_MS);
+	//}
+}
+
+
+void AWebServer::run() { xTaskCreatePinnedToCore(&this->_process, "_process", 1024, NULL, 1, &_wifi_tasks, 0); }
 
 bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected()); }

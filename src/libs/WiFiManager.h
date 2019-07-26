@@ -100,9 +100,7 @@ class WiFiManager {
 	static bool _lock;
 	static void lock() { WiFiManager::_lock = true; }
 	static void unlock() { WiFiManager::_lock = false; }
-	static bool isLocked() { 
-		return WiFiManager::_lock; 
-	}
+	static bool isLocked() { return WiFiManager::_lock; }
 	unsigned long _lastScanTime;
 	int16_t _scanDoneCb();
 };

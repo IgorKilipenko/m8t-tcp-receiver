@@ -45,6 +45,8 @@ class AWebServer {
 	~AWebServer();
 	void setup();
 	void process();
+	static void _process(void *);
+	void run();
 	void loadWiFiCredentials();
 	void saveWiFiCredentials();
 	int8_t scanWiFi();
@@ -105,6 +107,7 @@ class AWebServer {
 	void addOTAhandlers();
 	void addReceiverHandlers();
 	bool _autoPVT{false};
+	TaskHandle_t _wifi_tasks;
 };
 
 #endif // AWebServer_h
