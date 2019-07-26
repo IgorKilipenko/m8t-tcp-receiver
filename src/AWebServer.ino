@@ -80,6 +80,8 @@ void AWebServer::setup() {
 
 	initDefaultHeaders();
 	server.begin();
+
+	//run();
 }
 
 /** Credentials ================================================ */
@@ -242,22 +244,36 @@ void AWebServer::process() {
 		_ntripClient->receiveNtrip();
 	}
 
-	 delay(1);
+	delay(1);
 }
 
 /** Main process */
 void AWebServer::_process(void *arg) {
-	AWebServer *_this = (AWebServer *)arg;
-	micros();
-	vTaskDelay(10);
+	// AWebServer *_this = static_cast<AWebServer*>(arg);
+	// micros();
+	// vTaskDelay(10);
 	//_this->setup();
-	//for (;;) {
-	//	_this->process();
-	//	vTaskDelay(1 / portTICK_PERIOD_MS);
+	//_this->setup();
+	// for (;;) {
+	//	//_this->process();
+	//	//vTaskDelay(1 / portTICK_PERIOD_MS);
+	//	delay(1);
 	//}
+
+	log_d("xCore -> [%i]", xPortGetCoreID());
+	AWebServer *_this = static_cast<AWebServer*>(arg);
+	_this->setup();
+	for (;;) {
+		_this->process();
+		// vTaskDelay(1 / portTICK_PERIOD_MS);
+		delay(1);
+		//log_d("xCore -> [%i]", xPortGetCoreID());
+	}
 }
 
-
-void AWebServer::run() { xTaskCreatePinnedToCore(&this->_process, "_process", 1024, NULL, 1, &_wifi_tasks, 0); }
+void AWebServer::run(BaseType_t coreId) {
+	delay(500);
+	xTaskCreatePinnedToCore(&_process, "_process", 1024*8, this, 1, &_wifi_tasks, coreId);
+}
 
 bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected()); }

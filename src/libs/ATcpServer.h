@@ -49,6 +49,7 @@ class ATcpServer {
 
 	bool sendToTcpEnabled() const { return _sendToTcp; }
 	bool writeToSdEnabled() const { return _writeToSd; }
+	void runTask();
 
   private:
 	std::vector<AsyncClient *> clients; // a list to hold all clients

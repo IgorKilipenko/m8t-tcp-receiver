@@ -46,7 +46,7 @@ class AWebServer {
 	void setup();
 	void process();
 	static void _process(void *);
-	void run();
+	void run(BaseType_t coreId = 1);
 	void loadWiFiCredentials();
 	void saveWiFiCredentials();
 	int8_t scanWiFi();

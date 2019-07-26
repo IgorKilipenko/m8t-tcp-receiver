@@ -37,9 +37,9 @@ HardwareSerial *Receiver{&Serial};
 #define TCP_PORT 7042	 // Default tcp port (GPS receiver communication)
 
 /* Serial */
-#define BAUD_SERIAL 115200 // Debug Serial baund rate
-#define BAUND_RECEIVER 921600	   // GPS receiver baund rate
-#define SERIAL_SIZE_RX 1024*2
+#define BAUD_SERIAL 115200	// Debug Serial baund rate
+#define BAUND_RECEIVER 921600 // GPS receiver baund rate
+#define SERIAL_SIZE_RX 1024 * 2
 
 #include "libs/utils.h"
 #include "libs/Logger.h"
@@ -47,7 +47,10 @@ HardwareSerial *Receiver{&Serial};
 #include "libs/ATcpServer.h"
 #include "libs/WiFiManager.h"
 
-Logger logger{&Serial};	// For debug mode
+TaskHandle_t Task1;
+TaskHandle_t Task2;
+
+Logger logger{&Serial}; // For debug mode
 WiFiManager WM{};
 ATcpServer telnetServer{}; // GPS receiver communication
 
@@ -59,14 +62,45 @@ void setup() {
 	Serial.begin(BAUD_SERIAL);
 	Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2);
 	RTCM->begin(38400, SERIAL_8N1, RXD1, TXD1);
-	
+
 	Receiver->setRxBufferSize(SERIAL_SIZE_RX);
 	String hostName = String("ESP_GPS_") + utils::getEspChipId();
-	
-	WM.setup(hostName.c_str());
-	webServer.setup();
 
-	//webServer.run();
+	WM.setup(hostName.c_str());
+	//webServer.setup();
+
+	webServer.run(0);
+
+	//xTaskCreatePinnedToCore(TaskCore0, "TaskCore0", 1024, NULL, 2, &Task1, 0);
+	//delay(500);
+
+	//xTaskCreatePinnedToCore(TaskCore1, "TaskCore1", 1024, NULL, 1, &Task2, 1);
+	//delay(500);
 }
 
-void loop() { webServer.process(); }
+void loop() { /*webServer.process(); */}
+
+void TaskCore0(void *pvParameters) // This is a task.
+{
+	(void)pvParameters;
+
+	// webServer.setup();
+
+	for (;;) // A Task shall never return or exit.
+	{
+		Serial.println(xPortGetCoreID());
+		// webServer.setup();
+		delay(10000);
+	}
+}
+
+void TaskCore1(void *pvParameters) // This is a task.
+{
+	(void)pvParameters;
+
+	for (;;) {
+		delay(3000);
+		// webServer.process();
+		Serial.println(xPortGetCoreID());
+	}
+}
