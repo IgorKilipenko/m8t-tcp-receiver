@@ -67,18 +67,18 @@ void setup() {
 	String hostName = String("ESP_GPS_") + utils::getEspChipId();
 
 	WM.setup(hostName.c_str());
-	//webServer.setup();
+	// webServer.setup();
 
-	webServer.run(0);
+	webServer.run(1);
 
-	//xTaskCreatePinnedToCore(TaskCore0, "TaskCore0", 1024, NULL, 2, &Task1, 0);
-	//delay(500);
+	// xTaskCreatePinnedToCore(TaskCore0, "TaskCore0", 1024, NULL, 2, &Task1, 0);
+	// delay(500);
 
-	//xTaskCreatePinnedToCore(TaskCore1, "TaskCore1", 1024, NULL, 1, &Task2, 1);
-	//delay(500);
+	// xTaskCreatePinnedToCore(TaskCore1, "TaskCore1", 1024, NULL, 1, &Task2, 1);
+	// delay(500);
 }
 
-void loop() {delay(1); /*webServer.process(); */}
+void loop() { delay(1); /*webServer.process();*/ }
 
 void TaskCore0(void *pvParameters) // This is a task.
 {
