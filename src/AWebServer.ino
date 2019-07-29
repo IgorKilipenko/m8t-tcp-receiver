@@ -276,4 +276,4 @@ void AWebServer::run(BaseType_t coreId) {
 	xTaskCreatePinnedToCore(&_process, "_process", 1024*8, this, 1, &_wifi_tasks, coreId);
 }
 
-bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() == 0 || !WiFi.isConnected()); }
+bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() > 0 || !WiFi.isConnected()); }

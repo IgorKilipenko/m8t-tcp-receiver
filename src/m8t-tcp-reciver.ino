@@ -78,7 +78,7 @@ void setup() {
 	//delay(500);
 }
 
-void loop() { /*webServer.process(); */}
+void loop() {delay(1); /*webServer.process(); */}
 
 void TaskCore0(void *pvParameters) // This is a task.
 {
