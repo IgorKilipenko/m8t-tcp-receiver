@@ -27,34 +27,34 @@ SGraphQL::~SGraphQL() { handlers.clear(); }
 ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
 
 	if (!validRequest(json)) {
-		logger.error("Request Json not vilid\n");
+		log_e("Request Json not vilid\n");
 		json.prettyPrintTo(logger);
 		logger.print("\n");
 		return nullptr;
 	}
 
 	const char *type = json.get<const char *>("type");
-	logger.debug("parse -> type = %s\n", type);
+	log_v("parse -> type = %s\n", type);
 
 	const char *component = json.get<char *>("component");
-	logger.debug("parse -> component = %s\n", component);
+	log_v("parse -> component = %s\n", component);
 
 	const char *req_id = json.get<char *>("id");
-	logger.debug("parse -> request id = %s\n", req_id);
+	log_v("parse -> request id = %s\n", req_id);
 
 	JsonObject &responseRoot = fillRootObject(req_id, outJson);
 
 	ApiResultPtr res_ptr = emit(type, component, json, responseRoot);
 
 	if (res_ptr) {
-		logger.debug("Json API request parsed success\n");
+		log_d("Json API request parsed success\n");
 	}
 
 	return res_ptr;
 }
 
 ApiHandler &SGraphQL::addHandler(const std::shared_ptr<ApiHandler> handler) {
-	logger.debug("addHandler -> Add Handler for component: %s, type: %s\n", handler->getComponentName(), handler->getEventName());
+	log_v("addHandler -> Add Handler for component: %s, type: %s\n", handler->getComponentName(), handler->getEventName());
 	handlers.push_back(handler);
 	return *handler;
 }
@@ -66,14 +66,14 @@ bool SGraphQL::removeHandler(const std::shared_ptr<ApiHandler> handler) {
 }
 
 ApiHandler &SGraphQL::on(const char *component, const char *type, ApiHandlerFunction cb) {
-	logger.debug("on -> Start, for component: %s, type: %s\n", component, type);
+	log_d("on -> Start, for component: %s, type: %s\n", component, type);
 	std::shared_ptr<ApiHandler> handler(new ApiHandler(component, type, cb));
 	addHandler(handler);
 	return *handler;
 }
 
 ApiResultPtr SGraphQL::emit(const char *event, const char *component, const JsonObject &json, JsonObject &outJson) {
-	logger.debug("emit -> Start emit for event: %s, component: %s, \n", event, component);
+	log_d("emit -> Start emit for event: %s, component: %s, \n", event, component);
 	for (const auto &h : handlers) {
 		if (h->test(event, component)) {
 			return h->getCallback()(event, json, outJson);
@@ -94,28 +94,28 @@ JsonObject &SGraphQL::fillRootObject(const char *request_id, JsonObject &outJson
 bool SGraphQL::validRequest(const JsonObject &json) {
 	const char *type;
 	if (!json.success()) {
-		logger.error("Not valid json, JsonObject not scuccess\n");
+		log_e("Not valid json, JsonObject not scuccess\n");
 		return false;
 	}
 	if (!json.containsKey("id")) {
-		logger.error("Not valid json, JsonObject not contain key \"id\"\n");
+		log_e("Not valid json, JsonObject not contain key \"id\"\n");
 		return false;
 	}
 	if (!json.containsKey("type")) {
-		logger.error("Not valid json, JsonObject not contain key \"type\"\n");
+		log_e("Not valid json, JsonObject not contain key \"type\"\n");
 		return false;
 	}
 	if (!json.containsKey("component")) {
-		logger.error("Not valid json, JsonObject not contain key \"comonent\"\n");
+		log_e("Not valid json, JsonObject not contain key \"comonent\"\n");
 		return false;
 	}
 	if (!json.containsKey("cmd")) {
-		logger.error("Not valid json, JsonObject not contain key \"cmd\"\n");
+		log_e("Not valid json, JsonObject not contain key \"cmd\"\n");
 		return false;
 	}
 	type = json["type"];
 	if (!utils::streq(type, QUERY) && !utils::streq(type, MUTATION) && !utils::streq(type, ACTION)) {
-		logger.error("Not valid json, API type filed\n");
+		log_e("Not valid json, API type filed\n");
 		return false;
 	}
 	return true;
@@ -126,19 +126,19 @@ bool SGraphQL::validRequest(const JsonObject &json) {
 ////////////////////////////////////////////////////////////////////
 
 ApiHandler::ApiHandler(const char *component, const char *event, ApiHandlerFunction callback) : callback_fn{callback} {
-	logger.debug("ApiHandle ctr -> component : %s\n", component);
+	log_d("ApiHandle ctr -> component : %s\n", component);
 	_type = utils::copynewstr(event);
 	_component = utils::copynewstr(component);
 }
 
 ApiHandler::~ApiHandler() {
-	logger.debug("Destroy ApiHandler\n");
+	log_d("Destroy ApiHandler\n");
 	if (_type) {
-		logger.debug("Delete [] event: %s\n", _type);
+		log_d("Delete [] event: %s\n", _type);
 		delete[] _type;
 	}
 	if (_component) {
-		logger.debug("Delete [] component: %s\n", _component);
+		log_d("Delete [] component: %s\n", _component);
 		delete[] _component;
 	}
 }
