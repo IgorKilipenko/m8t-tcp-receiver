@@ -33,6 +33,7 @@ void AWebServer::end() {
 	}
 	logger.clearEventSource();
 	server.reset();
+	vTaskDelete(_runTasks);
 }
 
 void AWebServer::restart() {
@@ -41,6 +42,12 @@ void AWebServer::restart() {
 }
 
 void AWebServer::setup() {
+
+	try {
+		throw runtime_error("Test error");
+	} catch (const runtime_error &e) {
+		log_e("Catch errr [%s]", e.what());
+	}
 
 	loadWiFiCredentials();
 #ifdef ESP32
@@ -81,7 +88,7 @@ void AWebServer::setup() {
 	initDefaultHeaders();
 	server.begin();
 
-	//run();
+	// run();
 }
 
 /** Credentials ================================================ */
@@ -261,19 +268,19 @@ void AWebServer::_process(void *arg) {
 	//}
 
 	log_d("xCore -> [%i]", xPortGetCoreID());
-	AWebServer *_this = static_cast<AWebServer*>(arg);
+	AWebServer *_this = static_cast<AWebServer *>(arg);
 	_this->setup();
 	for (;;) {
 		_this->process();
 		// vTaskDelay(1 / portTICK_PERIOD_MS);
 		delay(1);
-		//log_d("xCore -> [%i]", xPortGetCoreID());
+		// log_d("xCore -> [%i]", xPortGetCoreID());
 	}
 }
 
 void AWebServer::run(BaseType_t coreId) {
 	delay(500);
-	xTaskCreatePinnedToCore(&_process, "_process", 1024*8, this, 1, &_wifi_tasks, coreId);
+	xTaskCreatePinnedToCore(&_process, "_process", 1024 * 8, this, 1, &_runTasks, coreId);
 }
 
-bool AWebServer::isCanSendData() { return (WiFi.softAPgetStationNum() > 0 || !WiFi.isConnected()); }
+bool AWebServer::isCanSendData() { return (WM.apEnabled() || WM.staConnected()); }
