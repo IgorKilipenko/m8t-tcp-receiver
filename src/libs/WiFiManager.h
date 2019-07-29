@@ -97,12 +97,13 @@ class WiFiManager {
 	bool _scanDone = false;
 	ApRecords _wifiList;
 	Logger *_logger = nullptr;
-	static bool _lock;
-	static void lock() { WiFiManager::_lock = true; }
-	static void unlock() { WiFiManager::_lock = false; }
-	static bool isLocked() { return WiFiManager::_lock; }
+	//BaseType_t _lock;
+	bool lock() { return xSemaphoreTake(_semaphore, pdMS_TO_TICKS(10)) == pdTRUE; }
+	bool unlock() { return xSemaphoreGive(_semaphore) == pdTRUE; }
 	unsigned long _lastScanTime;
 	int16_t _scanDoneCb();
+	volatile SemaphoreHandle_t _semaphore;
+	// portMUX_TYPE _mux = portMUX_INITIALIZER_UNLOCKED;
 };
 
 #endif // WiFiManager_h

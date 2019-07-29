@@ -1,8 +1,6 @@
 
 #include "WiFiManager.h"
 
-bool WiFiManager::_lock = false;
-
 WiFiManager::WiFiManager() : _eventIds{}, _wifiList{} {}
 WiFiManager::~WiFiManager() {
 	log_d("-> Destruct WiFi manager\n");
@@ -143,8 +141,7 @@ void WiFiManager::_wifiPrintEvent(WiFiEvent_t event) {
 }
 
 WiFiEventId_t WiFiManager::_onWiFiEvent(WifiEventHandler callback, system_event_id_t systemEventId, bool once) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 	if (!callback) {
 		return 0;
 	}
@@ -170,14 +167,14 @@ WiFiEventId_t WiFiManager::_onWiFiEvent(WifiEventHandler callback, system_event_
 }
 
 bool WiFiManager::setup(const char *ap_hostname) {
-	log_v("Setup");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Setup ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	_semaphore = xSemaphoreCreateBinary();
+	log_v("xSemaphoreCreateBinary\n");
+
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	_ap_hostname = ap_hostname;
 
@@ -188,40 +185,34 @@ bool WiFiManager::setup(const char *ap_hostname) {
 	WiFiEventId_t eventID = WiFi.onEvent(std::bind(&WiFiManager::_wifiPrintEvent, this, std::placeholders::_1));
 	_eventIds.push_back(eventID);
 
-	WiFiManager::unlock();
+	unlock();
 
 	return true;
 }
 
 bool WiFiManager::connectAp(const char *ap_ssid, const char *ap_password) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	_ap_ssid = ap_ssid;
 	_ap_password = ap_password;
 	log_d("AP ssid: [%s], AP pass: [%s]\n", _ap_ssid.c_str(), _ap_password.c_str());
 	bool res = WiFi.softAP(_ap_ssid.c_str(), _ap_password.c_str());
 
-	WiFiManager::unlock();
+	unlock();
 
 	return res;
 }
 
 bool WiFiManager::connectSta(const char *ssid, const char *password) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	_ssid = ssid;
 	_password = password;
@@ -229,52 +220,43 @@ bool WiFiManager::connectSta(const char *ssid, const char *password) {
 	log_d("ssid: [%s], pass: [%s]\n", _ssid.c_str(), _password.c_str());
 	bool res = WiFi.begin(_ssid.c_str(), _password.c_str());
 
-	WiFiManager::unlock();
+	unlock();
 
 	return res;
 }
 
 bool WiFiManager::apDisconnect(int delayTime) {
-	log_d("Start\n");
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	bool res = WiFi.softAPdisconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
 
-	WiFiManager::unlock();
+	unlock();
 
 	return res;
 }
 
 bool WiFiManager::staDisconnect(int delayTime) {
-	log_d("Start\n");
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	bool res = WiFi.disconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
 
-	WiFiManager::unlock();
+	unlock();
 
 	return res;
 }
 
 bool WiFiManager::waitEnabledAp(const char *ssid, const char *password) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
 	connectAp(ssid, password);
 	utils::waitAtTime([&]() { return apEnabled(); }, 1000, 10);
@@ -284,12 +266,7 @@ bool WiFiManager::waitEnabledAp(const char *ssid, const char *password) {
 }
 
 bool WiFiManager::waitConnectionSta(const char *ssid, const char *password) {
-	log_v("Start waitConnectionSta\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return false;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
 	connectSta(ssid, password);
 	utils::waitAtTime([&]() { return staConnected(); }, 1000, 10);
@@ -299,14 +276,11 @@ bool WiFiManager::waitConnectionSta(const char *ssid, const char *password) {
 }
 
 int16_t WiFiManager::_scanDoneCb() {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return -3;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	_scanDone = false;
 	_wifiList.clear();
@@ -336,18 +310,13 @@ int16_t WiFiManager::_scanDoneCb() {
 		_scanDone = true;
 	}
 
-	WiFiManager::unlock();
+	unlock();
 
 	return n;
 }
 
 int16_t WiFiManager::scanWiFiAsync() {
-	log_d("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
-	if (WiFiManager::isLocked()) {
-		log_w("Is global isLocked\n");
-		return -3;
-	}
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
 	unsigned time = millis();
 	if (time - _lastScanTime < 30000) {
@@ -369,7 +338,9 @@ int16_t WiFiManager::scanWiFiAsync() {
 
 	_lastScanTime = time;
 
-	WiFiManager::lock();
+	if (lock()) {
+		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+	}
 
 	_scanDone = false;
 	_wifiList.clear();
@@ -378,14 +349,13 @@ int16_t WiFiManager::scanWiFiAsync() {
 		log_e("Wifi sacn filed\n");
 	}
 
-	WiFiManager::unlock();
+	unlock();
 
 	return n;
 }
 
 WiFiEventId_t WiFiManager::onWifiScanDone(WifiScanHandler callback, bool once) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 	return _onWiFiEvent(
 		[&](WiFiEventInfo_t info) {
 			log_v("Add Event");
@@ -399,8 +369,7 @@ WiFiEventId_t WiFiManager::onWifiScanDone(WifiScanHandler callback, bool once) {
 }
 
 WiFiEventId_t WiFiManager::onStationConnected(WifiEventHandler callback, bool once) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 	return _onWiFiEvent(
 		[&](WiFiEventInfo_t info) {
 			log_d("Add Event");
@@ -410,8 +379,7 @@ WiFiEventId_t WiFiManager::onStationConnected(WifiEventHandler callback, bool on
 }
 
 WiFiEventId_t WiFiManager::onApConnected(WifiEventHandler callback, bool once) {
-	log_v("Start\n");
-	log_v("========= CORE -> [%i]\n", xPortGetCoreID());
+	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 	return _onWiFiEvent(
 		[&](WiFiEventInfo_t info) {
 			log_d("Add Event");
