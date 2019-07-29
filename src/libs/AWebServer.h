@@ -6,6 +6,7 @@
 #include "Arduino.h"
 //#include <string>
 #include <queue>
+using std::runtime_error;
 
 #ifdef ESP32
 #include "WiFi.h"
@@ -78,7 +79,7 @@ class AWebServer {
 	NtripClientSync *_ntripClient;
 	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
-	//UBLOX_GPS *_gps;
+	// UBLOX_GPS *_gps;
 	UbloxTransport *_transport;
 	bool _decodeUbxMsg = false;
 	std::queue<uint8_t> _ubxWsBuffer;
@@ -107,7 +108,7 @@ class AWebServer {
 	void addOTAhandlers();
 	void addReceiverHandlers();
 	bool _autoPVT{false};
-	TaskHandle_t _wifi_tasks;
+	TaskHandle_t _runTasks;
 };
 
 #endif // AWebServer_h
