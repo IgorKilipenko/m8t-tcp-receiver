@@ -1,69 +1,70 @@
 /** WebSocket events */
 void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+	log_d("Start WS EVENT, [CORE ------> [%i]]\n", xPortGetCoreID());
 	if (type == WS_EVT_CONNECT) {
-		logger.debug("ws[%s][%u] connect\n", server->url(), client->id());
+		log_d("ws[%s][%u] connect\n", server->url(), client->id());
 		client->printf("WS started, client id: %u :)", client->id());
 		client->ping();
 
 	} else if (type == WS_EVT_DISCONNECT) {
-		logger.printf("ws[%s] disconnect: %u\n", server->url(), client->id());
+		log_d("ws[%s] disconnect: %u\n", server->url(), client->id());
 		client->close();
 	} else if (type == WS_EVT_ERROR) {
-		logger.error("Ws error\n");
-		logger.debug("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
+		log_e("Ws error\n");
+		log_e("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t *)arg), (char *)data);
 		if (client) {
 			client->close();
 		}
 
 	} else if (type == WS_EVT_PONG) {
-		logger.debug("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
+		log_d("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len) ? (char *)data : "");
 	} else if (type == WS_EVT_DATA) {
 		// AwsFrameInfo *info = (AwsFrameInfo *)arg;
 	}
 }
 
 void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
-	logger.trace("NOT_FOUND: ");
+	log_d("NOT_FOUND: , [CORE ------> [%i]]\n", xPortGetCoreID());
 	if (request->method() == HTTP_GET)
-		logger.trace("GET");
+		log_d("GET");
 	else if (request->method() == HTTP_POST)
-		logger.trace("POST");
+		log_d("POST");
 	else if (request->method() == HTTP_DELETE)
-		logger.trace("DELETE");
+		log_d("DELETE");
 	else if (request->method() == HTTP_PUT)
-		logger.trace("PUT");
+		log_d("PUT");
 	else if (request->method() == HTTP_PATCH)
-		logger.trace("PATCH");
+		log_d("PATCH");
 	else if (request->method() == HTTP_HEAD)
-		logger.trace("HEAD");
+		log_d("HEAD");
 	else if (request->method() == HTTP_OPTIONS) {
 		// request->send(200);
 		// return;
 	} else
-		logger.trace("UNKNOWN");
-	logger.printf(" http://%s%s\n", request->host().c_str(), request->url().c_str());
+		log_d("UNKNOWN");
+	log_d(" http://%s%s\n", request->host().c_str(), request->url().c_str());
 
 	if (request->contentLength()) {
-		logger.trace("_CONTENT_TYPE: %s\n", request->contentType().c_str());
-		logger.trace("_CONTENT_LENGTH: %u\n", request->contentLength());
+		log_v("_CONTENT_TYPE: %s\n", request->contentType().c_str());
+		log_v("_CONTENT_LENGTH: %u\n", request->contentLength());
 	}
 
 	int headers = request->headers();
 	int i;
 	for (i = 0; i < headers; i++) {
 		AsyncWebHeader *h = request->getHeader(i);
-		logger.trace("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
+		log_v("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
 	}
 
 	int params = request->params();
 	for (i = 0; i < params; i++) {
 		AsyncWebParameter *p = request->getParam(i);
 		if (p->isFile()) {
-			logger.trace("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
+			log_v("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
 		} else if (p->isPost()) {
-			logger.trace("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+			log_v("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
 		} else {
-			logger.trace("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+			log_v("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
 		}
 	}
 
@@ -72,14 +73,14 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 }
 
 ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
-	logger.debug("Start on wifi QUERY\n");
-	logger.debug(":");
-	json.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start on wifi QUERY, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//logger.debug(":");
+	//json.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "scan")) {
-		logger.trace("Start scan WIFI\n");
+		log_d("Start scan WIFI, [CORE ------> [%i]]\n", xPortGetCoreID());
 		delay(100);
 		/*int8_t n = scanWiFi();
 		if (n == -1) {
@@ -107,7 +108,13 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 
 		if (WM.staConnected()) {
 			WM.scanWiFiAsync();
-			utils::waitAtTime([&]() { log_d("Wait.... DONE -> [%s]", WM.lastScanComplete() ? "TRUE" : "FALSE"); return WM.lastScanComplete(); }, 10000, 10);
+			/*/utils::waitAtTime(
+				[&]() {
+					log_d("Wait.... DONE -> [%s], CORE -----> [%i]\n", WM.lastScanComplete() ? "TRUE" : "FALSE", xPortGetCoreID());
+					return WM.lastScanComplete();
+				},
+				10000, 10);*/
+				
 			if (WM.lastScanComplete()) {
 
 				ApRecords list{};
@@ -150,13 +157,13 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 		*/
 
 	} else if (utils::streq(cmd, "info")) {
-		logger.trace("Start WIFI info\n");
+		log_d("Start WIFI info, [CORE ------> [%i]]\n", xPortGetCoreID());
 
 		JsonObject &resJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 
 		uint8_t mode = WiFi.getMode();
 		if (!mode) {
-			logger.error("WiFi disconnected, WiFi Mode = [%s]\n", utils::wiFiModeToString(mode).c_str());
+			log_e("WiFi disconnected, WiFi Mode = [%s]\n", utils::wiFiModeToString(mode).c_str());
 			return nullptr;
 		}
 		resJson["mode"] = utils::wiFiModeToString(mode);
@@ -190,25 +197,24 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 }
 
 ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
-	logger.debug("Start on wifi ACTION\n");
-	json.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start on wifi ACTION, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//json.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "connect")) {
 		if (!json.containsKey("ssid")) {
-			logger.debug("SSID failed\n");
+			log_w("SSID failed\n");
 			return nullptr;
 		}
 		if (!json.containsKey("password")) {
-			logger.debug("PASSWORD failed\n");
+			log_w("PASSWORD failed\n");
 			return nullptr;
 		}
 		const char *new_ssid = json["ssid"];
 		strcpy(this->ssid, new_ssid);
 		const char *new_password = json["password"];
 		strcpy(this->password, new_password);
-		logger.debug("onWiFiActionRequest -> createNestedObject\n ");
 		JsonObject &resJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 
 		resJson["status"] = WiFi.status();
@@ -233,22 +239,22 @@ ApiResultPtr AWebServer::wifiActionHandler(const char *event, const JsonObject &
 }
 
 ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
-	logger.debug("Start on receiver ACTION\n");
-	json.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start on receiver ACTION, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//json.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, SGraphQL::CMD_START) || utils::streq(cmd, SGraphQL::CMD_STOP)) {
-		logger.trace("Start Receiver Action, cmd: {%s}\n", cmd);
+		log_v("Start Receiver Action, cmd: {%s}\n", cmd);
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
-		logger.trace("Json root created\n");
+		log_v("Json root created\n");
 		if (utils::streq(cmd, SGraphQL::CMD_START)) {
 
 			if (telnetServer->isInProgress()) {
 				const char *msg = "Already enabled\n";
-				logger.debug(msg);
+				log_d("%s", msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 			} else {
@@ -268,10 +274,10 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 		} else {
 			if (!telnetServer->isInProgress()) {
 				const char *msg = "Already disabled\n";
-				logger.debug(msg);
+				log_d("%s", msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
-				logger.trace("SET -> Stop receive\n");
+				log_v("SET -> Stop receive\n");
 				// objJson["timeReceive"] = telnetServer->getTimeReceive();
 				telnetServer->stopReceive();
 			}
@@ -287,15 +293,15 @@ ApiResultPtr AWebServer::receiverActionHandler(const char *event, const JsonObje
 }
 
 ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
-	logger.debug("Start on receiver QUERY\n");
-	reqJson.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start on receiver QUERY, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//reqJson.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
 	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "state")) {
-		logger.trace("Start Receiver Query\n");
+		log_v("Start Receiver Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["enabled"] = telnetServer->isInProgress() ? true : false;
 		objJson["writeToSd"] = telnetServer->writeToSdEnabled();
@@ -316,15 +322,15 @@ ApiResultPtr AWebServer::receiverQueryHandler(const char *event, const JsonObjec
 }
 
 ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
-	logger.debug("Start server QUERY\n");
-	reqJson.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start server QUERY, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//reqJson.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
 	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "info")) {
-		logger.trace("Start Server Query\n");
+		log_v("Start Server Query\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["serverTime"] = getServerTime();
 		objJson["sdSuccess"] = telnetServer->isSdInitialize();
@@ -338,21 +344,21 @@ ApiResultPtr AWebServer::serverQueryHandler(const char *event, const JsonObject 
 }
 
 ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject &json, JsonObject &outJson) {
-	logger.debug("Start on rntrip ACTION\n");
-	json.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start on rntrip ACTION, [CORE ------> [%i]]\n", xPortGetCoreID());
+	//json.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 	const char *cmd = json.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, SGraphQL::CMD_START) || utils::streq(cmd, SGraphQL::CMD_STOP)) {
-		logger.trace("Start NtripClient Action, cmd: {%s}\n", cmd);
+		log_v("Start NtripClient Action, cmd: {%s}\n", cmd);
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
-		logger.trace("Json root created\n");
+		log_v("Json root created\n");
 
 		if (utils::streq(cmd, SGraphQL::CMD_START)) { // Enable Ntrip Client
 			if (_ntripClient->isEnabled()) {
 				const char *msg = "Ntrip Client already receiving data / enabled\n";
-				logger.debug(msg);
+				log_d("%s", msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
 				const char *host = json.containsKey("host") ? json.get<const char *>("host") : /*"192.168.1.50"*/ "82.202.202.138";
@@ -362,13 +368,13 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 				const char *passwd = json.containsKey("password") ? json.get<const char *>("password") : "pass";
 
 				if (_ntripClient->connect(host, port, user, passwd, mntpnt)) {
-					logger.debug("Ntrip client connected");
+					log_d("Ntrip client connected");
 				}
 			}
 		} else {
 			if (!_ntripClient->isEnabled()) {
 				const char *msg = "Ntrip Client already disabled\n";
-				logger.debug(msg);
+				log_d("%s", msg);
 				outJson[SGraphQL::RESP_MSG] = msg;
 			} else {
 				_ntripClient->stop();
@@ -388,15 +394,15 @@ ApiResultPtr AWebServer::ntripActionHandler(const char *event, const JsonObject 
 }
 
 ApiResultPtr AWebServer::ntripQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson) {
-	logger.debug("Start Ntrip QUERY\n");
-	reqJson.prettyPrintTo(logger);
-	logger.debug("\n");
+	log_d("Start Ntrip QUERY, [CORE ----> [%i]]\n", xPortGetCoreID());
+	//reqJson.prettyPrintTo(logger);
+	//logger.debug("\n");
 
 	ApiResultPtr res_ptr = std::shared_ptr<ApiResult>(new ApiResult());
 
 	const char *cmd = reqJson.get<const char *>(SGraphQL::CMD);
 	if (utils::streq(cmd, "state")) {
-		logger.trace("Start Ntrip Query State\n");
+		log_v("Start Ntrip Query State\n");
 		JsonObject &objJson = outJson.createNestedObject(SGraphQL::RESP_VALUE);
 		objJson["enabled"] = _ntripClient && _ntripClient->isEnabled();
 
@@ -442,15 +448,15 @@ void AWebServer::addServerHandlers() {
 
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
-		logger.debug("API \n");
+		log_d("API \n");
 		if (!json) {
-			logger.debug("apiHandler -> Json is empty\n");
+			log_d("apiHandler -> Json is empty\n");
 			request->send(404);
 			return;
 		}
 		const JsonObject &jsonObj = json.as<const JsonObject>();
 		if (!jsonObj.success()) {
-			logger.debug("apiHandler -> Json parsing failed\n");
+			log_w("apiHandler -> Json parsing failed\n");
 			request->send(404);
 			return;
 		}
@@ -461,25 +467,25 @@ void AWebServer::addServerHandlers() {
 		ApiResultPtr res_ptr = api.parse(jsonObj, root);
 
 		if (!res_ptr) {
-			logger.debug("apiHandler -> ApiResultPtr is nullptr\n");
+			log_w("apiHandler -> ApiResultPtr is nullptr\n");
 			request->send(404);
 			delete response;
 			return;
 		}
-		logger.debug("apiHandler -> Json API request parse success\n");
+		log_v("apiHandler -> Json API request parse success\n");
 
 		response->setLength();
 		request->send(response);
-		logger.debug("apiHandler -> Json API response send success\n");
+		log_v("apiHandler -> Json API response send success\n");
 
-		logger.debug("Then action count %i\n", res_ptr->actionCount());
+		log_v("Then action count %i\n", res_ptr->actionCount());
 
 		while (res_ptr->actionCount() > 0) {
 			const uint8_t err_code = res_ptr->then(request);
 			if (err_code == 0) {
-				logger.debug("Then Action success\n");
+				log_v("Then Action success\n");
 			} else {
-				logger.debug("Then action complite with err code: {%i}");
+				log_e("Then action complite with err code: {%i}");
 			}
 		}
 	});
@@ -525,9 +531,16 @@ void AWebServer::addOTAhandlers() {
 void AWebServer::addReceiverHandlers() { telnetServer->onSerialData(std::bind(&AWebServer::receiverDataHandler, this, std::placeholders::_1, std::placeholders::_2)); }
 
 void AWebServer::receiverDataHandler(const uint8_t *buffer, size_t len) {
-	if (!isCanSendData() || !ws.count()) {
+	if (!isCanSendData()) {
+		log_d("Is't can sand data\n");
+		delay(1);
 		return;
 	}
+	//if (!ws.count()) {
+	//	log_d("Ws not connected\n");
+	//	return;
+	//}
+
 	if (_decodeUbxMsg) {
 		for (uint16_t i = 0; i < len; i++) {
 			const int8_t code = _ubxDecoder.inputData(buffer[i]);
