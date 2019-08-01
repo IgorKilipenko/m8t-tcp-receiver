@@ -100,11 +100,11 @@ class WiFiManager {
 	ApRecords _wifiList;
 	Logger *_logger = nullptr;
 	//BaseType_t _lock;
-	bool lock() { return xSemaphoreTake(_semaphore, pdMS_TO_TICKS(10)) == pdTRUE; }
-	bool unlock() { return xSemaphoreGive(_semaphore) == pdTRUE; }
+	bool lock() { return xSemaphoreTake(_mutex, pdMS_TO_TICKS(10)) == pdTRUE; }
+	bool unlock() { return xSemaphoreGive(_mutex) == pdTRUE; }
 	unsigned long _lastScanTime;
 	int16_t _scanDoneCb();
-	volatile SemaphoreHandle_t _semaphore;
+	volatile SemaphoreHandle_t _mutex;
 	// portMUX_TYPE _mux = portMUX_INITIALIZER_UNLOCKED;
 };
 

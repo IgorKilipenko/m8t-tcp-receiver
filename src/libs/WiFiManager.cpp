@@ -169,8 +169,8 @@ WiFiEventId_t WiFiManager::_onWiFiEvent(WifiEventHandler callback, system_event_
 bool WiFiManager::setup(const char *ap_hostname) {
 	log_v("Setup ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	_semaphore = xSemaphoreCreateBinary();
-	log_v("xSemaphoreCreateBinary\n");
+	_mutex = xSemaphoreCreateMutex();
+	log_v("xSemaphoreCreateMutex\n");
 
 	if (lock()) {
 		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
