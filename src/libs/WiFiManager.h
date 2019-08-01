@@ -75,10 +75,12 @@ class WiFiManager {
 	bool waitEnabledAp(const char *ssid, const char *password);
 	bool waitConnectionSta(const char *ssid, const char *password);
 	int16_t scanWiFiAsync();
+	int16_t scanWiFiSync();
 	WiFiEventId_t onWifiScanDone(WifiScanHandler callback, bool once = false);
 	const ApRecords &getApRecords() const { return _wifiList; }
 	void getApRecords(ApRecords &list) const { list = _wifiList; }
 	bool lastScanComplete() const { return _scanDone; }
+	bool hasResult() const {return lastScanComplete() || (millis() - _lastScanTime < 30000); }
 
   private:
 	WiFiClass *_wifi;

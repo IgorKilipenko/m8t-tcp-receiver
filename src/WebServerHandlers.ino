@@ -107,7 +107,7 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 		JsonArray &arrayJson = outJson.createNestedArray(SGraphQL::RESP_VALUE);
 
 		if (WM.staConnected()) {
-			WM.scanWiFiAsync();
+			int16_t res = WM.scanWiFiAsync();
 			/*/utils::waitAtTime(
 				[&]() {
 					log_d("Wait.... DONE -> [%s], CORE -----> [%i]\n", WM.lastScanComplete() ? "TRUE" : "FALSE", xPortGetCoreID());
@@ -115,7 +115,7 @@ ApiResultPtr AWebServer::wifiQueryHandler(const char *event, const JsonObject &j
 				},
 				10000, 10);*/
 				
-			if (WM.lastScanComplete()) {
+			if (WM.hasResult()) {
 
 				ApRecords list{};
 				WM.getApRecords(list);

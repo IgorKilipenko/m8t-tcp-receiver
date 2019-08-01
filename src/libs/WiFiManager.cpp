@@ -388,28 +388,6 @@ WiFiEventId_t WiFiManager::onApConnected(WifiEventHandler callback, bool once) {
 		SYSTEM_EVENT_AP_START, once);
 }
 
-/*int16_t WiFiManager::scanWiFiSync(const char *ssid, const char *password) {
-	if (_wifiList.size() > 0) {
-		_wifiList.clear();
-	}
-	int n = WiFi.scanComplete();
-	if (n == -2) {
-		WiFi.scanNetworks(true);
-	} else if (n) {
-		for (int i = 0; i < n; ++i) {
-			auto wifi = std::shared_ptr<WifiItem>(new WifiItem);
-			wifi->rssi = WiFi.RSSI(i);
-			wifi->ssid = WiFi.SSID(i);
-			wifi->bssid = WiFi.BSSIDstr(i);
-			wifi->channel = WiFi.channel(i);
-			wifi->secure = WiFi.encryptionType(i);
-			_wifiList.push_back(std::move(wifi));
-		}
-		WiFi.scanDelete();
-		if (WiFi.scanComplete() == -2) {
-			WiFi.scanNetworks(true);
-		}
-	}
-
-	return n;
-}*/
+int16_t WiFiManager::scanWiFiSync() {
+	return WiFi.scanNetworks(false);
+}
