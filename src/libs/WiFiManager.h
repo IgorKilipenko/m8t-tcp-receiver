@@ -80,7 +80,7 @@ class WiFiManager {
 	const ApRecords &getApRecords() const { return _wifiList; }
 	void getApRecords(ApRecords &list) const { list = _wifiList; }
 	bool lastScanComplete() const { return _scanDone; }
-	bool hasResult() const {return lastScanComplete() || (millis() - _lastScanTime < 30000); }
+	bool hasResult() const { return lastScanComplete() || (millis() - _lastScanTime < 30000); }
 
   private:
 	WiFiClass *_wifi;
@@ -99,8 +99,11 @@ class WiFiManager {
 	bool _scanDone = false;
 	ApRecords _wifiList;
 	Logger *_logger = nullptr;
-	//BaseType_t _lock;
-	bool lock() { return xSemaphoreTake(_mutex, pdMS_TO_TICKS(10)) == pdTRUE; }
+	// BaseType_t _lock;
+	void lock() {
+		// return xSemaphoreTake(_mutex, pdMS_TO_TICKS(10)) == pdTRUE;
+		do {} while (xSemaphoreTake(_mutex, portMAX_DELAY /* pdMS_TO_TICKS(10) */) != pdTRUE	// Like esp32-hal-uart.c
+	}
 	bool unlock() { return xSemaphoreGive(_mutex) == pdTRUE; }
 	unsigned long _lastScanTime;
 	int16_t _scanDoneCb();
