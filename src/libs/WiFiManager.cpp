@@ -172,10 +172,6 @@ bool WiFiManager::setup(const char *ap_hostname) {
 	_mutex = xSemaphoreCreateMutex();
 	log_v("xSemaphoreCreateMutex\n");
 
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
-
 	_ap_hostname = ap_hostname;
 
 	// delete old config
@@ -193,10 +189,6 @@ bool WiFiManager::setup(const char *ap_hostname) {
 bool WiFiManager::connectAp(const char *ap_ssid, const char *ap_password) {
 	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
-
 	_ap_ssid = ap_ssid;
 	_ap_password = ap_password;
 	log_d("AP ssid: [%s], AP pass: [%s]\n", _ap_ssid.c_str(), _ap_password.c_str());
@@ -209,10 +201,6 @@ bool WiFiManager::connectAp(const char *ap_ssid, const char *ap_password) {
 
 bool WiFiManager::connectSta(const char *ssid, const char *password) {
 	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
-
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
 
 	_ssid = ssid;
 	_password = password;
@@ -228,9 +216,6 @@ bool WiFiManager::connectSta(const char *ssid, const char *password) {
 bool WiFiManager::apDisconnect(int delayTime) {
 	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
 
 	bool res = WiFi.softAPdisconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -242,10 +227,6 @@ bool WiFiManager::apDisconnect(int delayTime) {
 
 bool WiFiManager::staDisconnect(int delayTime) {
 	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
-
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
 
 	bool res = WiFi.disconnect(true);
 	vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -278,9 +259,6 @@ bool WiFiManager::waitConnectionSta(const char *ssid, const char *password) {
 int16_t WiFiManager::_scanDoneCb() {
 	log_v("Start ========= CORE -> [%i]\n", xPortGetCoreID());
 
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
 
 	_scanDone = false;
 	_wifiList.clear();
@@ -338,9 +316,6 @@ int16_t WiFiManager::scanWiFiAsync() {
 
 	_lastScanTime = time;
 
-	if (lock()) {
-		log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
-	}
 
 	_scanDone = false;
 	_wifiList.clear();

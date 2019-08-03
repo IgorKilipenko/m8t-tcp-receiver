@@ -102,7 +102,9 @@ class WiFiManager {
 	// BaseType_t _lock;
 	void lock() {
 		// return xSemaphoreTake(_mutex, pdMS_TO_TICKS(10)) == pdTRUE;
-		do {} while (xSemaphoreTake(_mutex, portMAX_DELAY /* pdMS_TO_TICKS(10) */) != pdTRUE	// Like esp32-hal-uart.c
+		while (xSemaphoreTake(_mutex, portMAX_DELAY /* pdMS_TO_TICKS(10) */) != pdTRUE) { // Like esp32-hal-uart.c
+			log_v("LOCKED, CORE ----------> [%i]", xPortGetCoreID());
+		}
 	}
 	bool unlock() { return xSemaphoreGive(_mutex) == pdTRUE; }
 	unsigned long _lastScanTime;
