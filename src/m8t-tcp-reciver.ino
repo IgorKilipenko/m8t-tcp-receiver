@@ -49,12 +49,16 @@ HardwareSerial *Receiver{&Serial};
 
 TaskHandle_t Task1;
 TaskHandle_t Task2;
+QueueHandle_t xQueue = nullptr;
 
 Logger logger{&Serial}; // For debug mode
 WiFiManager WM{};
 ATcpServer telnetServer{}; // GPS receiver communication
 
 AWebServer webServer{&telnetServer};
+
+uint8_t *msg = new uint8_t[5]{55, 5, 3, 4, 5};
+// char * STR;
 
 void setup() {
 	enableCore0WDT();
@@ -63,13 +67,15 @@ void setup() {
 	Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2);
 	RTCM->begin(38400, SERIAL_8N1, RXD1, TXD1);
 
-	Receiver->setRxBufferSize(SERIAL_SIZE_RX);
+	Receiver->setRxBufferSize(256);
 	String hostName = String("ESP_GPS_") + utils::getEspChipId();
 
 	WM.setup(hostName.c_str());
 	// webServer.setup();
 
 	webServer.run(1);
+	xQueue = xQueueCreate(8, sizeof(char));
+	xTaskCreatePinnedToCore(TaskReceiveGpsData, "TaskReceiveGpsData", 1024 * 8, NULL, 2, &Task1, 1);
 
 	// xTaskCreatePinnedToCore(TaskCore0, "TaskCore0", 1024, NULL, 2, &Task1, 0);
 	// delay(500);
@@ -77,8 +83,27 @@ void setup() {
 	// xTaskCreatePinnedToCore(TaskCore1, "TaskCore1", 1024, NULL, 1, &Task2, 1);
 	// delay(500);
 }
+/*volatile*/
+void loop() {
+	delay(1);
+	if (xQueue) {
+		int count = uxQueueMessagesWaiting(xQueue);
+		if (count > 0) {
+			log_d("Queue LENGTH = [%i]", count);
+			char buffer[8];
+			if (xQueueReceive(xQueue, buffer, 100) == pdTRUE) {
+				log_d("Received [%i] msgs", count);
+				if (buffer) {
+					buffer[7] = '\0';
+					log_d("Received MESSAGE [%s]", buffer);
+				}
 
-void loop() { delay(1); /*webServer.process();*/ }
+				// delay(100);
+			}
+		}
+	}
+	/*webServer.process();*/
+}
 
 void TaskCore0(void *pvParameters) // This is a task.
 {
@@ -102,5 +127,32 @@ void TaskCore1(void *pvParameters) // This is a task.
 		delay(3000);
 		// webServer.process();
 		Serial.println(xPortGetCoreID());
+	}
+}
+
+void TaskReceiveGpsData(void *pvParameters) {
+	const size_t SIZE = 1024;
+	uint8_t buffer[SIZE]{0};
+
+	for (;;) {
+		int bytesCount = Receiver->available();
+
+		if (bytesCount > 0) {
+			char *STR = new char[8];
+			strcpy(STR, "XSTRING");
+			bytesCount = std::min(SIZE, (size_t)bytesCount);
+			int len = Receiver->readBytes(buffer, bytesCount);
+			if (len != bytesCount) {
+				log_e("Not all bytes read from uart, available: [%i], read: [%i]\n", bytesCount, len);
+			}
+			if (len > 0) {
+				if (xQueueSend(xQueue, STR, 10) == pdPASS) {
+					log_d("Send to queue [%i] bytes", sizeof(msg));
+				}
+			}
+
+			delete[] STR;
+		}
+		delay(1);
 	}
 }
