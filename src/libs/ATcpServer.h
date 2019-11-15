@@ -13,6 +13,8 @@
 #include "SDStore.h"
 #include <vector>
 
+#define LOG_LOCAL_LEVEL 5
+
 #ifndef TCP_PORT
 #define TCP_PORT 7042
 #endif

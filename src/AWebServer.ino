@@ -255,6 +255,38 @@ void AWebServer::process() {
 }
 
 /** Main process */
+void AWebServer::processAsync() {
+	if (_connect) {
+		// if (connectStaWifi(ssid, password)) {
+		//	_connect = false;
+		//	logger.debug("Reconnected\n");
+		//	saveWiFiCredentials();
+		//	logger.debug("Saved WiFi credentials\n");
+		//}
+		if (WM.waitConnectionSta(ssid, password)) {
+			log_w("STA reconnected success\n");
+			_connect = false;
+		} else {
+			log_w("Connection STA timeout\n");
+		}
+	}
+
+	if (!telnetServer->isInProgress()) {
+		ArduinoOTA.handle();
+	}
+
+	std::thread tcpThread([&]() { telnetServer->process(); });
+
+	std::thread ntripTread([&]() {
+		if (_ntripClient->isEnabled()) {
+			_ntripClient->receiveNtrip();
+		}
+	});
+
+	// delay(1);
+}
+
+/** Main process */
 void AWebServer::_process(void *arg) {
 	// AWebServer *_this = static_cast<AWebServer*>(arg);
 	// micros();

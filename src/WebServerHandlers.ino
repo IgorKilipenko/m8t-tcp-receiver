@@ -24,7 +24,7 @@ void AWebServer::wsEventHnadler(AsyncWebSocket *server, AsyncWebSocketClient *cl
 }
 
 void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
-	log_d("NOT_FOUND: , [CORE ------> [%i]]\n", xPortGetCoreID());
+	log_v("NOT_FOUND: , [CORE ------> [%i]]\n", xPortGetCoreID());
 	if (request->method() == HTTP_GET)
 		log_d("GET");
 	else if (request->method() == HTTP_POST)
@@ -42,7 +42,7 @@ void AWebServer::notFoundHandler(AsyncWebServerRequest *request) {
 		// return;
 	} else
 		log_d("UNKNOWN");
-	log_d(" http://%s%s\n", request->host().c_str(), request->url().c_str());
+	log_v(" http://%s%s\n", request->host().c_str(), request->url().c_str());
 
 	if (request->contentLength()) {
 		log_v("_CONTENT_TYPE: %s\n", request->contentType().c_str());
@@ -448,7 +448,7 @@ void AWebServer::addServerHandlers() {
 
 	// REST API handler
 	AsyncCallbackJsonWebHandler *apiHandler = new AsyncCallbackJsonWebHandler("/api", [&](AsyncWebServerRequest *request, JsonVariant &json) {
-		log_d("API \n");
+		log_v("API \n");
 		if (!json) {
 			log_d("apiHandler -> Json is empty\n");
 			request->send(404);

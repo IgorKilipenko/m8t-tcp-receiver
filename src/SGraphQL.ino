@@ -47,7 +47,7 @@ ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
 	ApiResultPtr res_ptr = emit(type, component, json, responseRoot);
 
 	if (res_ptr) {
-		log_d("Json API request parsed success\n");
+		log_v("Json API request parsed success\n");
 	}
 
 	return res_ptr;

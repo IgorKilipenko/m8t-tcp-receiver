@@ -6,6 +6,10 @@
 #include "Arduino.h"
 //#include <string>
 #include <queue>
+#include <thread>
+#include <esp_pthread.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 using std::runtime_error;
 
 #ifdef ESP32
@@ -46,6 +50,7 @@ class AWebServer {
 	~AWebServer();
 	void setup();
 	void process();
+	void processAsync();
 	static void _process(void *);
 	void run(BaseType_t coreId = 1);
 	void loadWiFiCredentials();
