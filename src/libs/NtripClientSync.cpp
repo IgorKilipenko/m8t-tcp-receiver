@@ -1,3 +1,5 @@
+#include "NtripClientSync.h"
+
 // const size_t BUFFER_LENGTH = 1024;
 // const char *NtripClientSync::HTTP_OK = "HTTP/1.1 200 OK";
 
