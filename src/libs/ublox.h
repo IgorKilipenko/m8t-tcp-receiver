@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include "utils.h"
 #include <queue>
-#include <SparkFun_Ublox_Arduino_Library.h> // Source - https://github.com/sparkfun/SparkFun_Ublox_Arduino_Library/
+//#include <SparkFun_Ublox_Arduino_Library.h> // Source - https://github.com/sparkfun/SparkFun_Ublox_Arduino_Library/
 
 enum class ClassIds : uint8_t;
 enum class NavMessageIds : uint8_t;
