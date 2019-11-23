@@ -5,6 +5,7 @@
     },
     "files.associations": {
         "*.postcss": "css",
+        "*.tpp": "cpp",
         "array": "cpp",
         "*.tcc": "cpp",
         "cctype": "cpp",
@@ -50,6 +51,7 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "string": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "atomic": "cpp"
     }
 }
