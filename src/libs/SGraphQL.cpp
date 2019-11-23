@@ -1,4 +1,6 @@
 
+#include "SGraphQL.h"
+
 const char *SGraphQL::QUERY = "query";
 const char *SGraphQL::MUTATION = "mutaion";
 const char *SGraphQL::ACTION = "action";

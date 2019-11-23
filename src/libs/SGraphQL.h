@@ -8,6 +8,7 @@
 #include <queue>
 #include <memory>
 #include "AsyncJson.h"
+#include "utils.h"
 
 class ApiHandler;
 class ApiResult;
