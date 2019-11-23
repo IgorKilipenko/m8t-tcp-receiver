@@ -52,23 +52,24 @@ HardwareSerial *Receiver{&Serial};
 #define SERIAL_SIZE_RX 1024 * 2
 
 #include "libs/utils.h"
-#include "libs/Logger.h"
 #include "libs/AWebServer.h"
 #include "libs/ATcpServer.h"
-#include "libs/WiFiManager.h"
+#include "WiFiWithEvents.h"
 
-Logger logger{&Serial}; // For debug mode
-WiFiManager WM{};
-ATcpServer telnetServer{}; // GPS receiver communication
+WiFiWithEvents wifi{};
+ATcpServer telnetServer{Receiver}; // GPS receiver communication
 
-AWebServer webServer{&telnetServer};
-
-uint8_t *msg = new uint8_t[5]{55, 5, 3, 4, 5};
-// char * STR;
+AWebServer webServer{&telnetServer, Receiver};
 
 void setup() {
-	enableCore0WDT(); enableCore1WDT();
-	log_v("========= CORE -> [%i]", xPortGetCoreID());
+
+	//enableLoopWDT();
+	//enableCore0WDT();
+	//enableCore1WDT();
+	//disableCore0WDT();
+	//disableCore1WDT();
+	//disableLoopWDT();
+	// log_v("========= CORE -> [%i]", xPortGetCoreID());
 	Serial.begin(BAUD_SERIAL);
 	Receiver->begin(BAUND_RECEIVER, SERIAL_8N1, RXD2, TXD2);
 	RTCM->begin(38400, SERIAL_8N1, RXD1, TXD1);
@@ -76,13 +77,11 @@ void setup() {
 	Receiver->setRxBufferSize(256);
 	String hostName = String("ESP_GPS_") + utils::getEspChipId();
 
-	WM.setup(hostName.c_str());
+	wifi.connectSta();
 	webServer.setup();
-
-	//webServer.run(1);
 }
 /*volatile*/
 void loop() {
+	webServer.process();
 	delay(1);
-	webServer.processAsync();
 }
