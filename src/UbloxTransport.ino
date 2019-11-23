@@ -5,7 +5,7 @@ const size_t UbloxTransport::MAX_BUFFER_SIZE = Ublox::MAX_MSG_LEN;
 UbloxTransport::UbloxTransport(Stream &outStream) : Stream(), _outStream{&outStream} {}
 
 UbloxTransport::~UbloxTransport() {
-	logger.trace(":: destructor  :: UbloxTransport\n");
+	log_v(":: destructor  :: UbloxTransport\n");
 }
 
 int UbloxTransport::read() {
@@ -23,7 +23,7 @@ int UbloxTransport::available() { return (_queue.size()); }
 int UbloxTransport::availableForPush() {
 	if (!_queue.empty()) {
 		if (_queue.size() >= MAX_BUFFER_SIZE) {
-			logger.debug("Buffer overflow, size: [%ld]\n", _queue.size());
+			log_d("Buffer overflow, size: [%ld]\n", _queue.size());
 			return -1;
 		}
 	}
@@ -58,7 +58,7 @@ size_t UbloxTransport::write(uint8_t data) {
 		const size_t count = _outStream->write(data);
 		return count;
 	} else {
-		logger.error("Error write to stream, Stream is nullptr\n");
+		log_e("Error write to stream, Stream is nullptr\n");
 		return 0;
 	}
 }
@@ -86,7 +86,7 @@ int UbloxTransport::pushFromOutStream() {
 	int available = _outStream->available();
 
 	if (available < 0) {
-		logger.error("Error read from out stream\n");
+		log_e("Error read from out stream\n");
 		return -1;
 	} else if (available == 0) {
 		return 0;

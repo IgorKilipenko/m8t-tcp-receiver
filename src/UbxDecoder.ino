@@ -2,7 +2,7 @@
 UbxDecoder::UbxDecoder() : _buffer{new uint8_t[Ublox::MAX_MSG_LEN]} {}
 
 UbxDecoder::~UbxDecoder() {
-	logger.trace(":: destructor  :: UbxDecoder\n");
+	log_v(":: destructor  :: UbxDecoder\n");
 	if (_buffer != nullptr) {
 		delete[] _buffer;
 		_buffer = nullptr;
@@ -11,7 +11,7 @@ UbxDecoder::~UbxDecoder() {
 
 int8_t UbxDecoder::inputData(uint8_t data) {
 
-	// logger.trace("Start input data...\n");
+	// log_v("Start input data...\n");
 
 	if (_nbyte == 0) {
 		if (!_syncHeader(data)) {
@@ -31,9 +31,9 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 
 	if (_nbyte == 6) {
 		_length = utils::fromBytes<uint16_t>(_buffer + 4, 2) + 8;
-		logger.trace("Payload length = [%d]\n", _length);
+		log_v("Payload length = [%d]\n", _length);
 		if (_length > Ublox::MAX_MSG_LEN) {
-			logger.trace("Length message error, length = [%d]\n", _length);
+			log_v("Length message error, length = [%d]\n", _length);
 			_nbyte = 0;
 			return -1;
 		}
@@ -41,9 +41,9 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 
 	if (_nbyte == _length) {
 		_nbyte = 0;
-		logger.trace("Ubx message complite, (UbxDecoder)\n");
+		log_v("Ubx message complite, (UbxDecoder)\n");
 		if (_testChecksum()) {
-			logger.trace("Ubx message success, length = [%d]\n", _length);
+			log_v("Ubx message success, length = [%d]\n", _length);
 			return _decode();
 		}
 	}
@@ -52,7 +52,7 @@ int8_t UbxDecoder::inputData(uint8_t data) {
 }
 
 int8_t UbxDecoder::_decode() {
-	logger.trace("Start decode UBX message...\n");
+	log_v("Start decode UBX message...\n");
 
 	uint8_t classId = *(_buffer + 2);
 	uint8_t msgId = *(_buffer + 3);
@@ -68,7 +68,7 @@ int8_t UbxDecoder::_decode() {
 }
 
 bool UbxDecoder::_testChecksum() {
-	logger.trace("Start test checksum...\n");
+	log_v("Start test checksum...\n");
 
 	// assert(_buffer != nullptr);
 	// assert(_length >= 8);

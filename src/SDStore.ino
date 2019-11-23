@@ -34,12 +34,12 @@ size_t SDStore::getNextFileNumber(const char *dirname) const {
 	File root = SD.open(dirname);
 
 	if (!root) {
-		logger.debug("Failed to open directory, [%s]", dirname);
+		log_d("Failed to open directory, [%s]", dirname);
 		return 0;
 	}
 
 	if (!root.isDirectory()) {
-		logger.debug("Not a directory, [%s]", dirname);
+		log_d("Not a directory, [%s]", dirname);
 		return 0;
 	}
 
@@ -48,10 +48,10 @@ size_t SDStore::getNextFileNumber(const char *dirname) const {
 	while (file) {
 		if (!file.isDirectory()) {
 			String fn{file.name()};
-			logger.debug("->ITER -> File: [%s]", file.name());
+			log_d("->ITER -> File: [%s]", file.name());
 			if (fn.startsWith(_prefix) && fn.endsWith(_ext)) {
 				number++;
-				logger.debug(" %i\n", number);
+				log_d(" %i\n", number);
 				if (number > _max_nums){
 					reset = true;
 					break;
@@ -73,36 +73,36 @@ void SDStore::createFile() {
 
 	//size_t num = getNextFileNumber(_rootPath);
 	//if (!num){
-	//	logger.error("Create file error, next number is 0\n");
+	//	log_e("Create file error, next number is 0\n");
 	//	return;
 	//}
 
 	//sprintf(filename, "%s_%i.%s", _prefix, num, _ext);
-	logger.debug("Gen filename: [%s]\n", filename);
+	log_d("Gen filename: [%s]\n", filename);
 	assert(sizeof(_rootPath) + sizeof(filename) < MAX_PATH_LEN);
 	
 	char path[MAX_PATH_LEN]{0};
 	
 	strcat(path, _rootPath);
 	strcat(path, filename);
-	logger.debug("File name: [%s}, dir: [%s}, path: [%s]\n", filename, _rootPath, path);
+	log_d("File name: [%s}, dir: [%s}, path: [%s]\n", filename, _rootPath, path);
 	if (SD.exists(path)) {
 		SD.remove(path);
-		logger.debug("File: %s removed\n", filename);
+		log_d("File: %s removed\n", filename);
 	}
 
 	sdFile = SD.open(path, FILE_WRITE);
 	if (sdFile) {
-		logger.debug("File: %s created\n", path);
+		log_d("File: %s created\n", path);
 	} else {
-		logger.error("Failed to open file for writing, file name : [%s]\n", path);
+		log_e("Failed to open file for writing, file name : [%s]\n", path);
 	}
 }
 
 bool SDStore::initSdCard() {
-	logger.trace("Start init SD card...\n");
+	log_v("Start init SD card...\n");
 	assert(CS_PIN);
-	logger.trace("CS pin : %i\n", CS_PIN);
+	log_v("CS pin : %i\n", CS_PIN);
 
 #ifdef TTGO_BOARD
 	SPI.begin(SD_SCK, SD_MISO, SD_MOSI, SD_SS);
@@ -110,10 +110,10 @@ bool SDStore::initSdCard() {
 
 	if (!SD.begin(CS_PIN /*, SPI_QUARTER_SPEED*/)) {
 		// initialization failed!
-		logger.debug("initialization failed!.\n");
+		log_d("initialization failed!.\n");
 		_isInitSdCard = false;
 	} else {
-		logger.debug("initialization done.\n");
+		log_d("initialization done.\n");
 		_isInitSdCard = true;
 	}
 
@@ -125,34 +125,34 @@ void SDStore::end() {
 	if (_isInitSdCard) {
 		SD.end();
 		_isInitSdCard = false;
-		logger.trace("SD card closed, is init = [%s]\n", isInitialize() ? "true" : "false");
+		log_v("SD card closed, is init = [%s]\n", isInitialize() ? "true" : "false");
 	}
 }
 
 void SDStore::closeFile() {
-	logger.debug("Start closing file\n");
+	log_d("Start closing file\n");
 	if (sdFile) {
 		//sdFile.flush();
 		sdFile.close();
-		logger.trace("File closed, isOpenFile = [%s]\n", isOpenFile() ? "true" : "false");
+		log_v("File closed, isOpenFile = [%s]\n", isOpenFile() ? "true" : "false");
 	}
 }
 
 size_t SDStore::writeToSD(const char *buffer, size_t bytesCount) { return writeToSD(reinterpret_cast<const uint8_t *>(buffer), bytesCount); }
 
 size_t SDStore::writeToSD(const uint8_t *buffer, size_t bytesCount) {
-	logger.trace("Start write to SD card...\n");
+	log_v("Start write to SD card...\n");
 	size_t count = sdFile.write(buffer, bytesCount);
 	if (count) {
 		sdFile.flush();
 	}
 
-	logger.trace("Bytes count : [%i]\n", count);
+	log_v("Bytes count : [%i]\n", count);
 	if (count < bytesCount) {
 		if (!count) {
-			logger.error("Write failed\n");
+			log_e("Write failed\n");
 		}
-		logger.debug("WARN! Not all bytes write to SD, input count = [%i], writed count = [%i]\n", bytesCount, count);
+		log_d("WARN! Not all bytes write to SD, input count = [%i], writed count = [%i]\n", bytesCount, count);
 	}
 	return count;
 }

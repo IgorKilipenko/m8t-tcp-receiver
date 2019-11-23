@@ -4,7 +4,7 @@
 NtripClientSync::NtripClientSync(HardwareSerial *uart) : _uart{uart}, _client{new WiFiClient} {}
 
 NtripClientSync::~NtripClientSync() {
-	logger.trace(":: destructor  :: NtripClientSync\n");
+	log_v(":: destructor  :: NtripClientSync\n");
 	if (_client) {
 		_client->stop();
 		delete _client;
@@ -14,7 +14,7 @@ NtripClientSync::~NtripClientSync() {
 bool NtripClientSync::connect(const char *host, uint16_t port, const char *user, const char *pass, const char *mntpnt, const char *nmea) {
 
 	if (isEnabled()) {
-		logger.debug("Client already connected to Ntrip\n");
+		log_d("Client already connected to Ntrip\n");
 		return false;
 	}
 
@@ -25,11 +25,11 @@ bool NtripClientSync::connect(const char *host, uint16_t port, const char *user,
 
 		const size_t cstrlen = buildConnStr(connStr, host, port, user, pass, mntpnt, nmea);
 		if (cstrlen == 0) {
-			logger.error("Connection string is empty");
+			log_e("Connection string is empty");
 		} else {
 			size_t count = _client->write((const uint8_t *)connStr, cstrlen);
-			logger.debug("Ntrip connection string write: [%i] bytes\n", count);
-			logger.debug("Ntrip connection string: %s\n", connStr);
+			log_d("Ntrip connection string write: [%i] bytes\n", count);
+			log_d("Ntrip connection string: %s\n", connStr);
 			uint64_t start = millis();
 			while (!_client->available() && millis() - start < 1000) {
 				delay(10);
@@ -37,7 +37,7 @@ bool NtripClientSync::connect(const char *host, uint16_t port, const char *user,
 			connected = requestNtrip();
 		}
 	}else{
-		logger.error("Clent connection error, not connected\n");
+		log_e("Clent connection error, not connected\n");
 	}
 
 	if (connected) {
@@ -49,7 +49,7 @@ bool NtripClientSync::connect(const char *host, uint16_t port, const char *user,
 		_port = port;
 	} else if (!_client->connected()) {
 		_client->stop();
-		logger.error("Ntrip server reject connection, not connected\n");
+		log_e("Ntrip server reject connection, not connected\n");
 	}
 
 	_connectedNtrip = connected;
@@ -70,22 +70,22 @@ bool NtripClientSync::requestNtrip() {
 	int len = readLine(buffer, 128);
 
 	if (len <= 0){
-		logger.error("Response frome Ntrip server not contain headers [%s | %s]\n", NTRIP_RSP_OK_CLI, NTRIP_HTTP_OK);
+		log_e("Response frome Ntrip server not contain headers [%s | %s]\n", NTRIP_RSP_OK_CLI, NTRIP_HTTP_OK);
 	}
 
 	if (len >= strlen(NTRIP_RSP_OK_CLI) && memcmp((uint8_t *)NTRIP_RSP_OK_CLI, buffer, strlen(NTRIP_RSP_OK_CLI)) == 0) {
-		logger.debug("Connection to ntrip success. Response: %s\n", buffer);
+		log_d("Connection to ntrip success. Response: %s\n", buffer);
 	} else if (len >= strlen(NTRIP_HTTP_OK) && memcmp((uint8_t *)NTRIP_HTTP_OK, buffer, strlen(NTRIP_HTTP_OK)) == 0) {
 		// FIX Next -> will by ICY 200 OK\r\n in response body FOR FIX
-		logger.debug("Connection to ntrip success. Response: %s\n", buffer);
+		log_d("Connection to ntrip success. Response: %s\n", buffer);
 	} else {
-		logger.debug("Error response from ntrip server. Response: %s\n", buffer);
+		log_d("Error response from ntrip server. Response: %s\n", buffer);
 		_connectedNtrip = false;
 		return false;
 	}
 
 	read(buffer + len, sizeof(buffer) - len);
-	logger.debug("Response from ntrip server. Response: [%s]\n", buffer);
+	log_d("Response from ntrip server. Response: [%s]\n", buffer);
 
 	_connectedNtrip = true;
 	return _connectedNtrip;
@@ -93,13 +93,13 @@ bool NtripClientSync::requestNtrip() {
 
 int NtripClientSync::receiveNtrip() {
 	if (!isEnabled()) {
-		logger.error("Receive data error, Ntrip server not enabled\n");
+		log_e("Receive data error, Ntrip server not enabled\n");
 		return -1;
 	}
 	int count = read(_buffer, NTRIP_BUFFER_LENGTH);
 	if (count > 0) {
 		count = _uart->write(_buffer, count);
-		logger.trace("Write [%i] to gps ntrip (rtcm) bytes\n", count);
+		log_v("Write [%i] to gps ntrip (rtcm) bytes\n", count);
 	}else{
 		return -1;
 	}
@@ -109,7 +109,7 @@ int NtripClientSync::receiveNtrip() {
 
 int NtripClientSync::read(uint8_t *buffer, size_t len) {
 	if (!_client->connected()) {
-		logger.error("Read err ntrip, client not connected\n");
+		log_e("Read err ntrip, client not connected\n");
 		return -1;
 	}
 	int count = _client->available();
@@ -117,9 +117,9 @@ int NtripClientSync::read(uint8_t *buffer, size_t len) {
 		len = std::min((size_t)count, len);
 		count = _client->read(buffer, len);
 		// utils::ethernetDechunk((char*)buffer);
-		logger.trace("Read from ntrip server [%i] bytes\n", count);
+		log_v("Read from ntrip server [%i] bytes\n", count);
 	}else if (count < 0){
-		logger.error("Erro read NTRIP data from stream, res = [%i]\n", count);
+		log_e("Erro read NTRIP data from stream, res = [%i]\n", count);
 		return -1;
 	}
 	return count;
@@ -127,14 +127,14 @@ int NtripClientSync::read(uint8_t *buffer, size_t len) {
 
 int NtripClientSync::readLine(uint8_t *buffer, size_t len) {
 	if (!_client->connected()) {
-		logger.error("Read err ntrip, client not connected\n");
+		log_e("Read err ntrip, client not connected\n");
 		return -1;
 	}
 	return _client->readBytesUntil('\r', buffer, len);
 }
 
 bool NtripClientSync::isEnabled() {
-	// logger.debug("Ntrip enabled = %s\n", (_client && _client->connected() && _connectedNtrip) ? "TRUE" : "FALSE");
+	// log_d("Ntrip enabled = %s\n", (_client && _client->connected() && _connectedNtrip) ? "TRUE" : "FALSE");
 	_connectedNtrip = _client && _client->connected() && _connectedNtrip;
 	return _connectedNtrip;
 }
@@ -142,7 +142,7 @@ bool NtripClientSync::isEnabled() {
 size_t NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t port, const char *user, const char *pass, const char *mntpnt, const char *nmea) {
 
 	if (!host || !user || !pass || !mntpnt){
-		logger.error("Build connection string (NTRIP) error, empty args\n");
+		log_e("Build connection string (NTRIP) error, empty args\n");
 		return 0;
 	}
 
@@ -168,6 +168,6 @@ size_t NtripClientSync::buildConnStr(char *connStr, const char *host, uint16_t p
 	p += sprintf(p, "\r\n");
 
 	std::copy(buff, p, connStr);
-	logger.debug("Build connection string [%s]\n", connStr);
+	log_d("Build connection string [%s]\n", connStr);
 	return p - buff;
 }
