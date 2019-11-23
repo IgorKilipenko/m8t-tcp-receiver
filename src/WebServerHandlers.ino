@@ -455,7 +455,7 @@ void AWebServer::receiverDataHandler(const uint8_t *src_buffer, size_t len) {
 		log_v("WS count: %d", ws.count());
 
 		unsigned long start = millis();
-		Serial.println("=========== START SEND WS NOT DECODE DATA ============");
+		//Serial.println("=========== START SEND WS NOT DECODE DATA ============");
 
 		for (int i = 0; i < len; i++) {
 			_ubxWsBuffer.push(buffer[i]);
@@ -472,6 +472,6 @@ void AWebServer::receiverDataHandler(const uint8_t *src_buffer, size_t len) {
 			_lastUbxWsSendTime = millis();
 		}
 
-		Serial.printf("=========== END SEND WS NOT DECODE DATA ==== TIME  [%ld ms]  =========\n", millis() - start);
+		//Serial.printf("=========== END SEND WS NOT DECODE DATA ==== TIME  [%ld ms]  =========\n", millis() - start);
 	}
 }
