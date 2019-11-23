@@ -34,7 +34,6 @@ using std::runtime_error;
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include "SGraphQL.h"
-#include "WiFiManager.h"
 
 #include "ublox.h"
 #include "UbxMessage.h"
@@ -46,7 +45,7 @@ using std::runtime_error;
 
 class AWebServer {
   public:
-	AWebServer(ATcpServer *telnetServer);
+	AWebServer(ATcpServer *telnetServer, HardwareSerial*);
 	~AWebServer();
 	void setup();
 	void process();
@@ -55,7 +54,6 @@ class AWebServer {
 	void run(BaseType_t coreId = 1);
 	void loadWiFiCredentials();
 	void saveWiFiCredentials();
-	int8_t scanWiFi();
 	void end();
 	void restart();
 	unsigned long getServerTime() const { return millis(); }
@@ -82,7 +80,6 @@ class AWebServer {
 	AsyncEventSource events;
 	ATcpServer *telnetServer;
 	NtripClientSync *_ntripClient;
-	std::vector<std::unique_ptr<WifiItem>> wifiList;
 	UbxDecoder _ubxDecoder;
 	// UBLOX_GPS *_gps;
 	UbloxTransport *_transport;
@@ -99,21 +96,18 @@ class AWebServer {
 	void initDefaultHeaders();
 	void receiverDataHandler(const uint8_t *buffer, size_t len);
 
-	ApiResultPtr wifiQueryHandler(const char *event, const JsonObject &json, JsonObject &outJson);
-	ApiResultPtr wifiActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr receiverActionHandler(const char *event, const JsonObject &json, JsonObject &outJson);
 	ApiResultPtr receiverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 	ApiResultPtr serverQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 	ApiResultPtr ntripActionHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 	ApiResultPtr ntripQueryHandler(const char *event, const JsonObject &reqJson, JsonObject &outJson);
 
-	bool connectStaWifi(const char *ssid, const char *password);
-	void disconnectStaWifi();
 	void addServerHandlers();
 	void addOTAhandlers();
 	void addReceiverHandlers();
 	bool _autoPVT{false};
 	TaskHandle_t _runTasks;
+	HardwareSerial* _receiver;
 };
 
 #endif // AWebServer_h
