@@ -11,7 +11,7 @@
 
 class SDStore {
   public:
-	SDStore();
+	SDStore(int);
 	~SDStore();
 	static const size_t MAX_FNAME_LEN = 13;
 	static const size_t MAX_PATH_LEN = 128;
@@ -40,6 +40,7 @@ class SDStore {
 	const char *_prefix{"raw"};
 	const char *_ext{"ubx"};
 	const size_t _max_nums = 999;
+	const int _csPin;
 };
 
 #endif // SDStore_h

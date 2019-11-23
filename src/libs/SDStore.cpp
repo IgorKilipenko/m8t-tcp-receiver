@@ -1,4 +1,6 @@
-SDStore::SDStore() {}
+#include "SDStore.h"
+
+SDStore::SDStore(int csPin) :_csPin{csPin} {}
 SDStore::~SDStore() { end(); }
 
 void SDStore::generateFileName(char *name) {
@@ -101,14 +103,14 @@ void SDStore::createFile() {
 
 bool SDStore::initSdCard() {
 	log_v("Start init SD card...\n");
-	assert(CS_PIN);
-	log_v("CS pin : %i\n", CS_PIN);
+	assert(_csPin);
+	log_v("CS pin : %i\n", _csPin);
 
 #ifdef TTGO_BOARD
 	SPI.begin(SD_SCK, SD_MISO, SD_MOSI, SD_SS);
 #endif
 
-	if (!SD.begin(CS_PIN /*, SPI_QUARTER_SPEED*/)) {
+	if (!SD.begin(_csPin /*, SPI_QUARTER_SPEED*/)) {
 		// initialization failed!
 		log_d("initialization failed!.\n");
 		_isInitSdCard = false;
