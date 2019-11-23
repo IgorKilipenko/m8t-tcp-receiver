@@ -31,7 +31,7 @@ class NtripClientSync {
   public:
 	//const static char* HTTP_OK;
 
-	NtripClientSync(HardwareSerial *uart = Receiver);
+	NtripClientSync(HardwareSerial *uart);
 	~NtripClientSync();
 
 	bool connect(const char *host, uint16_t port, const char *user, const char *pass, const char *mountPoint, const char *nmea = nullptr);

@@ -13,7 +13,7 @@
 #include "SDStore.h"
 #include <vector>
 
-#define LOG_LOCAL_LEVEL 5
+//#define LOG_LOCAL_LEVEL 5
 
 #ifndef TCP_PORT
 #define TCP_PORT 7042
@@ -29,7 +29,7 @@ typedef std::function<void(const uint8_t *, size_t)> SerialDataCallback;
 
 class ATcpServer {
   public:
-	ATcpServer();
+	ATcpServer(HardwareSerial*);
 	~ATcpServer();
 
 	// TelnetServer methods:
@@ -74,6 +74,7 @@ class ATcpServer {
 	void handleNewClient(AsyncClient *client);
 	char _buffer[BUFFER_SIZE]{0};
 	void _processData(char *buffer, int len);
+	HardwareSerial* _receiver;
 };
 
 #endif
