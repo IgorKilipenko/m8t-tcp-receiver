@@ -39,6 +39,17 @@
         "type_traits": "cpp",
         "tuple": "cpp",
         "typeinfo": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "chrono": "cpp",
+        "cstdarg": "cpp",
+        "ctime": "cpp",
+        "unordered_set": "cpp",
+        "algorithm": "cpp",
+        "ratio": "cpp",
+        "iomanip": "cpp",
+        "thread": "cpp",
+        "cinttypes": "cpp",
+        "string": "cpp",
+        "regex": "cpp"
     }
 }
