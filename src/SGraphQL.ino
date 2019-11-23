@@ -6,7 +6,6 @@ const char *SGraphQL::UNDEFINED = "undefined";
 const char *SGraphQL::ALL = "all";
 const char *SGraphQL::CMD = "cmd";
 
-const char *SGraphQL::WIFI = "wifi";	// WiFi Component
 const char *SGraphQL::GPS = "receiver"; // GPS receiver Conponent
 const char *SGraphQL::NTRIP = "ntrip"; // Ntrip
 const char *SGraphQL::SERVER = "server";
@@ -28,8 +27,8 @@ ApiResultPtr SGraphQL::parse(const JsonObject &json, JsonObject &outJson) {
 
 	if (!validRequest(json)) {
 		log_e("Request Json not vilid\n");
-		json.prettyPrintTo(logger);
-		logger.print("\n");
+		json.prettyPrintTo(Serial);
+		Serial.print("\n");
 		return nullptr;
 	}
 
