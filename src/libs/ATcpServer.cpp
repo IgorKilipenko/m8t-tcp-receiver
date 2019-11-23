@@ -1,6 +1,6 @@
 #include "ATcpServer.h"
 
-ATcpServer::ATcpServer(HardwareSerial *receiver) : clients{MAX_TCP_CLIENTS, nullptr}, _receiver{receiver} {}
+ATcpServer::ATcpServer(HardwareSerial *receiver, SDStore *store) : clients{MAX_TCP_CLIENTS, nullptr}, _receiver{receiver}, _store{store} {}
 ATcpServer::~ATcpServer() { end(); }
 
 void ATcpServer::ATcpServer::process() {
@@ -24,8 +24,8 @@ void ATcpServer::_processData(char *buffer, int bytesCount) {
 	if (bytesCount > 0) {
 
 		if (receiveData) {
-			if (_writeToSd && store && store->isInitialize() && store->isOpenFile()) {
-				store->writeToSD(buffer, bytesCount);
+			if (_writeToSd && _store->isInitialize() && _store->isOpenFile()) {
+				_store->writeToSD(buffer, bytesCount);
 				delay(1);
 			}
 
@@ -106,12 +106,12 @@ void ATcpServer::handleNewClient(AsyncClient *client) {
 }
 
 bool ATcpServer::isInProgress() const { return receiveData; }
-bool ATcpServer::isSdInitialize() const { return store != nullptr && store->isInitialize(); }
+bool ATcpServer::isSdInitialize() const { return _store != nullptr && _store->isInitialize(); }
 
 void ATcpServer::stopReceive() {
-	if (store) {
+	if (_store) {
 		log_d("Stop store\n");
-		store->closeFile();
+		_store->closeFile();
 	}
 	if (server) {
 		server->end();
@@ -128,10 +128,9 @@ void ATcpServer::startReceive(bool writeToSd, bool sendToTcp) {
 	_writeToSd = writeToSd;
 	_sendToTcp = sendToTcp;
 
-	assert(store != nullptr);
-	if (_writeToSd && store && (store->isInitialize() || store->initSdCard())) {
+	if (_writeToSd && (_store->isInitialize() || _store->initSdCard())) {
 		log_v("Stored initialized\n");
-		store->createFile();
+		_store->createFile();
 		log_v("File created\n");
 	}
 
@@ -165,11 +164,6 @@ unsigned long ATcpServer::getTimeStart() const {
 }
 
 void ATcpServer::end() {
-	if (store) {
-		delete store;
-	}
-	store = nullptr;
-
 	freeClients();
 	clients.clear();
 
@@ -208,9 +202,8 @@ size_t ATcpServer::sendMessage(AsyncClient *client, String str) {
 }
 
 void ATcpServer::setup() {
-	store = new SDStore();
 	if (_writeToSd) {
-		store->initSdCard();
+		_store->initSdCard();
 	}
 	server = new AsyncServer(TCP_PORT);
 	serviceServer = new AsyncServer(TCP_PORT + 1);

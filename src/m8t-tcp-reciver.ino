@@ -8,6 +8,8 @@
 */
 //#define LOG_LOCAL_LEVEL 3
 
+#include <Arduino.h>
+
 #define LOG_LEVEL 2
 #define WEB_LOG_LEVEL 3
 
@@ -27,17 +29,13 @@
 #define TXD2 17
 #define RXD1 4
 #define TXD1 15
-#endif
+#endif // TTGO_BOARD
+#else
+#error Platform not supported
+#endif // ESP32
 
 HardwareSerial *RTCM{&Serial1};
 HardwareSerial *Receiver{&Serial2};
-#elif defined(ESP8266)
-#define CS_PIN D8 // SD card cs_pin (default D8 on ESP8266)
-#define MOCK_RECEIVER_DATA
-HardwareSerial *Receiver{&Serial};
-#else
-#error Platform not supported
-#endif
 
 /* TCP Client */
 #define MAX_TCP_CLIENTS 5 // Default max clients
@@ -54,15 +52,16 @@ HardwareSerial *Receiver{&Serial};
 #include "WiFiWithEvents.h"
 
 WiFiWithEvents wifi{};
-ATcpServer telnetServer{Receiver}; // GPS receiver communication
-
+SDStore store{CS_PIN};
+ATcpServer telnetServer{Receiver, &store}; // GPS receiver communication
 AWebServer webServer{&telnetServer, Receiver};
 
 void setup() {
 
 	//enableLoopWDT();
-	//enableCore0WDT();
-	//enableCore1WDT();
+	enableCore0WDT();
+	enableCore1WDT();
+	//esp_task_wdt_init(TWDT_TIMEOUT_S, false);
 	//disableCore0WDT();
 	//disableCore1WDT();
 	//disableLoopWDT();
@@ -76,6 +75,7 @@ void setup() {
 
 	wifi.connectSta();
 	webServer.setup();
+	//webServer.run(0);
 }
 /*volatile*/
 void loop() {

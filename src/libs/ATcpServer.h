@@ -29,7 +29,7 @@ typedef std::function<void(const uint8_t *, size_t)> SerialDataCallback;
 
 class ATcpServer {
   public:
-	ATcpServer(HardwareSerial*);
+	ATcpServer(HardwareSerial *, SDStore *);
 	~ATcpServer();
 
 	// TelnetServer methods:
@@ -56,7 +56,6 @@ class ATcpServer {
   private:
 	std::vector<AsyncClient *> clients; // a list to hold all clients
 	bool receiveData = false;
-	SDStore *store = nullptr;
 	AsyncServer *server = nullptr;
 	AsyncServer *serviceServer = nullptr;
 	SerialDataCallback _seralDataCallback = nullptr;
@@ -74,7 +73,8 @@ class ATcpServer {
 	void handleNewClient(AsyncClient *client);
 	char _buffer[BUFFER_SIZE]{0};
 	void _processData(char *buffer, int len);
-	HardwareSerial* _receiver;
+	HardwareSerial *_receiver;
+	SDStore *_store;
 };
 
 #endif
