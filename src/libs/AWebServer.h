@@ -6,6 +6,7 @@
 #include "Arduino.h"
 //#include <string>
 #include <queue>
+#include <vector>
 #include <thread>
 #include <esp_pthread.h>
 #include <freertos/FreeRTOS.h>
@@ -49,6 +50,7 @@ class AWebServer {
 	~AWebServer();
 	void setup();
 	void process();
+	void process(std::vector<char>);
 	void processAsync();
 	static void _process(void *);
 	void run(BaseType_t coreId = 1);

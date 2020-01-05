@@ -1,6 +1,8 @@
 #ifndef WiFiWithEvents_h
 #define WiFiWithEvents_h
 
+#include "Arduino.h"
+
 class WiFiWithEvents {
   public:
 	WiFiWithEvents() {}

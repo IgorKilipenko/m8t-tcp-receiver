@@ -158,6 +158,22 @@ void AWebServer::process() {
 }
 
 /** Main process */
+void AWebServer::process(std::vector<char> buf) {
+
+	if (!telnetServer->isInProgress()) {
+		ArduinoOTA.handle();
+	}
+
+	telnetServer->processData(buf.data(), buf.size());
+
+	if (_ntripClient->isEnabled()) {
+		_ntripClient->receiveNtrip();
+	}
+
+	delay(1);
+}
+
+/** Main process */
 void AWebServer::_process(void *arg) {
 	// AWebServer *_this = static_cast<AWebServer*>(arg);
 	// micros();

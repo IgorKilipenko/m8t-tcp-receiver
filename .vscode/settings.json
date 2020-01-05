@@ -5,6 +5,7 @@
     },
     "files.associations": {
         "*.postcss": "css",
+        "*.vfl": "vex",
         "*.tpp": "cpp",
         "array": "cpp",
         "*.tcc": "cpp",
@@ -52,6 +53,9 @@
         "cinttypes": "cpp",
         "string": "cpp",
         "regex": "cpp",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "bitset": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp"
     }
 }

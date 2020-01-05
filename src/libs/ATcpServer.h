@@ -34,6 +34,7 @@ class ATcpServer {
 
 	// TelnetServer methods:
 	void process();
+	void processData(char *buffer, int len);
 	void stopReceive();
 	void startReceive(bool writeToSd = true, bool sendToTcp = true);
 	bool isInProgress() const;
@@ -72,7 +73,6 @@ class ATcpServer {
 	void handleTimeOut(AsyncClient *client, uint32_t time);
 	void handleNewClient(AsyncClient *client);
 	char _buffer[BUFFER_SIZE]{0};
-	void _processData(char *buffer, int len);
 	HardwareSerial *_receiver;
 	SDStore *_store;
 };

@@ -16,11 +16,11 @@ void ATcpServer::ATcpServer::process() {
 		log_e("Not all bytes read from uart, available: [%i], read: [%i]\n", bytesCount, len);
 	}
 	if (len > 0) {
-		_processData(_buffer, len);
+		processData(_buffer, len);
 	}
 }
 
-void ATcpServer::_processData(char *buffer, int bytesCount) {
+void ATcpServer::processData(char *buffer, int bytesCount) {
 	if (bytesCount > 0) {
 
 		if (receiveData) {
