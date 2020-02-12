@@ -49,7 +49,9 @@ template <typename T> class Queue {
 	}
 	bool empty() {
 		std::unique_lock<std::mutex> mlock(mutex_);
-		return queue_.empty();
+		bool res = queue_.empty();
+		mlock.unlock();
+		return res;
 	}
 	Queue() = default;
 	Queue(const Queue &) = delete;			  // disable copying
